@@ -1,0 +1,57 @@
+### Go ###
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+# vendor/
+go.work
+
+### react ###
+.DS_*
+*.log
+logs
+**/*.backup.*
+**/*.back.*
+
+node_modules
+bower_components
+
+*.sublime*
+
+psd
+thumb
+sketch
+
+### Build artifacts ###
+build/
+build-*/              # nếu có nhiều folder build khác nhau theo module
+dist/                 # dành cho frontend (React)
+*.tar
+*.zip
+*.img
+*.pid
+*.lock
+
+### CI/CD ###
+coverage.out
+.coverage/
+junit.xml
+
+### Runtime ###
+.env
+.env.*
+.env.local
+*.tmp
+*.bak
+*.swp
+
+### Editor ##
+.idea/
+*.code-workspace
+*.sublime-workspace
+*.sublime-project
+
+# End of extended gitignore

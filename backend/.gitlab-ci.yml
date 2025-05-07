@@ -8,7 +8,6 @@ sast-backend:
   stage: sast
   image: securego/gosec
   script:
-    - go mod tidy
     - gosec -fmt sarif -out gl-sast-report.json ./...
   artifacts:
     reports:
@@ -16,7 +15,6 @@ sast-backend:
     paths:
       - gl-sast-report.json
     when: always
-  allow_failure: true
 
 build:
   stage: build

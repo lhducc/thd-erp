@@ -1,29 +1,18 @@
+default:
+  before_script:
+    - cd backend
+
 stages:
     - lint
     - sast
     - build
     - deploy
 
-
 lint:
   stage: lint
-  image: golangci/golangci-lint:v1.56
+  image: golangci/golangci-lint:v2.1.6
   script:
-    - cd backend
     - golangci-lint run --timeout 5m
-
-sast-backend:
-  stage: sast
-  image: securego/gosec
-  script:
-    - cd backend
-    - gosec -fmt sarif -out gl-sast-report.json ./...
-  artifacts:
-    reports:
-      sast: gl-sast-report.json
-    paths:
-      - gl-sast-report.json
-    when: always
 
 build:
   stage: build

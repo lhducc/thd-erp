@@ -6,7 +6,6 @@ stages:
     - build
     - test
     - deploy
-    - checklog
 
 lint:
   stage: lint
@@ -18,3 +17,10 @@ build:
   stage: build
   script:
     - echo "build"
+
+test:
+  stage: test
+
+deploy:
+  stage: deploy
+  script: echo "deploy"

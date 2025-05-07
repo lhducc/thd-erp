@@ -1,7 +1,10 @@
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
 stages:
     - lint
-    - build
     - test
+    - build
     - deploy
 
 lint:

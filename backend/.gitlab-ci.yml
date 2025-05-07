@@ -2,15 +2,19 @@ include:
   - template: Security/SAST.gitlab-ci.yml
 
 stages:
+    - lint
     - build
     - test
     - deploy
     - checklog
 
+lint:
+  stage: lint
+  image: golangci/golangci-lint:v1.56
+  script:
+    - golangci-lint run --timeout 5m
+
 build:
-    stage: build
-    script:
-        - echo "hello"
-        - whoami
-        - pwd
-        - ls
+  stage: build
+  script:
+    - echo "build"

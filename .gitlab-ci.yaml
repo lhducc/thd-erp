@@ -1,0 +1,12 @@
+stages:
+    - build
+    - deploy
+    - checklog
+
+build:
+    stage: build
+    script:
+        - echo "hello"
+        - whoami
+        - pwd
+        - ls

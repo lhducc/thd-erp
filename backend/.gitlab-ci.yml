@@ -1,11 +1,22 @@
-include:
-  - template: Security/SAST.gitlab-ci.yml
-
 stages:
     - lint
-    - test
+    - sast
     - build
     - deploy
+
+sast-backend:
+  stage: sast
+  image: securego/gosec
+  script:
+    - go mod tidy
+    - gosec -fmt sarif -out gl-sast-report.json ./...
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+    paths:
+      - gl-sast-report.json
+    when: always
+  allow_failure: true
 
 build:
   stage: build

@@ -4,10 +4,19 @@ stages:
     - build
     - deploy
 
+
+lint:
+  stage: lint
+  image: golangci/golangci-lint:v1.56
+  script:
+    - cd backend
+    - golangci-lint run --timeout 5m
+
 sast-backend:
   stage: sast
   image: securego/gosec
   script:
+    - cd backend
     - gosec -fmt sarif -out gl-sast-report.json ./...
   artifacts:
     reports:

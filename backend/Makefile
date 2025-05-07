@@ -1,4 +1,7 @@
-.PHONY: run build test
+.PHONY: lint run build test
+
+lint:
+	golangci-lint run --timeout 5m	
 
 run:
 	go run ./cmd/api/main.go

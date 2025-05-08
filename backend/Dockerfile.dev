@@ -1,7 +1,10 @@
-FROM golang:1.22-alpine
+FROM golang:1.22
 
 WORKDIR /app
 
-RUN apk --no-cache add git make
+RUN go install github.com/cosmtrek/air@v1.50.0
 
-CMD ["sh", "-c", "go mod download && make run"]
+# Ensure go/bin is in PATH
+ENV PATH="/go/bin:${PATH}"
+
+CMD ["air", "-c", "air.toml"]

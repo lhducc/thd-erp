@@ -13,11 +13,8 @@ if [[ "$MODE" == "up" ]]; then
 
   echo "Waiting for backend to be ready..."
   sleep 2
+  echo "pls, using 'docker compose -f ./deploys/docker-compose.dev.be.yml ps' for check status"
 
-  echo "Running frontend locally..."
-  cd frontend
-  npm install
-  npm run dev
 else
   docker compose -f ./deploys/docker-compose.dev.be.yml down
 fi

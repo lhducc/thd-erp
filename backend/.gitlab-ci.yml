@@ -1,0 +1,24 @@
+default:
+  before_script:
+    - cd backend
+
+stages:
+    - lint
+    - sast
+    - build
+    - deploy
+
+lint:
+  stage: lint
+  image: golangci/golangci-lint:v2.1.6
+  script:
+    - golangci-lint run --timeout 5m
+
+build:
+  stage: build
+  script:
+    - echo "build"
+
+deploy:
+  stage: deploy
+  script: echo "deploy"

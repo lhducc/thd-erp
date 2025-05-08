@@ -19,7 +19,7 @@ FROM alpine:3.14
 
 ENV APPNAME erp-backend
 
-WORKDIR /run
+WORKDIR /app
 
 COPY --from=builder /src/build/$APPNAME .
 

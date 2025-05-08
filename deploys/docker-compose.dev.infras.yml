@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -7,7 +5,7 @@ services:
     ports:
       - "5432:5432"
     env_file:
-      - .env
+      - ../.env
     restart: unless-stopped
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -17,7 +15,7 @@ services:
     container_name: erp-minio
     command: server --console-address ":9001" /data
     env_file:
-      - .env
+      - ../.env
     ports:
       - "9000:9000"
       - "9001:9001"

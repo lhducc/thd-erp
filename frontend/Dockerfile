@@ -1,5 +1,5 @@
 ## Build stage ##
-FROM node:18.18-alpine as builder
+FROM node:24.0.0-alpine3.20 as builder
 WORKDIR /src
 
 COPY . .

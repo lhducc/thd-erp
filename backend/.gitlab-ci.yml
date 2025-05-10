@@ -12,7 +12,7 @@ lint:
   stage: lint
   image: 10.57.70.41:5001/product/erp/erp/golangci/golangci-lint:v2.1.6
   script:
-    - golangci-lint run --timeout=5m
+    - golangci-lint run -v --print-issued-lines --out-format=colored-line-number --timeout=5m
 
 build:
   stage: build

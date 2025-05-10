@@ -12,7 +12,7 @@ lint:
   stage: lint
   image: 10.57.70.41:5001/product/erp/erp/golangci/golangci-lint:v2.1.6
   script:
-    - golangci-lint run -v --out-format=tab --timeout=5m
+    - golangci-lint run -v --timeout=5m
 
 build:
   stage: build

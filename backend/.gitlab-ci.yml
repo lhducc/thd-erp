@@ -31,7 +31,6 @@ build:
     - docker rm ${CONTAINER_IMAGE}
   tags:
     - uat
-    - shell
 
 deploy:
   stage: deploy

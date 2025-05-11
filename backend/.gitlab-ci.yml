@@ -50,6 +50,9 @@ gosec-sast:
     reports:
       sast:
       - gl-sast-report.json
+  only:
+    - merge_requests
+
 
 semgrep-sast:
   stage: test
@@ -73,6 +76,8 @@ semgrep-sast:
         - "**/*.py"
         - "**/*.java"
         - "**/*.c"
+  only:
+    - merge_requests
 
 secret-detect:
   stage: test
@@ -89,6 +94,8 @@ secret-detect:
   allow_failure: true
   rules:
     - if: '$CI_COMMIT_BRANCH'
+  only:
+    - merge_requests
 
 
 #### Build Stage

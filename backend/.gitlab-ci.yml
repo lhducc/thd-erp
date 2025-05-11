@@ -19,8 +19,8 @@ style-check:
   image: 10.57.70.41:5001/product/erp/erp/golangci/golangci-lint:v2.1.6
   script:
     - golangci-lint run -v --timeout=5m
-  only:
-    - merge_requests
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
 
 unit-test:
   stage: test
@@ -34,8 +34,8 @@ unit-test:
     paths:
       - coverage.out
       - coverage.txt
-  only:
-    - merge_requests
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
 
 gosec-sast:
   stage: test
@@ -50,8 +50,8 @@ gosec-sast:
     reports:
       sast:
       - gl-sast-report.json
-  only:
-    - merge_requests
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
 
 
 semgrep-sast:
@@ -100,8 +100,6 @@ secret-detect:
 build-image:
   stage: build
   script:
-    - apk --no-cache add update-ca-certificates
-    - update-ca-certificates
     - docker build -t ${CONTAINER_IMAGE}:dev-${CI_COMMIT_SHORT_SHA} .
     - docker save ${CONTAINER_IMAGE}:dev-${CI_COMMIT_SHORT_SHA} -o image.tar
   artifacts:
@@ -146,6 +144,16 @@ push-image-dev-registry:
 #### Deploy Stage
 
 
-deploy:
+deploy-uat:
   stage: deploy
-  script: echo "deploy"
+  script: echo "deploy to uat version $CI_COMMIT_TAG"
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+deploy-prod:
+  stage: deploy
+  script: echo "deploy to prod version $CI_COMMIT_TAG"
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: manual
+    - when: never

@@ -37,6 +37,18 @@ unit-test:
   only:
     - merge_requests
 
+gosec-sast:
+  stage: test
+  artifacts:
+    reports:
+      sast:
+      - gl-sast-report.json
+  variables:
+    SEARCH_MAX_DEPTH: 4
+  script:
+  - "/analyzer run"
+  allow_failure: true
+
 build:
   stage: build
   script:

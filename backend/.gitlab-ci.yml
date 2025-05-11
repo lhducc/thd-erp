@@ -71,6 +71,23 @@ semgrep-sast:
         - "**/*.java"
         - "**/*.c"
 
+secret-detection:
+  stage: test
+  image:
+    name: 10.57.70.41:5001/product/erp/erp/secrets:latest
+  script:
+    - /analyzer run
+  artifacts:
+    reports:
+      secret_detection: gl-secret-detection-report.json
+    paths:
+      - gl-secret-detection-report.json
+    when: always
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+
 build:
   stage: build
   script:

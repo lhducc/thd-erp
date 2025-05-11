@@ -97,6 +97,8 @@ secret-detect:
 build-image:
   stage: build
   script:
+    - apk --no-cache add update-ca-certificates
+    - update-ca-certificates
     - docker build -t ${CONTAINER_IMAGE}:dev-${CI_COMMIT_SHORT_SHA} .
     - docker save ${CONTAINER_IMAGE}:dev-${CI_COMMIT_SHORT_SHA} -o image.tar
   artifacts:

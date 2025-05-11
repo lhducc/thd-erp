@@ -104,7 +104,7 @@ build-image:
     - docker save ${CONTAINER_IMAGE}:dev-${CI_COMMIT_SHORT_SHA} -o image.tar
   artifacts:
     paths:
-      - image.tar
+      - ./backend/image.tar
   tags:
     - uat
   rules:

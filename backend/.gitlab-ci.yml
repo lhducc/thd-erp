@@ -4,7 +4,7 @@ default:
 
 stages:
     - lint
-    - sast
+    - test
     - build
     - deploy
 
@@ -13,6 +13,12 @@ lint:
   image: 10.57.70.41:5001/product/erp/erp/golangci/golangci-lint:v2.1.6
   script:
     - golangci-lint run -v --timeout=5m
+
+test:
+  stage: test
+  image: 10.57.70.41:5001/product/erp/erp/golang:1.22-alpine
+  script:
+    - go test -v ./...
 
 build:
   stage: build

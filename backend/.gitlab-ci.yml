@@ -5,6 +5,9 @@ default:
 variables:
   CONTAINER_IMAGE: ${REGISTRY_URL}/${REGISTRY_PROJECT}/${CI_PROJECT_NAME}-backend:${CI_COMMIT_TAG:-notag}-${CI_COMMIT_SHORT_SHA}
 
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
 stages:
     - lint
     - test
@@ -26,6 +29,12 @@ unit-test:
     - go test -coverprofile=coverage.out -v ./...
     - go tool cover -func=coverage.out > coverage.txt
     - cat coverage.txt
+  artifacts:
+  when: always
+  paths:
+    - coverage.out
+    - coverage.txt
+  only: merge_requests
 
 build:
   stage: build

@@ -30,11 +30,12 @@ unit-test:
     - go tool cover -func=coverage.out > coverage.txt
     - cat coverage.txt
   artifacts:
-  when: always
-  paths:
-    - coverage.out
-    - coverage.txt
-  only: merge_requests
+    when: always
+    paths:
+      - coverage.out
+      - coverage.txt
+  only:
+    - merge_requests
 
 build:
   stage: build

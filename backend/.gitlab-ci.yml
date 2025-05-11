@@ -3,16 +3,19 @@ default:
     - cd backend
 
 variables:
-  CONTAINER_IMAGE: ${REGISTRY_URL}/${REGISTRY_PROJECT}/${CI_PROJECT_NAME}-backend:${CI_COMMIT_TAG:-notag}-${CI_COMMIT_SHORT_SHA}
+  CONTAINER_IMAGE: ${REGISTRY_URL}/${REGISTRY_PROJECT}/${CI_PROJECT_NAME}-backend
 
 stages:
-    - lint
     - test
     - build
     - deploy
 
-lint:
-  stage: lint
+
+#### Test Stage
+
+
+style-check:
+  stage: test
   image: 10.57.70.41:5001/product/erp/erp/golangci/golangci-lint:v2.1.6
   script:
     - golangci-lint run -v --timeout=5m
@@ -71,7 +74,7 @@ semgrep-sast:
         - "**/*.java"
         - "**/*.c"
 
-secret-detection:
+secret-detect:
   stage: test
   image:
     name: 10.57.70.41:5001/product/erp/erp/secrets:latest
@@ -88,14 +91,56 @@ secret-detection:
     - if: '$CI_COMMIT_BRANCH'
 
 
-build:
+#### Build Stage
+
+
+build-image:
   stage: build
   script:
-    - docker build -t ${CONTAINER_IMAGE} .
-    - docker push ${CONTAINER_IMAGE}
-    - docker rm ${CONTAINER_IMAGE}
+    - docker build -t ${CONTAINER_IMAGE}:dev-${CI_COMMIT_SHORT_SHA} .
+    - docker save ${CONTAINER_IMAGE}:dev-${CI_COMMIT_SHORT_SHA} -o image.tar
+  artifacts:
+    paths:
+      - image.tar
   tags:
     - uat
+  needs: [style-check, gosec-sast, semgrep-sast, secret-detect]
+  rules:
+    - when: on_success
+
+healcheck-image:
+  stage: build
+  script:
+    - echo "healthy check"
+  tags:
+    - uat
+  rules:
+    - when: on_success
+  needs: [build-image]
+
+sec-scan-image:
+  stage: build
+  script:
+    - echo "sec scan image"
+  tags:
+    - uat
+  rules:
+    - when: on_success
+  needs: [build-image]
+
+push-image-dev-registry:
+  stage: build
+  script:
+    - echo "healthy check"
+  tags:
+    - uat
+  rules:
+    - when: on_success
+  needs: [healcheck-image, sec-scan-image]
+
+
+#### Deploy Stage
+
 
 deploy:
   stage: deploy

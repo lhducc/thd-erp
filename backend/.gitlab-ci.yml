@@ -49,7 +49,7 @@ gosec-sast:
       - gl-sast-report.json
 
 semgrep-sast:
-  stage: sast
+  stage: test
   image:
     name: 10.57.70.41:5001/product/erp/erp/analyzers/semgrep:latest
   script:

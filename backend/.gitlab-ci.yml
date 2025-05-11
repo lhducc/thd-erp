@@ -16,13 +16,16 @@ lint:
   image: 10.57.70.41:5001/product/erp/erp/golangci/golangci-lint:v2.1.6
   script:
     - golangci-lint run -v --timeout=5m
+  only:
+    - merge_requests
 
 unit-test:
   stage: test
   image: 10.57.70.41:5001/product/erp/erp/golang:1.22-alpine
   script:
-    - echo "running unit-test"
-    - go test -v ./... | tee test.log
+    - go test -coverprofile=coverage.out -v ./...
+    - go tool cover -func=coverage.out > coverage.txt
+    - cat coverage.txt
 
 build:
   stage: build

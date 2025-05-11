@@ -17,11 +17,12 @@ lint:
   script:
     - golangci-lint run -v --timeout=5m
 
-test:
+unit-test:
   stage: test
   image: 10.57.70.41:5001/product/erp/erp/golang:1.22-alpine
   script:
-    - go test -v ./...
+    - echo "running unit-test"
+    - go test -v ./... | tee test.log
 
 build:
   stage: build

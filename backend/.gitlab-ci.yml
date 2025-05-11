@@ -42,6 +42,8 @@ gosec-sast:
       - gl-sast-report.json
   variables:
     SEARCH_MAX_DEPTH: 4
+  script:
+    - echo "hello"
   allow_failure: true
 
 build:

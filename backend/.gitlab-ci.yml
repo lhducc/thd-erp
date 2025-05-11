@@ -44,6 +44,7 @@ gosec-sast:
     SEARCH_MAX_DEPTH: 4
   script:
     - echo "hello"
+    - "/analyzer run"
   allow_failure: true
 
 build:

@@ -5,14 +5,9 @@ ENV APPNAME erp-backend
 
 WORKDIR /src
 
-RUN apk --no-cache add git
-
-COPY go.mod go.sum .
-RUN go mod download
-
 COPY . .
 
-RUN CGO_ENABLED=0 go build -v -o ./build/$APPNAME ./cmd/api/main.go
+RUN CGO_ENABLED=0 go build -mod=vendor -v -o ./build/$APPNAME ./cmd/api/main.go
 
 ## RUN STAGE ##
 FROM 10.57.70.41:5001/product/erp/erp/alpine:3.14

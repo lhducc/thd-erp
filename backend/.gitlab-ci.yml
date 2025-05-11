@@ -36,16 +36,17 @@ unit-test:
 
 gosec-sast:
   stage: test
-  artifacts:
-    reports:
-      sast:
-      - gl-sast-report.json
   variables:
     SEARCH_MAX_DEPTH: 4
+  image: 10.57.70.41:5001/product/erp/erp/analyzers/gosec:latest
   script:
     - echo "hello"
     - "/analyzer run"
   allow_failure: true
+  artifacts:
+    reports:
+      sast:
+      - gl-sast-report.json
 
 build:
   stage: build

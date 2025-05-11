@@ -68,7 +68,7 @@ semgrep-sast:
     when: always
   allow_failure: true
   rules:
-    - if: "$CI_COMMIT_BRANCH"
+    - if: "$CI_COMMIT_BRANCH" && "$CI_MERGE_REQUEST_ID"
       exists:
         - "**/*.go"
         - "**/*.js"
@@ -76,8 +76,6 @@ semgrep-sast:
         - "**/*.py"
         - "**/*.java"
         - "**/*.c"
-  only:
-    - merge_requests
 
 secret-detect:
   stage: test
@@ -93,9 +91,7 @@ secret-detect:
     when: always
   allow_failure: true
   rules:
-    - if: '$CI_COMMIT_BRANCH'
-  only:
-    - merge_requests
+    - if: '$CI_COMMIT_BRANCH' && "$CI_MERGE_REQUEST_ID"
 
 
 #### Build Stage

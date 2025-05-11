@@ -104,7 +104,6 @@ build-image:
       - image.tar
   tags:
     - uat
-  needs: [style-check, gosec-sast, semgrep-sast, secret-detect]
   rules:
     - when: on_success
 

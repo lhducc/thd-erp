@@ -48,6 +48,29 @@ gosec-sast:
       sast:
       - gl-sast-report.json
 
+semgrep-sast:
+  stage: sast
+  image:
+    name: 10.57.70.41:5001/product/erp/erp/analyzers/semgrep:latest
+  script:
+    - /analyzer run
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+    paths:
+      - gl-sast-report.json
+    when: always
+  allow_failure: true
+  rules:
+    - if: "$CI_COMMIT_BRANCH"
+      exists:
+        - "**/*.go"
+        - "**/*.js"
+        - "**/*.ts"
+        - "**/*.py"
+        - "**/*.java"
+        - "**/*.c"
+
 build:
   stage: build
   script:

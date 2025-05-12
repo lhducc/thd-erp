@@ -1,175 +1,20 @@
-default:
-  before_script:
-    - cd backend
-
-variables:
-  CONTAINER_IMAGE: ${REGISTRY_URL}/${REGISTRY_PROJECT}/${CI_PROJECT_NAME}-backend
-  UAT_CONTAINER_TAG: ${CI_COMMIT_TAG}-${CI_COMMIT_SHORT_SHA}
-
 stages:
-    - test
-    - build
-    - deploy
+  - trigger
 
-
-#### Test Stage
-
-style-check:
-  stage: test
-  image: 10.57.70.41:5001/product/erp/erp/golangci/golangci-lint:v2.1.6
-  script:
-    - golangci-lint run -v --timeout=5m
+trigger-backend:
+  stage: trigger
   rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+    - changes:
+        - backend/**
+  trigger:
+    include: backend/.gitlab-ci.yml
+    strategy: depend
 
-unit-test:
-  stage: test
-  image: 10.57.70.41:5001/product/erp/erp/golang:1.22-alpine
-  script:
-    - go test -coverprofile=coverage.out -v ./...
-    - go tool cover -func=coverage.out > coverage.txt
-    - cat coverage.txt
-  artifacts:
-    when: always
-    paths:
-      - coverage.out
-      - coverage.txt
+trigger-frontend:
+  stage: trigger
   rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
-
-gosec-sast:
-  stage: test
-  variables:
-    SEARCH_MAX_DEPTH: 4
-  image: 10.57.70.41:5001/product/erp/erp/analyzers/gosec:latest
-  script:
-    - echo "hello"
-    - "/analyzer run"
-  allow_failure: true
-  artifacts:
-    reports:
-      sast:
-      - gl-sast-report.json
-  rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
-
-
-semgrep-sast:
-  stage: test
-  image:
-    name: 10.57.70.41:5001/product/erp/erp/analyzers/semgrep:latest
-  script:
-    - /analyzer run
-  artifacts:
-    reports:
-      sast: gl-sast-report.json
-    paths:
-      - gl-sast-report.json
-    when: always
-  allow_failure: true
-  rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
-      exists:
-        - "**/*.go"
-        - "**/*.js"
-        - "**/*.ts"
-        - "**/*.py"
-        - "**/*.java"
-        - "**/*.c"
-
-secret-detect:
-  stage: test
-  image:
-    name: 10.57.70.41:5001/product/erp/erp/secrets:latest
-  script:
-    - /analyzer run
-  artifacts:
-    reports:
-      secret_detection: gl-secret-detection-report.json
-    paths:
-      - gl-secret-detection-report.json
-    when: always
-  allow_failure: true
-  rules:
-  - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
-
-
-#### Build Stage
-
-build-image:
-  stage: build
-  script:
-    - docker build -t ${CONTAINER_IMAGE}:dev-${CI_COMMIT_SHORT_SHA} .
-    - docker save ${CONTAINER_IMAGE}:dev-${CI_COMMIT_SHORT_SHA} -o image.tar
-  artifacts:
-    paths:
-      - ./backend/image.tar
-  tags:
-    - uat
-  rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
-      when: on_success
-
-healcheck-image:
-  stage: build
-  script:
-    - echo "healthy check"
-  tags:
-    - uat
-  rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
-      when: on_success
-  needs: [build-image]
-
-sec-scan-image:
-  stage: build
-  script:
-    - echo "sec scan image"
-  tags:
-    - uat
-  rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
-      when: on_success
-  needs: [build-image]
-
-push-image-dev-registry:
-  stage: build
-  script:
-    - echo "push image ${CONTAINER_IMAGE}:dev-${CI_COMMIT_SHORT_SHA} to container registry"
-  tags:
-    - uat
-  rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
-      when: on_success
-  needs: [healcheck-image, sec-scan-image]
-
-buildandpush-uat-image:
-  stage: build
-  script:
-    - docker build -t ${CONTAINER_IMAGE}:${UAT_CONTAINER_TAG} .
-    - docker push ${CONTAINER_IMAGE}:${UAT_CONTAINER_TAG}
-  tags:
-    - uat
-  rules:
-    - if: '$CI_COMMIT_TAG'
-
-
-#### Deploy Stage
-
-deploy-uat:
-  stage: deploy
-  before_script:
-    - cd deploys
-  script:
-    - echo "deploy to uat version $CI_COMMIT_TAG"
-    - CONTAINER_IMAGE=$CONTIANER_IMAGE CONTAINER_TAG=${UAT_CONTAINER_TAG} docker compose -f docker-compose.uat.yml up -d
-  rules:
-    - if: '$CI_COMMIT_TAG'
-
-deploy-prod:
-  stage: deploy
-  script: echo "deploy to prod version $CI_COMMIT_TAG"
-  rules:
-    - if: '$CI_COMMIT_TAG'
-      when: manual
-    - when: never
+    - changes:
+        - frontend/**/*
+  trigger:
+    include: frontend/.gitlab-ci.yml
+    strategy: depend

@@ -166,7 +166,7 @@ deploy-uat:
     - sleep 10
     - docker compose -f ./deploys/docker-compose.uat.yml ps
   environment:
-    name: uat
+    name: staging
   tags:
     - uat
   rules:

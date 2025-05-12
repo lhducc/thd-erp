@@ -1,7 +1,7 @@
 services:
   backend:
     container_name: erp-backend
-    image: $CONTAINER_IMAGE:CONTAINER_TAG
+    image: $CONTAINER_IMAGE:$CONTAINER_TAG
     ports:
       - "8080:8080"
     env_file:

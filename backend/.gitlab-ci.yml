@@ -147,10 +147,7 @@ buildandpush-uat-image:
   stage: build
   script:
     - docker build -t ${CONTAINER_IMAGE}:${UAT_CONTAINER_TAG} .
-    - docker push ${CONTAINER_IMAGE}:${UAT_CONTAINER_TAG}}
-  artifacts:
-    paths:
-      - ./backend/image.tar
+    - docker push ${CONTAINER_IMAGE}:${UAT_CONTAINER_TAG}
   tags:
     - uat
   rules:

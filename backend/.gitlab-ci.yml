@@ -146,8 +146,8 @@ push-image-dev-registry:
 buildandpush-uat-image:
   stage: build
   script:
-    - docker build -t ${CONTAINER_IMAGE}:${UAT_CONTAINER_TAG} .
-    - docker push ${CONTAINER_IMAGE}:${UAT_CONTAINER_TAG}
+    - docker build -t ${BE_CONTAINER_IMAGE}:${UAT_CONTAINER_TAG} .
+    - docker push ${BE_CONTAINER_IMAGE}:${UAT_CONTAINER_TAG}
   tags:
     - uat
   rules:

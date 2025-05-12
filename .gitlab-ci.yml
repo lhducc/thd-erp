@@ -1,5 +1,13 @@
+variables:
+  CONTAINER_IMAGE: ${REGISTRY_URL}/${REGISTRY_PROJECT}/${CI_PROJECT_NAME}-backend
+  UAT_CONTAINER_TAG: ${CI_COMMIT_TAG}-${CI_COMMIT_SHORT_SHA}
+
 stages:
   - trigger
+  - deploy
+
+
+#### Trigger Stage
 
 trigger-backend:
   stage: trigger
@@ -18,3 +26,32 @@ trigger-frontend:
   trigger:
     include: frontend/.gitlab-ci.yml
     strategy: depend
+
+
+#### Deploy Stage
+
+deploy-uat:
+  stage: deploy
+  script:
+    - echo "deploy to uat version $CI_COMMIT_TAG"
+    - cp sample.env .env
+    - CONTAINER_IMAGE=$CONTAINER_IMAGE CONTAINER_TAG=${UAT_CONTAINER_TAG} docker compose -f ./deploys/docker-compose.uat.yml up -d --remove-orphans
+    - sleep 10
+    - docker compose -f ./deploys/docker-compose.uat.yml ps
+  environment:
+    name: staging
+  tags:
+    - uat
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+deploy-prod:
+  stage: deploy
+  script: echo "deploy to prod version $CI_COMMIT_TAG"
+  environment:
+    name: production
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: manual
+    - when: never
+

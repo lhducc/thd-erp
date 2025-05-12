@@ -162,7 +162,7 @@ deploy-uat:
   script:
     - echo "deploy to uat version $CI_COMMIT_TAG"
     - cp sample.env .env
-    - CONTAINER_IMAGE=$CONTIANER_IMAGE CONTAINER_TAG=${UAT_CONTAINER_TAG} docker compose -f docker-compose.uat.yml up -d
+    - CONTAINER_IMAGE=$CONTIANER_IMAGE CONTAINER_TAG=${UAT_CONTAINER_TAG} docker compose -f ./deploys/docker-compose.uat.yml up -d
   tags:
     - uat
   rules:

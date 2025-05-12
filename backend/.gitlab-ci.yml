@@ -158,6 +158,7 @@ buildandpush-uat-image:
 
 deploy-uat:
   stage: deploy
+  before_script: []
   script:
     - echo "deploy to uat version $CI_COMMIT_TAG"
     - cp sample.env .env

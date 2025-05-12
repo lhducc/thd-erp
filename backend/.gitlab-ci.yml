@@ -4,6 +4,7 @@ default:
 
 variables:
   CONTAINER_IMAGE: ${REGISTRY_URL}/${REGISTRY_PROJECT}/${CI_PROJECT_NAME}-backend
+  UAT_CONTAINER_TAG: ${CI_COMMIT_TAG}-${CI_COMMIT_SHORT_SHA}
 
 stages:
     - test
@@ -12,7 +13,6 @@ stages:
 
 
 #### Test Stage
-
 
 style-check:
   stage: test
@@ -96,7 +96,6 @@ secret-detect:
 
 #### Build Stage
 
-
 build-image:
   stage: build
   script:
@@ -108,7 +107,8 @@ build-image:
   tags:
     - uat
   rules:
-    - when: on_success
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+      when: on_success
 
 healcheck-image:
   stage: build
@@ -117,7 +117,8 @@ healcheck-image:
   tags:
     - uat
   rules:
-    - when: on_success
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+      when: on_success
   needs: [build-image]
 
 sec-scan-image:
@@ -127,22 +128,36 @@ sec-scan-image:
   tags:
     - uat
   rules:
-    - when: on_success
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+      when: on_success
   needs: [build-image]
 
 push-image-dev-registry:
   stage: build
   script:
-    - echo "healthy check"
+    - echo "push image ${CONTAINER_IMAGE}:dev-${CI_COMMIT_SHORT_SHA} to container registry"
   tags:
     - uat
   rules:
-    - when: on_success
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+      when: on_success
   needs: [healcheck-image, sec-scan-image]
+
+buildandpush-uat-image:
+  stage: build
+  script:
+    - docker build -t ${CONTAINER_IMAGE}:${UAT_CONTAINER_TAG}} .
+    - docker push ${CONTAINER_IMAGE}:${UAT_CONTAINER_TAG}}
+  artifacts:
+    paths:
+      - ./backend/image.tar
+  tags:
+    - uat
+  rules:
+    - if: '$CI_COMMIT_TAG'
 
 
 #### Deploy Stage
-
 
 deploy-uat:
   stage: deploy
@@ -150,8 +165,7 @@ deploy-uat:
     - cd deploys
   script:
     - echo "deploy to uat version $CI_COMMIT_TAG"
-    - ls
-    - echo $CONTAINER_IMAGE:${CI_COMMIT_TAG}-${CI_COMMIT_SHORT_SHA}
+    - CONTAINER_IMAGE=$CONTIANER_IMAGE CONTAINER_TAG=${UAT_CONTAINER_TAG} docker compose -f docker-compose.uat.yml up -d
   rules:
     - if: '$CI_COMMIT_TAG'
 

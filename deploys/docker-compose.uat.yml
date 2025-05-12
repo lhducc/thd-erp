@@ -1,7 +1,18 @@
 services:
+  frontend:
+    container_name: erp-frontend
+    image: $FE_CONTAINER_IMAGE:$CONTAINER_TAG
+    ports:
+      - "3000:80"
+    env_file:
+      - ../.env
+    depends_on:
+      - backend
+    restart: unless-stopped
+
   backend:
     container_name: erp-backend
-    image: $CONTAINER_IMAGE:$CONTAINER_TAG
+    image: $BE_CONTAINER_IMAGE:$CONTAINER_TAG
     ports:
       - "8080:8080"
     env_file:

@@ -146,7 +146,7 @@ push-image-dev-registry:
 buildandpush-uat-image:
   stage: build
   script:
-    - docker build -t ${CONTAINER_IMAGE}:${UAT_CONTAINER_TAG}} .
+    - docker build -t ${CONTAINER_IMAGE}:${UAT_CONTAINER_TAG} .
     - docker push ${CONTAINER_IMAGE}:${UAT_CONTAINER_TAG}}
   artifacts:
     paths:

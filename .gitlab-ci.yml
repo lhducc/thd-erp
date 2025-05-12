@@ -1,5 +1,6 @@
 variables:
-  CONTAINER_IMAGE: ${REGISTRY_URL}/${REGISTRY_PROJECT}/${CI_PROJECT_NAME}-backend
+  BE_CONTAINER_IMAGE: ${REGISTRY_URL}/${REGISTRY_PROJECT}/${CI_PROJECT_NAME}-backend
+  FE_CONTAINER_IMAGE: ${REGISTRY_URL}/${REGISTRY_PROJECT}/${CI_PROJECT_NAME}-frontend
   UAT_CONTAINER_TAG: ${CI_COMMIT_TAG}-${CI_COMMIT_SHORT_SHA}
 
 stages:
@@ -35,7 +36,7 @@ deploy-uat:
   script:
     - echo "deploy to uat version $CI_COMMIT_TAG"
     - cp sample.env .env
-    - CONTAINER_IMAGE=$CONTAINER_IMAGE CONTAINER_TAG=${UAT_CONTAINER_TAG} docker compose -f ./deploys/docker-compose.uat.yml up -d --remove-orphans
+    - FE_CONTAINER_IMAGE=$FE_CONTAINER_IMAGE BE_CONTAINER_IMAGE=$BE_CONTAINER_IMAGE CONTAINER_TAG=${UAT_CONTAINER_TAG} docker compose -f ./deploys/docker-compose.uat.yml up -d --remove-orphans
     - sleep 10
     - docker compose -f ./deploys/docker-compose.uat.yml ps
   environment:

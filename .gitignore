@@ -11,6 +11,7 @@ go.work
 
 ### React / NodeJS ###
 node_modules/
+package-lock.json
 bower_components/
 dist/
 dist-ssr/

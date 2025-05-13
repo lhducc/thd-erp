@@ -1,1 +1,9 @@
+FROM 10.57.70.41:5001/product/erp/erp/node:24.0.0-slim
+WORKDIR /app
 
+COPY package.json .npmrc .
+RUN npm install --legacy-peer-deps --verbose --no-audit
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev"]

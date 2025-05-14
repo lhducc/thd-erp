@@ -1,14 +1,16 @@
 ## Build stage ##
-FROM node:24.0.0-alpine3.20 as builder
+FROM 10.57.70.41:5001/product/erp/erp/node:24.0.0-slim AS builder
 WORKDIR /src
 
-COPY . .
+COPY package.json .npmrc .
+RUN npm install --legacy-peer-deps --verbose
 
-RUN npm install
+COPY . .
 RUN npm run build
 
+
 ## Run stage ##
-FROM nginx:alpine
+FROM 10.57.70.41:5001/product/erp/erp/nginx:slime
 
 COPY --from=builder /src/dist /usr/share/nginx/html
 

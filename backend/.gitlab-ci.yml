@@ -2,23 +2,153 @@ default:
   before_script:
     - cd backend
 
+variables:
+  BE_CONTAINER_IMAGE: ${REGISTRY_URL}/${REGISTRY_PROJECT}/${CI_PROJECT_NAME}-backend
+  DEV_CONTAINER_TAG: dev-${CI_COMMIT_SHORT_SHA}
+  UAT_CONTAINER_TAG: ${CI_COMMIT_TAG}-${CI_COMMIT_SHORT_SHA}
+
 stages:
-    - lint
-    - sast
+    - test
     - build
-    - deploy
 
-#lint:
-#  stage: lint
-#  image: golangci/golangci-lint:v2.1.6
-#  script:
-#    - golangci-lint run --timeout 5m
+#### Test Stage
 
-build:
+style-check:
+  stage: test
+  image: 10.57.70.41:5001/product/erp/erp/golangci/golangci-lint:v2.1.6
+  script:
+    - golangci-lint run -v --timeout=5m
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+
+unit-test:
+  stage: test
+  image: 10.57.70.41:5001/product/erp/erp/golang:1.22-alpine
+  script:
+    - go test -coverprofile=coverage.out -v ./...
+    - go tool cover -func=coverage.out > coverage.txt
+    - cat coverage.txt
+  artifacts:
+    when: always
+    paths:
+      - coverage.out
+      - coverage.txt
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+
+gosec-sast:
+  stage: test
+  variables:
+    SEARCH_MAX_DEPTH: 4
+  image: 10.57.70.41:5001/product/erp/erp/analyzers/gosec:latest
+  script:
+    - echo "hello"
+    - "/analyzer run"
+  allow_failure: true
+  artifacts:
+    reports:
+      sast:
+      - gl-sast-report.json
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+
+
+semgrep-sast:
+  stage: test
+  image:
+    name: 10.57.70.41:5001/product/erp/erp/analyzers/semgrep:latest
+  script:
+    - /analyzer run
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+    paths:
+      - gl-sast-report.json
+    when: always
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+      exists:
+        - "**/*.go"
+        - "**/*.js"
+        - "**/*.ts"
+        - "**/*.py"
+        - "**/*.java"
+        - "**/*.c"
+
+secret-detect:
+  stage: test
+  image:
+    name: 10.57.70.41:5001/product/erp/erp/secrets:latest
+  script:
+    - /analyzer run
+  artifacts:
+    reports:
+      secret_detection: gl-secret-detection-report.json
+    paths:
+      - gl-secret-detection-report.json
+    when: always
+  allow_failure: true
+  rules:
+  - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+
+
+#### Build Stage
+
+build-image:
   stage: build
   script:
-    - echo "build"
+    - docker build -t ${BE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG} .
+    - docker save ${BE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG} -o image.tar
+  artifacts:
+    paths:
+      - ./backend/image.tar
+  tags:
+    - uat
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+      when: on_success
 
-deploy:
-  stage: deploy
-  script: echo "deploy"
+healcheck-image:
+  stage: build
+  script:
+    - echo "healthy check"
+  tags:
+    - uat
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+      when: on_success
+  needs: [build-image]
+
+sec-scan-image:
+  stage: build
+  script:
+    - echo "sec scan image"
+  tags:
+    - uat
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+      when: on_success
+  needs: [build-image]
+
+push-image-dev-registry:
+  stage: build
+  script:
+    - echo "push image ${BE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG} to container registry"
+    - docker push ${BE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG}
+  tags:
+    - uat
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+      when: on_success
+  needs: [healcheck-image, sec-scan-image]
+
+buildandpush-uat-image:
+  stage: build
+  script:
+    - docker build -t ${BE_CONTAINER_IMAGE}:${UAT_CONTAINER_TAG} .
+    - docker push ${BE_CONTAINER_IMAGE}:${UAT_CONTAINER_TAG}
+  tags:
+    - uat
+  rules:
+    - if: '$CI_COMMIT_TAG'

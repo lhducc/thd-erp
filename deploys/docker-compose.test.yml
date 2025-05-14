@@ -1,0 +1,51 @@
+services:
+  frontend:
+    container_name: erp-frontend
+    image: 10.57.70.41:5001/product/erp/erp/erp-frontend
+    ports:
+      - "3000:80"
+    env_file:
+      - ../.env
+    depends_on:
+      - backend
+    restart: unless-stopped
+    
+  backend:
+    container_name: erp-backend
+    image: 10.57.70.41:5001/product/erp/erp/erp-backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - ../.env
+    depends_on:
+      - postgres
+      - minio
+    restart: unless-stopped
+
+  postgres:
+    image: 10.57.70.41:5001/product/erp/erp/postgres:15-alpine
+    container_name: erp-postgres
+    ports:
+      - "5432:5432"
+    env_file:
+      - ../.env
+    restart: unless-stopped
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  minio:
+    image: 10.57.70.41:5001/product/erp/erp/minio:latest
+    container_name: erp-minio
+    command: server --console-address ":9001" /data
+    env_file:
+      - ../.env
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  minio_data:

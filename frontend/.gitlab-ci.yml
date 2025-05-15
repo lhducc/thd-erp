@@ -1,0 +1,89 @@
+default:
+  before_script:
+    - cd frontend
+
+variables:
+  FE_CONTAINER_IMAGE: ${REGISTRY_URL}/${REGISTRY_PROJECT}/${CI_PROJECT_NAME}-frontend
+  DEV_CONTAINER_TAG: dev-${CI_COMMIT_SHORT_SHA}
+  UAT_CONTAINER_TAG: ${CI_COMMIT_TAG}-${CI_COMMIT_SHORT_SHA}
+
+stages:
+    - test
+    - build
+
+#### Test Stage
+
+secret-detect:
+  stage: test
+  image:
+    name: 10.57.70.41:5001/product/erp/erp/secrets:latest
+  script:
+    - /analyzer run
+  artifacts:
+    reports:
+      secret_detection: gl-secret-detection-report.json
+    paths:
+      - gl-secret-detection-report.json
+    when: always
+  allow_failure: true
+  rules:
+  - if: '$CI_COMMIT_BRANCH'
+
+
+#### Build Stage
+
+build-image:
+  stage: build
+  script:
+    - docker build -t ${FE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG} .
+    - docker save ${FE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG} -o image.tar
+  artifacts:
+    paths:
+      - ./frontend/image.tar
+  tags:
+    - uat
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+healcheck-image:
+  stage: build
+  script:
+    - echo "healthy check"
+  tags:
+    - uat
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+      when: on_success
+  needs: [build-image]
+
+sec-scan-image:
+  stage: build
+  script:
+    - echo "sec scan image"
+  tags:
+    - uat
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+      when: on_success
+  needs: [build-image]
+
+push-image-dev-registry:
+  stage: build
+  script:
+    - echo "push image ${FE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG} to container registry"
+    - docker push ${FE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG}
+  tags:
+    - uat
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+  needs: [healcheck-image, sec-scan-image]
+
+buildandpush-uat-image:
+  stage: build
+  script:
+    - docker build -t ${FE_CONTAINER_IMAGE}:${UAT_CONTAINER_TAG} .
+    - docker push ${FE_CONTAINER_IMAGE}:${UAT_CONTAINER_TAG}
+  tags:
+    - uat
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^uat_/'

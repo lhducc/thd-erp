@@ -19,7 +19,7 @@ style-check:
   script:
     - golangci-lint run -v --timeout=5m
   rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+    - if: '$CI_COMMIT_BRANCH'
 
 unit-test:
   stage: test
@@ -34,7 +34,7 @@ unit-test:
       - coverage.out
       - coverage.txt
   rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+    - if: '$CI_COMMIT_BRANCH'
 
 gosec-sast:
   stage: test
@@ -90,7 +90,7 @@ secret-detect:
     when: always
   allow_failure: true
   rules:
-  - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+  - if: '$CI_COMMIT_BRANCH'
 
 
 #### Build Stage
@@ -106,7 +106,7 @@ build-image:
   tags:
     - uat
   rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+    - if: '$CI_COMMIT_BRANCH'
       when: on_success
 
 healcheck-image:
@@ -116,7 +116,7 @@ healcheck-image:
   tags:
     - uat
   rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+    - if: '$CI_COMMIT_BRANCH'
       when: on_success
   needs: [build-image]
 
@@ -127,7 +127,7 @@ sec-scan-image:
   tags:
     - uat
   rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+    - if: '$CI_COMMIT_BRANCH'
       when: on_success
   needs: [build-image]
 
@@ -139,7 +139,7 @@ push-image-dev-registry:
   tags:
     - uat
   rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+    - if: '$CI_COMMIT_BRANCH'
       when: on_success
   needs: [healcheck-image, sec-scan-image]
 
@@ -151,4 +151,4 @@ buildandpush-uat-image:
   tags:
     - uat
   rules:
-    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_TAG =~ /^uat_/'

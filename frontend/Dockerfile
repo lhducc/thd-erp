@@ -10,7 +10,7 @@ RUN npm run build
 
 
 ## Run stage ##
-FROM 10.57.70.41:5001/product/erp/erp/nginx:slime
+FROM 10.57.70.41:5001/product/erp/erp/nginx:1.27
 
 COPY --from=builder /src/dist /usr/share/nginx/html
 

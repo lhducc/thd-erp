@@ -1,7 +1,9 @@
 .PHONY: dev-up dev-down
 
 dev-up:
-	docker compose -f ./deploys/docker-compose.dev.full.yml up -d
+	cp -rf ../sample.env ../.env
+	cp -rf ../frontend/example.env ../frontend/.env
+	docker compose -f ./deploys/docker-compose.dev.full.yml up -d --build
 	sleep 4
 	docker compose -f ./deploys/docker-compose.dev.full.yml ps
 

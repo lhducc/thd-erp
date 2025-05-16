@@ -9,7 +9,6 @@ services:
       - ../.env
     volumes:
       - ../frontend:/app
-      - /app/node_modules
   backend:
     container_name: erp-backend
     build:

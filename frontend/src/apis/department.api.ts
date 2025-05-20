@@ -1,3 +1,16 @@
+import type { PayloadDepartment } from "@/types";
+import api from "./api";
+
+export const createDepartmentApi = async (payload: PayloadDepartment) => {
+  try {
+    const response = await api.post("/department", payload);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
 import type { Department, PayloadDepartment } from "@/types";
 import api from "./api";
 

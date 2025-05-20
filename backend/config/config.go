@@ -2,6 +2,8 @@ package config
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/viper"
 )
@@ -31,9 +33,14 @@ type CORS struct {
 var AppConfig Config
 
 func LoadConfig() {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Lỗi lấy working directory: %v", err)
+	}
 	viper.SetConfigName("config")
 	viper.SetConfigType("yml")
-	viper.AddConfigPath("C:\\thd\\erp\\erp\\backend\\config")
+	viper.AddConfigPath(filepath.Join(wd, "config"))
+	viper.AddConfigPath(filepath.Join(wd, "..", "..", "config"))
 
 	// Đọc file config, nếu lỗi thì dừng chương trình
 	if err := viper.ReadInConfig(); err != nil {
@@ -41,7 +48,7 @@ func LoadConfig() {
 	}
 
 	// Parse dữ liệu từ file config vào biến AppConfig
-	err := viper.Unmarshal(&AppConfig)
+	err = viper.Unmarshal(&AppConfig)
 	if err != nil {
 		log.Fatalf("Lỗi parse config: %v", err)
 	}

@@ -1,7 +1,16 @@
 package router
 
 import (
+	authHandler "erp/backend/api/handler/hrm/auth"
 	handler "erp/backend/api/handler/hrm/hr_profile"
+	"erp/backend/api/middleware"
+	"erp/backend/config"
+	authRepo "erp/backend/internal/auth/repository"
+	"erp/backend/internal/auth/token"
+	authUsecase "erp/backend/internal/auth/usecase"
+	"erp/backend/internal/hrm/hr_profile/repository"
+	"erp/backend/internal/hrm/hr_profile/usecase"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -19,6 +28,13 @@ func setupHRMRoutes(router *gin.RouterGroup, db *gorm.DB) {
 }
 
 func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
+
+	config.LoadEnv()
+	jwtMaker, err := token.NewJWTMaker(config.GetSecretKey())
+	if err != nil {
+		log.Fatal("Error creating JWT maker:", err)
+	}
+
 	officeHandler := handler.NewOficeHandler(db)
 	departmentHandler := handler.NewDepartmentHandler(db)
 	jobtitleHandler := handler.NewJobTitleHandler(db)
@@ -27,8 +43,26 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	employeeHandler := handler.NewEmployeeHandler(db)
 	contractHandler := handler.NewContractHandler(db)
 	decisionHandler := handler.NewDecisionHandler(db)
+	accountRepo := authRepo.NewAccountRepository(db)
+	accountUsecase := authUsecase.NewAuthentication(accountRepo, jwtMaker)
+	accountHandler := authHandler.NewAuthenticationHandler(accountUsecase)
+	documentTypeHandler := handler.NewDocumentTypeHandler(db)
+	contractTypeRepo := repository.NewContractTypeRepository(db)
+	contractTypeUsecase := usecase.NewContractTypeUsecase(contractTypeRepo)
+	contractTypeHandler := handler.NewContractTypeHandler(contractTypeUsecase)
+	decisionTypeRepo := repository.NewDecisionTypeRepository(db)
+	decisionTypeUsecase := usecase.NewDecisionTypeUsecase(decisionTypeRepo)
+	decisionTypeHandler := handler.NewDecisionTypeHandler(decisionTypeUsecase)
+	insuranceRepo := repository.NewInsuranceRepository(db)
+	insuranceUsecase := usecase.NewInsuranceUsecase(insuranceRepo)
+	insuranceHandler := handler.NewInsuranceHandler(insuranceUsecase)
+
+	public := router.Group("/auth")
+	public.POST("/login", accountHandler.SignIn)
 
 	hrmRouter := router.Group("")
+	hrmRouter.Use(middleware.AuthMiddleware(jwtMaker))
+	hrmRouter.PUT("/auth/password", accountHandler.ChangePassword)
 
 	setupOfficeRoutes(hrmRouter, officeHandler)
 	setupDepartmentRoutes(hrmRouter, departmentHandler)
@@ -38,6 +72,10 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupEmployeeRouters(hrmRouter, employeeHandler)
 	setupContractRoutes(hrmRouter, contractHandler)
 	setupDecisionRoutes(hrmRouter, decisionHandler)
+	setupDocumentTypeRoutes(hrmRouter, documentTypeHandler)
+	setupInsuranceRoutes(hrmRouter, insuranceHandler)
+	setupDecisionTypeRoutes(hrmRouter, decisionTypeHandler)
+	setupContractTypeRoutes(hrmRouter, contractTypeHandler)
 
 }
 
@@ -126,4 +164,47 @@ func setupContractRoutes(router *gin.RouterGroup, handler *handler.ContractHandl
 	contractGroup.GET("/:id", handler.GetContract())
 	contractGroup.GET("", handler.GetAllContract())
 	contractGroup.GET("/export", handler.ExportContract())
+}
+
+func setupDocumentTypeRoutes(r *gin.RouterGroup, h *handler.DocumentTypeHandler) {
+	group := r.Group("/documenttype")
+	{
+		group.POST("", h.CreateDocumentType())
+		group.PUT("/:id", h.UpdateDocumentType())
+		group.DELETE("/:id", h.DeleteDocumentType())
+		group.GET("/:id", h.GetDocumentTypeById())
+	}
+}
+
+func setupInsuranceRoutes(r *gin.RouterGroup, h *handler.InsuranceHandler) {
+	group := r.Group("/insurance")
+	{
+		group.POST("", h.CreateInsurance())
+		group.PUT("/:id", h.UpdateInsurance())
+		group.DELETE("/:id", h.DeleteInsurance())
+		group.GET("/:id", h.GetInsuranceById())
+		group.GET("", h.GetInsurances())
+	}
+}
+
+func setupDecisionTypeRoutes(r *gin.RouterGroup, h *handler.DecisionTypeHandler) {
+	group := r.Group("/decisiontype")
+	{
+		group.POST("", h.CreateDecisionType())
+		group.PUT("/:id", h.UpdateDecisionType())
+		group.DELETE("/:id", h.DeleteDecisionType())
+		group.GET("/:id", h.GetDecisionTypeById())
+		group.GET("", h.GetDecisionTypes())
+	}
+}
+
+func setupContractTypeRoutes(r *gin.RouterGroup, h *handler.ContractTypeHandler) {
+	group := r.Group("/contracttype")
+	{
+		group.POST("", h.CreateContractType())
+		group.PUT("/:id", h.UpdateContractType())
+		group.DELETE("/:id", h.DeleteContractType())
+		group.GET("/:id", h.GetContractTypeById())
+		group.GET("", h.GetContractTypes())
+	}
 }

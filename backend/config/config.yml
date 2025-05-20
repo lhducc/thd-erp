@@ -1,6 +1,6 @@
 server:
   AppVersion: 1.0.0
-  Port: localhost:8080
+  Port: 0.0.0.0:8080
   SSL: true
 
 
@@ -10,4 +10,4 @@ postgres:
 
 
 cors:
-  AllowOrigins: ['http://localhost:5173']
+  AllowOrigins: ['http://erp.dev.thd.com:5173']

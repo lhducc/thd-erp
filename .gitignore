@@ -8,6 +8,8 @@
 *.out
 # vendor/
 go.work
+*tmp/*
+*tmp
 
 ### React / NodeJS ###
 node_modules/

@@ -7,7 +7,7 @@
 //	  return err
 //	}
 //
-// Or from a keyword/value string.
+// Or from a DSN string.
 //
 //	db, err := sql.Open("pgx", "user=postgres password=secret host=localhost port=5432 database=pgx_test sslmode=disable")
 //	if err != nil {
@@ -75,7 +75,6 @@ import (
 	"math"
 	"math/rand"
 	"reflect"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -99,7 +98,7 @@ func init() {
 
 	// if pgx driver was already registered by different pgx major version then we
 	// skip registration under the default name.
-	if !slices.Contains(sql.Drivers(), "pgx") {
+	if !contains(sql.Drivers(), "pgx") {
 		sql.Register("pgx", pgxDriver)
 	}
 	sql.Register("pgx/v5", pgxDriver)
@@ -119,6 +118,17 @@ func init() {
 		pgtype.TimestamptzOID: 1,
 		pgtype.XIDOID:         1,
 	}
+}
+
+// TODO replace by slices.Contains when experimental package will be merged to stdlib
+// https://pkg.go.dev/golang.org/x/exp/slices#Contains
+func contains(list []string, y string) bool {
+	for _, x := range list {
+		if x == y {
+			return true
+		}
+	}
+	return false
 }
 
 // OptionOpenDB options for configuring the driver when opening a new db pool.
@@ -794,16 +804,6 @@ func (r *Rows) Next(dest []driver.Value) error {
 						return nil, err
 					}
 					return d.Value()
-				}
-			case pgtype.XMLOID:
-				var d []byte
-				scanPlan := m.PlanScan(dataTypeOID, format, &d)
-				r.valueFuncs[i] = func(src []byte) (driver.Value, error) {
-					err := scanPlan.Scan(src, &d)
-					if err != nil {
-						return nil, err
-					}
-					return d, nil
 				}
 			default:
 				var d string

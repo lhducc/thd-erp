@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"path/filepath"
@@ -51,5 +52,14 @@ func LoadConfig() {
 	err = viper.Unmarshal(&AppConfig)
 	if err != nil {
 		log.Fatalf("Lỗi parse config: %v", err)
+	}
+}
+
+func LoadEnv() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Không tìm thấy file .env hoặc lỗi khi load.")
+	} else {
+		log.Println(".env file loaded")
 	}
 }

@@ -13,7 +13,7 @@ export const createOfficeApi = async (payload: PayloadOffice) => {
 
 export const getAllOfficesApi = async (): Promise<Office[]> => {
   try {
-    const response = await api.get("/offices");
+    const response = await api.get("/office");
     return response.data.data;
   } catch (error) {
     console.error("Error fetching all offices API:", error);

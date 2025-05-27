@@ -13,6 +13,47 @@ stages:
 
 #### Test Stage
 
+node:
+  stage: test
+  image: 10.57.70.41:5001/product/erp/erp/node:24.0.0-slim  
+  needs: []
+  script:
+    - npm set registry https://10.57.70.41:4873   
+    - npm install
+    - npx eslint . -f json -o gl-code-quality-report.json
+  artifacts:
+    reports:
+      codequality: frontend/gl-code-quality-report.json
+  cache:
+    key: "${CI_COMMIT_REF_SLUG}"
+    paths:
+      - node_modules/
+
+semgrep-sast:
+  stage: test
+  image:
+    name: 10.57.70.41:5001/product/erp/erp/analyzers/semgrep:latest
+  script:
+    - /analyzer run
+  allow_failure: true
+  artifacts:
+    reports:
+      sast: frontend/gl-sast-report.json
+    paths:
+      - frontend/gl-sast-report.json
+    when: always
+  allow_failure: true
+  rules:
+    #- if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+    - if: '$CI_COMMIT_BRANCH'
+      exists:
+        - "**/*.go"
+        - "**/*.js"
+        - "**/*.ts"
+        - "**/*.py"
+        - "**/*.java"
+        - "**/*.c"
+
 secret-detect:
   stage: test
   image:
@@ -56,16 +97,37 @@ healcheck-image:
       when: on_success
   needs: [build-image]
 
+# sec-scan-image:
+#   stage: build
+#   script:
+#     - echo "sec scan image"
+#   tags:
+#     - uat
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH'
+#       when: on_success
+#   needs: [build-image]
+
 sec-scan-image:
   stage: build
+  image: 
+    name: 10.57.70.41:5001/product/erp/erp/security-products/container-scanning:8
+  variables:
+    CS_IMAGE: ${FE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG}
+    CS_SCHEMA_MODEL: 15
+  allow_failure: true
+  artifacts:
+    reports:
+      container_scanning: gl-container-scanning-report.json
+      cyclonedx: "**/gl-sbom-*.cdx.json"
+    paths: 
+      - frontend/gl-container-scanning-report.json
+      - "**/gl-sbom-*.cdx.json"
   script:
-    - echo "sec scan image"
-  tags:
-    - uat
-  rules:
-    - if: '$CI_COMMIT_BRANCH'
-      when: on_success
-  needs: [build-image]
+    - echo "Bắt đầu chạy gtcs scan..."
+    - gtcs scan
+
+  needs: [healcheck-image,build-image]
 
 push-image-dev-registry:
   stage: build

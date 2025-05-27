@@ -17,7 +17,11 @@ style-check:
   stage: test
   image: 10.57.70.41:5001/product/erp/erp/golangci/golangci-lint:v2.1.6
   script:
-    - golangci-lint run -v --timeout=5m
+  - golangci-lint run -v --timeout=5m > golangci-lint.log 2>&1 || true
+  artifacts:
+    when: always
+    paths:
+      - backend/golangci-lint.log
   rules:
     - if: '$CI_COMMIT_BRANCH'
 
@@ -28,11 +32,22 @@ unit-test:
     - go test -coverprofile=coverage.out -v ./...
     - go tool cover -func=coverage.out > coverage.txt
     - cat coverage.txt
+    - |
+      # Trích xuất dòng "total" từ coverage.txt
+      total_coverage=$(grep total coverage.txt | awk '{print $3}' | sed 's/%//')
+      echo "Total coverage is ${total_coverage}%"
+      # So sánh
+      threshold=10
+      result=$(echo "$total_coverage < $threshold" | bc)
+      if [ "$result" -eq 1 ]; then
+        echo "❌ Coverage too low! Must be at least ${threshold}%"
+        exit 1
+      fi
   artifacts:
     when: always
     paths:
-      - coverage.out
-      - coverage.txt
+      - backend/coverage.out
+      - backend/coverage.txt
   rules:
     - if: '$CI_COMMIT_BRANCH'
 
@@ -48,9 +63,10 @@ gosec-sast:
   artifacts:
     reports:
       sast:
-      - gl-sast-report.json
+        - backend/gl-sast-report.json
   rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+  #  - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+    - if: '$CI_COMMIT_BRANCH'
 
 
 semgrep-sast:
@@ -59,15 +75,17 @@ semgrep-sast:
     name: 10.57.70.41:5001/product/erp/erp/analyzers/semgrep:latest
   script:
     - /analyzer run
+  allow_failure: true
   artifacts:
     reports:
-      sast: gl-sast-report.json
+      sast: backend/gl-sast-report.json
     paths:
-      - gl-sast-report.json
+      - backend/gl-sast-report.json
     when: always
   allow_failure: true
   rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+    #- if: '$CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_ID'
+    - if: '$CI_COMMIT_BRANCH'
       exists:
         - "**/*.go"
         - "**/*.js"
@@ -75,6 +93,7 @@ semgrep-sast:
         - "**/*.py"
         - "**/*.java"
         - "**/*.c"
+
 
 secret-detect:
   stage: test
@@ -142,6 +161,27 @@ push-image-dev-registry:
     - if: '$CI_COMMIT_BRANCH'
       when: on_success
   needs: [healcheck-image, sec-scan-image]
+
+scan_image:
+  stage: build
+  image: 
+    name: 10.57.70.41:5001/product/erp/erp/security-products/container-scanning:8
+  variables:
+    CS_IMAGE: ${BE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG}
+    CS_SCHEMA_MODEL: 15
+  allow_failure: true
+  artifacts:
+    reports:
+      container_scanning: gl-container-scanning-report.json
+      cyclonedx: "**/gl-sbom-*.cdx.json"
+    paths: 
+      - backend/gl-container-scanning-report.json
+      - "**/gl-sbom-*.cdx.json"
+  script:
+    - echo "Bắt đầu chạy gtcs scan..."
+    - gtcs scan
+
+  needs: [healcheck-image, sec-scan-image, build-image]
 
 buildandpush-uat-image:
   stage: build

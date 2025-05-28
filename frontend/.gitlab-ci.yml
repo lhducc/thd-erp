@@ -75,6 +75,7 @@ secret-detect:
 
 build-image:
   stage: build
+  when: manual
   script:
     - docker build -t ${FE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG} .
     - docker save ${FE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG} -o image.tar

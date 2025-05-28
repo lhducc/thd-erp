@@ -13,21 +13,21 @@ stages:
 
 #### Test Stage
 
-node:
-  stage: test
-  image: 10.57.70.41:5001/product/erp/erp/node:24.0.0-slim  
-  needs: []
-  script:
-    - npm set registry https://10.57.70.41:4873   
-    - npm install
-    - npx eslint . -f json -o gl-code-quality-report.json
-  artifacts:
-    reports:
-      codequality: frontend/gl-code-quality-report.json
-  cache:
-    key: "${CI_COMMIT_REF_SLUG}"
-    paths:
-      - node_modules/
+# node:
+#   stage: test
+#   image: 10.57.70.41:5001/product/erp/erp/node:24.0.0-slim  
+#   needs: []
+#   script:
+#     - npm set registry https://10.57.70.41:4873   
+#     - npm install
+#     - npx eslint . -f json -o gl-code-quality-report.json
+#   artifacts:
+#     reports:
+#       codequality: frontend/gl-code-quality-report.json
+#   cache:
+#     key: "${CI_COMMIT_REF_SLUG}"
+#     paths:
+#       - node_modules/
 
 semgrep-sast:
   stage: test

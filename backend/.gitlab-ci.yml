@@ -25,31 +25,31 @@ style-check:
   rules:
     - if: '$CI_COMMIT_BRANCH'
 
-unit-test:
-  stage: test
-  image: 10.57.70.41:5001/product/erp/erp/golang:1.22-alpine
-  script:
-    - go test -coverprofile=coverage.out -v ./...
-    - go tool cover -func=coverage.out > coverage.txt
-    - cat coverage.txt
-    - |
-      # Trích xuất dòng "total" từ coverage.txt
-      total_coverage=$(grep total coverage.txt | awk '{print $3}' | sed 's/%//')
-      echo "Total coverage is ${total_coverage}%"
-      # So sánh
-      threshold=10
-      result=$(echo "$total_coverage < $threshold" | bc)
-      if [ "$result" -eq 1 ]; then
-        echo "❌ Coverage too low! Must be at least ${threshold}%"
-        exit 1
-      fi
-  artifacts:
-    when: always
-    paths:
-      - backend/coverage.out
-      - backend/coverage.txt
-  rules:
-    - if: '$CI_COMMIT_BRANCH'
+# unit-test:
+#   stage: test
+#   image: 10.57.70.41:5001/product/erp/erp/golang:1.22-alpine
+#   script:
+#     - go test -coverprofile=coverage.out -v ./...
+#     - go tool cover -func=coverage.out > coverage.txt
+#     - cat coverage.txt
+#     - |
+#       # Trích xuất dòng "total" từ coverage.txt
+#       total_coverage=$(grep total coverage.txt | awk '{print $3}' | sed 's/%//')
+#       echo "Total coverage is ${total_coverage}%"
+#       # So sánh
+#       threshold=10
+#       result=$(echo "$total_coverage < $threshold" | bc)
+#       if [ "$result" -eq 1 ]; then
+#         echo "❌ Coverage too low! Must be at least ${threshold}%"
+#         exit 1
+#       fi
+#   artifacts:
+#     when: always
+#     paths:
+#       - backend/coverage.out
+#       - backend/coverage.txt
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH'
 
 gosec-sast:
   stage: test

@@ -50,9 +50,16 @@ func (s *userStore) CreateEmployee(employee *model.Employee) error {
 	return nil
 }
 
-func (s *userStore) GetAllEmployeesByStatus(status string) ([]model.Employee, error) {
+func (s *userStore) GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error) {
 	var employees []model.Employee
-	result := s.db.Where("status = ?", status).Find(&employees)
+	offset := (page - 1) * pageSize
+
+	result := s.db.
+		Where("status = ?", status).
+		Limit(pageSize).
+		Offset(offset).
+		Find(&employees)
+
 	if result.Error != nil {
 		return []model.Employee{}, fmt.Errorf("failed to get employees with status %s: %v", status, result.Error)
 	}
@@ -70,6 +77,19 @@ func (s *userStore) GetUserById(id string) (model.Employee, error) {
 func (s *userStore) GetAllEmployees() ([]model.Employee, error) {
 	var employees []model.Employee
 	if err := s.db.Find(&employees).Error; err != nil {
+		return nil, fmt.Errorf("failed to get employees: %w", err)
+	}
+	return employees, nil
+}
+
+func (s *userStore) GetAllEmployeesPagination(page, pageSize int) ([]model.Employee, error) {
+	var employees []model.Employee
+	offset := (page - 1) * pageSize
+
+	if err := s.db.
+		Limit(pageSize).
+		Offset(offset).
+		Find(&employees).Error; err != nil {
 		return nil, fmt.Errorf("failed to get employees: %w", err)
 	}
 	return employees, nil

@@ -14,7 +14,8 @@ type EmployeeRepo interface {
 	UpdateEmployeeWithAccount(employee *model.Employee, accountID int) error
 	GetUserById(id string) (model.Employee, error)
 	GetAllEmployees() ([]model.Employee, error)
-	GetAllEmployeesByStatus(status string) ([]model.Employee, error)
+	GetAllEmployeesPagination(page, pageSize int) ([]model.Employee, error)
+	GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error)
 	UpdateEmployee(id string, updatedEmployee model.Employee) error
 	DeleteEmployee(id string) error
 	GetLastEmployeeByCode(emp *model.Employee) error
@@ -99,8 +100,8 @@ func (biz *employeeBiz) GetUserById(id string) (model.Employee, error) {
 	return employee, nil
 }
 
-func (biz *employeeBiz) GetAllEmployees() ([]model.Employee, error) {
-	employees, err := biz.repo.GetAllEmployees()
+func (biz *employeeBiz) GetAllEmployees(page, pageSize int) ([]model.Employee, error) {
+	employees, err := biz.repo.GetAllEmployeesPagination(page, pageSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all employees: %w", err)
 	}
@@ -108,8 +109,8 @@ func (biz *employeeBiz) GetAllEmployees() ([]model.Employee, error) {
 	return employees, nil
 }
 
-func (biz *employeeBiz) GetAllEmployeesByStatus(status string) ([]model.Employee, error) {
-	employees, err := biz.repo.GetAllEmployeesByStatus(status)
+func (biz *employeeBiz) GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error) {
+	employees, err := biz.repo.GetAllEmployeesByStatus(status, page, pageSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get employees with status: %w", err)
 	}

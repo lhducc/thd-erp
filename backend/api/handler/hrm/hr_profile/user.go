@@ -7,6 +7,7 @@ import (
 	utils "erp/backend/pkg"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -18,8 +19,8 @@ type EmployeeBiz interface {
 	GetUserById(id string) (model.Employee, error)
 	UpdateEmployee(id string, updatedEmployee model.Employee) error
 	DeleteEmployee(id string) error
-	GetAllEmployees() ([]model.Employee, error)
-	GetAllEmployeesByStatus(status string) ([]model.Employee, error)
+	GetAllEmployees(page, pageSize int) ([]model.Employee, error)
+	GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error)
 	ExportEmployeeTest(selectedFields []string) ([]byte, string, error)
 }
 
@@ -67,7 +68,15 @@ func (biz *EmployeeHandler) CreateEmployee() gin.HandlerFunc {
 
 func (biz *EmployeeHandler) GetAllEmployees() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		result, err := biz.employeeBiz.GetAllEmployees()
+		page, err := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+		if err != nil || page < 1 {
+			page = 1
+		}
+		pageSize, err := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
+		if err != nil || pageSize < 1 {
+			pageSize = 10
+		}
+		result, err := biz.employeeBiz.GetAllEmployees(page, pageSize)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
@@ -81,7 +90,16 @@ func (biz *EmployeeHandler) GetAllEmployeeByStatus() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		status := ctx.Param("status")
 
-		result, err := biz.employeeBiz.GetAllEmployeesByStatus(status)
+		page, err := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+		if err != nil || page < 1 {
+			page = 1
+		}
+		pageSize, err := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
+		if err != nil || pageSize < 1 {
+			pageSize = 10
+		}
+
+		result, err := biz.employeeBiz.GetAllEmployeesByStatus(status, page, pageSize)
 		if err != nil {
 			utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusNotFound, nil)
 			return

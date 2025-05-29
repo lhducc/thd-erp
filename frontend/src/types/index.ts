@@ -64,3 +64,8 @@ export type JobTitle = {
   created_date: Date;
   hierarchy_level_id: string;
 };
+
+export type PayloadSignIn = {
+  email: string,
+  password: string
+}

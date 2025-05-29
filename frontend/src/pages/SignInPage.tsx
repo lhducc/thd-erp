@@ -14,6 +14,11 @@ import {
 import { Input } from "@/components/ui/input";
 import InputPassword from "@/components/InputPassword";
 import LogoSignInPage from "@/assets/LogoSignInPage.svg";
+import { useMutation } from "@tanstack/react-query";
+import { signInApi } from "@/apis/signIn.api";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const formSchema = z.object({
   email: z.string().email("Email không hợp lệ."),
@@ -21,6 +26,16 @@ const formSchema = z.object({
 });
 
 const SignInPage = () => {
+
+  const navigate = useNavigate(); 
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      navigate("/");
+    }
+  }, [navigate]);
+
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -30,11 +45,24 @@ const SignInPage = () => {
     },
   });
 
+  const { mutate: login, isPending } = useMutation({
+    mutationFn: signInApi,
+    onSuccess: (res) => {
+      if (res.statuscode === 200) {
+        localStorage.setItem("access_token", res.data.access_token);
+        localStorage.setItem("refresh_token", res.data.refresh_token);
+        toast.success("Đăng nhập thành công");
+        navigate("/"); 
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Đăng nhập thất bại");
+    },
+  });
+
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
+    login(values)
   }
 
   return (

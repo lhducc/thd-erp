@@ -2,6 +2,7 @@ package router
 
 import (
 	authHandler "erp/backend/api/handler/hrm/auth"
+	"erp/backend/api/handler/hrm/checkin"
 	handler "erp/backend/api/handler/hrm/hr_profile"
 	"erp/backend/api/middleware"
 	"erp/backend/config"
@@ -57,6 +58,11 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	insuranceUsecase := usecase.NewInsuranceUsecase(insuranceRepo)
 	insuranceHandler := handler.NewInsuranceHandler(insuranceUsecase)
 
+	//CheckIn
+	workShiftHandler := checkin.NewWorkShiftHandler(db)
+	allow := checkin.NewAllowedWorkingScheduleHandler(db)
+	holiday := checkin.NewHolidayHandler(db)
+
 	public := router.Group("/auth")
 	public.POST("/login", accountHandler.SignIn)
 
@@ -76,6 +82,11 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupInsuranceRoutes(hrmRouter, insuranceHandler)
 	setupDecisionTypeRoutes(hrmRouter, decisionTypeHandler)
 	setupContractTypeRoutes(hrmRouter, contractTypeHandler)
+
+	//CheckIn
+	setupAllowedWorkingScheduleRoutes(hrmRouter, allow)
+	setupWorkShiftRoutes(hrmRouter, workShiftHandler)
+	setupHolidayRoutes(hrmRouter, holiday)
 
 }
 
@@ -206,5 +217,37 @@ func setupContractTypeRoutes(r *gin.RouterGroup, h *handler.ContractTypeHandler)
 		group.DELETE("/:id", h.DeleteContractType())
 		group.GET("/:id", h.GetContractTypeById())
 		group.GET("", h.GetContractTypes())
+	}
+}
+
+func setupWorkShiftRoutes(router *gin.RouterGroup, workShiftHandler *checkin.WorkShiftHandler) {
+	workshift := router.Group("/workshifts")
+	{
+		workshift.POST("", workShiftHandler.CreateWorkShift())
+		workshift.GET("/:id", workShiftHandler.GetWorkShift())
+		workshift.GET("", workShiftHandler.GetAllWorkShift())
+		workshift.PUT("/:id", workShiftHandler.UpdateWorkShift())
+		workshift.DELETE("/:id", workShiftHandler.DeleteWorkShift())
+	}
+}
+func setupHolidayRoutes(router *gin.RouterGroup, holidayHandler *checkin.HolidayHandler) {
+	holidays := router.Group("/holiday")
+	{
+		holidays.POST("", holidayHandler.CreateHoliday())
+		holidays.GET("/:id", holidayHandler.GetHoliday())
+		holidays.GET("", holidayHandler.GetAllHoliday())
+		holidays.PUT("/:id", holidayHandler.UpdateHoliday())
+		holidays.DELETE("/:id", holidayHandler.DeleteHoliday())
+	}
+}
+
+func setupAllowedWorkingScheduleRoutes(router *gin.RouterGroup, scheduleHandler *checkin.AllowedWorkingScheduleHandler) {
+	schedule := router.Group("/allowed-working-schedule")
+	{
+		schedule.POST("", scheduleHandler.CreateAllowedWorkingSchedule())
+		schedule.GET("/:id", scheduleHandler.GetAllowedWorkingSchedule())
+		schedule.GET("", scheduleHandler.GetAllAllowedWorkingSchedule())
+		schedule.PUT("/:id", scheduleHandler.UpdateAllowedWorkingSchedule())
+		schedule.DELETE("/:id", scheduleHandler.DeleteAllowedWorkingSchedule())
 	}
 }

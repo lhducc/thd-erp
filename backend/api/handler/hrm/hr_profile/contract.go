@@ -69,7 +69,30 @@ func (h *ContractHandler) GetContract() gin.HandlerFunc {
 			return
 		}
 
-		utils.ResponseMessage(c, errors.MsgListData, http.StatusOK, result)
+		var res = model.ContractResponse{
+			ContractID:    result.ContractId,
+			EffectiveDate: result.EffectiveDate,
+			ExpiredDate:   result.ExpiredDate,
+			SignDate:      result.SignDate,
+			Note:          result.Note,
+			AttachedFile:  result.AttachedFile,
+			Condition:     result.Condition,
+			CreatedDate:   result.CreatedDate,
+			ContractType:  result.ContractTypeId,
+			Employee: model.EmployeeSimple{
+				EmployeeID: result.Employee.EmployeeID,
+				FullName:   result.Employee.Fullname,
+				Department: model.DepartmentSimple{
+					DepartmentID:   result.Employee.Department.ID,
+					DepartmentName: result.Employee.Department.Name,
+					Office: model.OfficeSimple{
+						OfficeID:   result.Employee.Department.Office.ID,
+						OfficeName: result.Employee.Department.Office.Name,
+					},
+				},
+			},
+		}
+		utils.ResponseMessage(c, errors.MsgListData, http.StatusOK, []model.ContractResponse{res})
 	}
 }
 
@@ -79,7 +102,34 @@ func (h *ContractHandler) GetAllContract() gin.HandlerFunc {
 		if err != nil {
 			utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusOK, nil)
 		}
-		utils.ResponseMessage(ctx, errors.MsgListData, http.StatusOK, result)
+		var responseList []model.ContractResponse
+		for _, v := range result {
+			res := model.ContractResponse{
+				ContractID:    v.ContractId,
+				EffectiveDate: v.EffectiveDate,
+				ExpiredDate:   v.ExpiredDate,
+				SignDate:      v.SignDate,
+				Note:          v.Note,
+				AttachedFile:  v.AttachedFile,
+				Condition:     v.Condition,
+				CreatedDate:   v.CreatedDate,
+				ContractType:  v.ContractTypeId,
+				Employee: model.EmployeeSimple{
+					EmployeeID: v.Employee.EmployeeID,
+					FullName:   v.Employee.Fullname,
+					Department: model.DepartmentSimple{
+						DepartmentID:   v.Employee.Department.ID,
+						DepartmentName: v.Employee.Department.Name,
+						Office: model.OfficeSimple{
+							OfficeID:   v.Employee.Department.Office.ID,
+							OfficeName: v.Employee.Department.Office.Name,
+						},
+					},
+				},
+			}
+			responseList = append(responseList, res)
+		}
+		utils.ResponseMessage(ctx, errors.MsgListData, http.StatusOK, responseList)
 	}
 }
 

@@ -42,6 +42,8 @@ type Employee struct {
 	Manager *Employee `gorm:"foreignKey:ManagerID;references:employee_id" json:"manager,omitempty"`
 	// Contracts []Contract gorm:"foreignKey:EmployeeID;references:employee_id" json:"contracts,omitempty"
 	// Decisions []Decision gorm:"foreignKey:EmployeeID;references:employee_id" json:"decisions,omitempty"
+	DepartmentID string      `gorm:"column:department_id" json:"-"`
+	Department   *Department `gorm:"foreignKey:DepartmentID;references:ID" json:"department,omitempty"`
 }
 
 func (Employee) TableName() string { return "employee" }

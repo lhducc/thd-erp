@@ -26,7 +26,10 @@ func (s *contractStore) CreateContract(context context.Context, data *hrmmodel.C
 
 func (r *contractStore) GetContract(ctx context.Context, id string) (*hrmmodel.Contract, error) {
 	var contract hrmmodel.Contract
-	if err := r.db.WithContext(ctx).Table("contract").
+	if err := r.db.WithContext(ctx).
+		Preload("Employee").
+		Preload("Employee.Department").
+		Preload("Employee.Department.Office").
 		Where("contract_id = ?", id).
 		First(&contract).Error; err != nil {
 		return nil, err
@@ -36,12 +39,15 @@ func (r *contractStore) GetContract(ctx context.Context, id string) (*hrmmodel.C
 
 func (r *contractStore) GetAllContract(ctx context.Context) ([]hrmmodel.Contract, error) {
 
-	var positions []hrmmodel.Contract
-	if err := r.db.WithContext(ctx).Table("contract").Find(&positions).Error; err != nil {
+	var contracts []hrmmodel.Contract
+	if err := r.db.WithContext(ctx).
+		Preload("Employee").
+		Preload("Employee.Department").
+		Preload("Employee.Department.Office").
+		Find(&contracts).Error; err != nil {
 		return nil, err
 	}
-
-	return positions, nil
+	return contracts, nil
 }
 
 func (r *contractStore) UpdateContract(ctx context.Context, id string, data *hrmmodel.ContractCreate) error {

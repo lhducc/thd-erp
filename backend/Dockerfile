@@ -1,5 +1,5 @@
 ## BUILD STAGE##
-FROM 10.57.70.41:5001/product/erp/erp/golang:1.22-alpine AS builder
+FROM 10.57.70.41:5001/product/erp/erp/golang:1.24-alpine AS builder
 
 ENV APPNAME erp-backend
 

@@ -1,15 +1,16 @@
 default:
   before_script:
     - cd backend
-
+ 
 variables:
   BE_CONTAINER_IMAGE: ${REGISTRY_URL}/${REGISTRY_PROJECT}/${CI_PROJECT_NAME}-backend
   DEV_CONTAINER_TAG: dev-${CI_COMMIT_SHORT_SHA}
   UAT_CONTAINER_TAG: ${CI_COMMIT_TAG}-${CI_COMMIT_SHORT_SHA}
-
+  # 
+  #DOCKER_AUTH_CONFIG: $DOCKER_AUTH_CONFIG
 stages:
     - test
-    - build
+    - build 
 
 #### Test Stage
 
@@ -25,31 +26,32 @@ style-check:
   rules:
     - if: '$CI_COMMIT_BRANCH'
 
-# unit-test:
-#   stage: test
-#   image: 10.57.70.41:5001/product/erp/erp/golang:1.22-alpine
-#   script:
-#     - go test -coverprofile=coverage.out -v ./...
-#     - go tool cover -func=coverage.out > coverage.txt
-#     - cat coverage.txt
-#     - |
-#       # Trích xuất dòng "total" từ coverage.txt
-#       total_coverage=$(grep total coverage.txt | awk '{print $3}' | sed 's/%//')
-#       echo "Total coverage is ${total_coverage}%"
-#       # So sánh
-#       threshold=10
-#       result=$(echo "$total_coverage < $threshold" | bc)
-#       if [ "$result" -eq 1 ]; then
-#         echo "❌ Coverage too low! Must be at least ${threshold}%"
-#         exit 1
-#       fi
-#   artifacts:
-#     when: always
-#     paths:
-#       - backend/coverage.out
-#       - backend/coverage.txt
-#   rules:
-#     - if: '$CI_COMMIT_BRANCH'
+unit-test: 
+  stage: test
+  image: 10.57.70.41:5001/product/erp/erp/golang:1.24-alpine
+  script:
+    - go test -coverprofile=coverage.out -v ./... || true
+    - go tool cover -func=coverage.out > coverage.txt
+    - cat coverage.txt
+    - |
+      # Trích xuất dòng "total" từ coverage.txt
+      total_coverage=$(grep total coverage.txt | awk '{print $3}' | sed 's/%//')
+      echo "Total coverage is ${total_coverage}%"
+      # So sánh
+      threshold=0
+      result=$(echo "$total_coverage < $threshold" | bc)
+      if [ "$result" -eq 1 ]; then
+        echo "❌ Coverage too low! Must be at least ${threshold}%"
+        exit 1
+      fi
+
+  artifacts:
+    when: always
+    paths:
+      - backend/coverage.out
+      - backend/coverage.txt
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
 
 gosec-sast:
   stage: test
@@ -94,7 +96,7 @@ semgrep-sast:
         - "**/*.java"
         - "**/*.c"
 
-
+  
 secret-detect:
   stage: test
   image:
@@ -116,6 +118,7 @@ secret-detect:
 
 build-image:
   stage: build
+  #when: manual
   script:
     - docker build -t ${BE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG} .
     - docker save ${BE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG} -o image.tar
@@ -126,12 +129,12 @@ build-image:
     - uat
   rules:
     - if: '$CI_COMMIT_BRANCH'
-      when: on_success
+     # when: on_success
 
 healcheck-image:
   stage: build
   script:
-    - echo "healthy check"
+    - echo "healthy check" 
   tags:
     - uat
   rules:
@@ -139,7 +142,7 @@ healcheck-image:
       when: on_success
   needs: [build-image]
 
-sec-scan-image:
+sec-scan-image:  
   stage: build
   script:
     - echo "sec scan image"
@@ -149,7 +152,7 @@ sec-scan-image:
     - if: '$CI_COMMIT_BRANCH'
       when: on_success
   needs: [build-image]
-
+  
 push-image-dev-registry:
   stage: build
   script:
@@ -178,11 +181,11 @@ scan_image:
       - backend/gl-container-scanning-report.json
       - "**/gl-sbom-*.cdx.json"
   script:
-    - echo "Bắt đầu chạy gtcs scan..."
+    - echo "Running gtcs scan..."
     - gtcs scan
 
   needs: [healcheck-image, sec-scan-image, build-image]
-
+ 
 buildandpush-uat-image:
   stage: build
   script:

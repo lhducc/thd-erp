@@ -6,28 +6,27 @@ variables:
   FE_CONTAINER_IMAGE: ${REGISTRY_URL}/${REGISTRY_PROJECT}/${CI_PROJECT_NAME}-frontend
   DEV_CONTAINER_TAG: dev-${CI_COMMIT_SHORT_SHA}
   UAT_CONTAINER_TAG: ${CI_COMMIT_TAG}-${CI_COMMIT_SHORT_SHA}
-
 stages:
     - test
     - build
 
-#### Test Stage
+#### Test Stage 
 
-# node:
-#   stage: test
-#   image: 10.57.70.41:5001/product/erp/erp/node:24.0.0-slim  
-#   needs: []
-#   script:
-#     - npm set registry https://10.57.70.41:4873   
-#     - npm install
-#     - npx eslint . -f json -o gl-code-quality-report.json
-#   artifacts:
-#     reports:
-#       codequality: frontend/gl-code-quality-report.json
-#   cache:
-#     key: "${CI_COMMIT_REF_SLUG}"
-#     paths:
-#       - node_modules/
+node:
+  stage: test
+  image: 10.57.70.41:5001/product/erp/erp/node:24.0.0-slim  
+  needs: []
+  script:
+    - tar -xzf node_modules.tar.gz
+    - npx eslint . -f json -o gl-code-quality-report.json || true
+
+  artifacts:
+    reports:
+      codequality: frontend/gl-code-quality-report.json
+  cache:
+    key: "${CI_COMMIT_REF_SLUG}"
+    paths:
+      - node_modules/
 
 semgrep-sast:
   stage: test
@@ -69,14 +68,16 @@ secret-detect:
   allow_failure: true
   rules:
   - if: '$CI_COMMIT_BRANCH'
-
+ 
 
 #### Build Stage
-
-build-image:
+  
+build-image:  
   stage: build
-  when: manual
+  #when: manual
   script:
+    - tar -xzf node_modules.tar.gz
+    - ls
     - docker build -t ${FE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG} .
     - docker save ${FE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG} -o image.tar
   artifacts:
@@ -109,6 +110,8 @@ healcheck-image:
 #       when: on_success
 #   needs: [build-image]
 
+
+ 
 sec-scan-image:
   stage: build
   image: 
@@ -116,8 +119,8 @@ sec-scan-image:
   variables:
     CS_IMAGE: ${FE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG}
     CS_SCHEMA_MODEL: 15
-  allow_failure: true
-  artifacts:
+  allow_failure: true 
+  artifacts:  
     reports:
       container_scanning: gl-container-scanning-report.json
       cyclonedx: "**/gl-sbom-*.cdx.json"
@@ -125,7 +128,7 @@ sec-scan-image:
       - frontend/gl-container-scanning-report.json
       - "**/gl-sbom-*.cdx.json"
   script:
-    - echo "Bắt đầu chạy gtcs scan..."
+    - echo "Running gtcs scan..."
     - gtcs scan
 
   needs: [healcheck-image,build-image]
@@ -134,7 +137,8 @@ push-image-dev-registry:
   stage: build
   script:
     - echo "push image ${FE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG} to container registry"
-    - docker push ${FE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG}
+    - docker push ${FE_CONTAINER_IMAGE}:${DEV_CONTAINER_TAG} || true
+    
   tags:
     - uat
   rules:

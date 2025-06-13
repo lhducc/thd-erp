@@ -3,7 +3,7 @@ services:
     container_name: erp-frontend
     image: $FE_CONTAINER_IMAGE:$CONTAINER_TAG
     ports:
-      - "3000:80"
+      - "80:80"
     env_file:
       - ../.env
     depends_on:

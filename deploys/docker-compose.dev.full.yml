@@ -1,5 +1,6 @@
 services:
   frontend:
+    container_name: erp-frontend
     build:
       context: ../frontend
       dockerfile: Dockerfile.dev
@@ -9,6 +10,7 @@ services:
       - ../.env
     volumes:
       - ../frontend:/app
+      
   backend:
     container_name: erp-backend
     build:

@@ -25,7 +25,8 @@ type EmployeeBiz interface {
 }
 
 type EmployeeHandler struct {
-	employeeBiz EmployeeBiz
+	employeeBiz   EmployeeBiz
+	departmentBiz DepartmentBiz
 }
 
 func NewEmployeeHandler(db *gorm.DB) *EmployeeHandler {
@@ -33,8 +34,13 @@ func NewEmployeeHandler(db *gorm.DB) *EmployeeHandler {
 	account := repository.NewAccountStore(db)
 	biz := usecase.NewEmployeeBiz(store, account)
 
+	// Khởi tạo Department Usecase
+	departmentStore := repository.NewDepartmentStore(db)
+	departmentBiz := usecase.NewDepartmentBiz(departmentStore)
+
 	return &EmployeeHandler{
-		employeeBiz: biz,
+		employeeBiz:   biz,
+		departmentBiz: departmentBiz,
 	}
 }
 
@@ -76,13 +82,27 @@ func (biz *EmployeeHandler) GetAllEmployees() gin.HandlerFunc {
 		if err != nil || pageSize < 1 {
 			pageSize = 10
 		}
-		result, err := biz.employeeBiz.GetAllEmployees(page, pageSize)
+		employees, err := biz.employeeBiz.GetAllEmployees(page, pageSize)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}
 
-		utils.ResponseMessage(ctx, "Danh sách dữ liệu", http.StatusOK, result)
+		// Bổ sung thông tin Department cho từng nhân viên
+		for i, emp := range employees {
+			deparmentID := emp.DepartmentID
+			if deparmentID == "" {
+				continue
+			}
+			dept, err := biz.departmentBiz.GetDepartment(ctx.Request.Context(), emp.DepartmentID)
+			if err != nil {
+				utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi khi lấy department: %s", err.Error()), http.StatusNotFound, nil)
+				return
+			}
+			employees[i].Department = dept
+		}
+
+		utils.ResponseMessage(ctx, "Danh sách dữ liệu", http.StatusOK, employees)
 	}
 }
 
@@ -99,13 +119,27 @@ func (biz *EmployeeHandler) GetAllEmployeeByStatus() gin.HandlerFunc {
 			pageSize = 10
 		}
 
-		result, err := biz.employeeBiz.GetAllEmployeesByStatus(status, page, pageSize)
+		employees, err := biz.employeeBiz.GetAllEmployeesByStatus(status, page, pageSize)
 		if err != nil {
 			utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusNotFound, nil)
 			return
 		}
 
-		utils.ResponseMessage(ctx, "Danh sách dữ liệu", http.StatusOK, result)
+		// Bổ sung thông tin Department cho từng nhân viên
+		for i, emp := range employees {
+			if emp.DepartmentID == "" {
+				// Bỏ qua, không cần load department
+				continue
+			}
+			dept, err := biz.departmentBiz.GetDepartment(ctx.Request.Context(), emp.DepartmentID)
+			if err != nil {
+				utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi khi lấy department: %s", err.Error()), http.StatusNotFound, nil)
+				return
+			}
+			employees[i].Department = dept
+		}
+
+		utils.ResponseMessage(ctx, "Danh sách dữ liệu", http.StatusOK, employees)
 	}
 }
 
@@ -117,6 +151,16 @@ func (biz *EmployeeHandler) GetUserById() gin.HandlerFunc {
 		if err != nil {
 			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusNotFound, nil)
 			return
+		}
+
+		if result.DepartmentID != "" {
+			var Department *model.Department
+			Department, err = biz.departmentBiz.GetDepartment(c.Request.Context(), result.DepartmentID)
+			if err != nil {
+				utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusNotFound, nil)
+				return
+			}
+			result.Department = Department
 		}
 
 		utils.ResponseMessage(c, "Danh sách dữ liệu", http.StatusOK, result)

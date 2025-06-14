@@ -5,7 +5,7 @@ import (
 	officemodel "erp/backend/internal/hrm/office/model"
 	hrmrepository "erp/backend/internal/hrm/office/repository"
 	hrmbiz "erp/backend/internal/hrm/office/usecase"
-	"erp/backend/internal/utils"
+	utils "erp/backend/pkg"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

@@ -62,6 +62,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	workShiftHandler := checkin.NewWorkShiftHandler(db)
 	allow := checkin.NewAllowedWorkingScheduleHandler(db)
 	holiday := checkin.NewHolidayHandler(db)
+	attandanceForm := checkin.NewAttendanceFormHandler(db)
 
 	public := router.Group("/auth")
 	public.POST("/login", accountHandler.SignIn)
@@ -87,6 +88,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupAllowedWorkingScheduleRoutes(hrmRouter, allow)
 	setupWorkShiftRoutes(hrmRouter, workShiftHandler)
 	setupHolidayRoutes(hrmRouter, holiday)
+	setupAttandanceFormRoutes(hrmRouter, attandanceForm)
 
 }
 
@@ -250,4 +252,13 @@ func setupAllowedWorkingScheduleRoutes(router *gin.RouterGroup, scheduleHandler 
 		schedule.PUT("/:id", scheduleHandler.UpdateAllowedWorkingSchedule())
 		schedule.DELETE("/:id", scheduleHandler.DeleteAllowedWorkingSchedule())
 	}
+}
+
+func setupAttandanceFormRoutes(router *gin.RouterGroup, handler *checkin.AttendanceFormHandler) {
+	attandanceFormGroup := router.Group("/attandance-form")
+	attandanceFormGroup.POST("", handler.CreateAttendanceForm())
+	attandanceFormGroup.GET("/:id", handler.GetAttendanceForm())
+	attandanceFormGroup.GET("", handler.GetAllAttendanceForm())
+	attandanceFormGroup.PUT("/:id", handler.UpdateAttendanceForm())
+	attandanceFormGroup.DELETE("/:id", handler.DisableAttendanceForm())
 }

@@ -69,3 +69,33 @@ export type PayloadSignIn = {
   email: string,
   password: string
 }
+
+export type PayloadEmployee = {
+  full_name: string;
+  birthday: string;
+  gender: string;
+  work_type: string;
+  phone_number: string;
+  email: string;
+  account_id: number;
+  position_id: string;
+  job_title_id: string;
+  status: string;
+  manager_id: string;
+};
+
+export type Employee = {
+  employee_id: string;
+  full_name: string;
+  birthday: string;
+  gender: string;
+  work_type: string;
+  phone_number: string;
+  email: string;
+  account_id: number;
+  position_id: string;
+  job_title_id: string;
+  status: string;
+  manager_id: string;
+  created_date: string; 
+};

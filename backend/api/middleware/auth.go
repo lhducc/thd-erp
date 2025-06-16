@@ -9,11 +9,8 @@ import (
 
 func AuthMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		accessToken, err := c.Cookie("access_token")
-		if err != nil || strings.TrimSpace(accessToken) == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "access token not found"})
-			return
-		}
+		authorization := c.Request.Header.Get("Authorization")
+		accessToken := strings.Replace(authorization, "Bearer ", "", 1)
 
 		payload, err := tokenMaker.VerifyToken(accessToken)
 		if err != nil {

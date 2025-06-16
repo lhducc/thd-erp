@@ -9,6 +9,7 @@ import DepartmentPage from "./pages/DepartmentPage";
 import PositionPage from "./pages/PositionPage";
 import JobTitlePage from "./pages/JobTitlePage";
 import HierarchyLevelPage from "./pages/HierarchyLevelPage";
+import ContractPage from "./pages/ContractPage";
 
 const App = () => {
   return useRoutes([
@@ -27,6 +28,10 @@ const App = () => {
         {
           path: PATH.OFFICE,
           element: <OfficePage />,
+        },
+        {
+          path: PATH.CONTRACT,
+          element: <ContractPage />,
         },
         {
           path: PATH.DEPARTMENT,

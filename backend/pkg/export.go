@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"reflect"
 	"strconv"
 	"time"
@@ -103,4 +104,28 @@ func (e *ExcelExporter) Export(items interface{}, selectedFields []string) ([]by
 
 	filename := e.SheetName + "_" + strconv.FormatInt(time.Now().Unix(), 10) + ".xlsx"
 	return buf.Bytes(), filename, nil
+}
+
+type ExcelReader struct {
+	file *excelize.File
+}
+
+func NewExcelReader(reader io.Reader) (*ExcelReader, error) {
+	file, err := excelize.OpenReader(reader)
+	if err != nil {
+		return nil, err
+	}
+	return &ExcelReader{file: file}, nil
+}
+
+// GetSheetName gets the name of a sheet by its index.
+// It's exported.
+func (er *ExcelReader) GetSheetName(idx int) string {
+	return er.file.GetSheetName(idx)
+}
+
+// GetRows gets all rows from a sheet.
+// It's exported.
+func (er *ExcelReader) GetRows(sheetName string) ([][]string, error) {
+	return er.file.GetRows(sheetName)
 }

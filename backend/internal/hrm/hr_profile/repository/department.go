@@ -25,7 +25,7 @@ func (s *departmentStore) CreateDepartment(context context.Context, data *model.
 
 func (r *departmentStore) GetDepartment(ctx context.Context, id string) (*model.Department, error) {
 	var department model.Department
-	if err := r.db.WithContext(ctx).Table("department").
+	if err := r.db.WithContext(ctx).Table("department").Preload("Office").
 		Where("department_id = ?", id).
 		First(&department).Error; err != nil {
 		return nil, err
@@ -36,7 +36,10 @@ func (r *departmentStore) GetDepartment(ctx context.Context, id string) (*model.
 func (r *departmentStore) GetAllDepartment(ctx context.Context) ([]model.Department, error) {
 
 	var positions []model.Department
-	if err := r.db.WithContext(ctx).Table("department").Find(&positions).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Table("department").
+		Preload("Office").
+		Find(&positions).Error; err != nil {
 		return nil, err
 	}
 

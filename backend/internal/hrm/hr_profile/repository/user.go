@@ -56,8 +56,13 @@ func (s *userStore) GetAllEmployeesByStatus(status string, page, pageSize int) (
 
 	result := s.db.
 		Where("status = ?", status).
+		Order("employee_id ASC").
 		Limit(pageSize).
 		Offset(offset).
+		Preload("Account").
+		Preload("Manager").
+		Preload("JobTitle").
+		Preload("Position").
 		Find(&employees)
 
 	if result.Error != nil {
@@ -68,7 +73,12 @@ func (s *userStore) GetAllEmployeesByStatus(status string, page, pageSize int) (
 
 func (s *userStore) GetUserById(id string) (model.Employee, error) {
 	var employee model.Employee
-	if err := s.db.Where("employee_id = ?", id).First(&employee).Error; err != nil {
+	if err := s.db.Where("employee_id = ?", id).
+		Preload("Account").
+		Preload("Manager").
+		Preload("JobTitle").
+		Preload("Position").
+		First(&employee).Error; err != nil {
 		return model.Employee{}, fmt.Errorf("employee not found with id %d", id)
 	}
 	return employee, nil
@@ -76,7 +86,13 @@ func (s *userStore) GetUserById(id string) (model.Employee, error) {
 
 func (s *userStore) GetAllEmployees() ([]model.Employee, error) {
 	var employees []model.Employee
-	if err := s.db.Find(&employees).Error; err != nil {
+	if err := s.db.
+		Order("employee_id ASC").
+		Preload("Account").
+		Preload("Manager").
+		Preload("JobTitle").
+		Preload("Position").
+		Find(&employees).Error; err != nil {
 		return nil, fmt.Errorf("failed to get employees: %w", err)
 	}
 	return employees, nil
@@ -87,8 +103,13 @@ func (s *userStore) GetAllEmployeesPagination(page, pageSize int) ([]model.Emplo
 	offset := (page - 1) * pageSize
 
 	if err := s.db.
+		Order("employee_id ASC").
 		Limit(pageSize).
 		Offset(offset).
+		Preload("Account").
+		Preload("Manager").
+		Preload("JobTitle").
+		Preload("Position").
 		Find(&employees).Error; err != nil {
 		return nil, fmt.Errorf("failed to get employees: %w", err)
 	}

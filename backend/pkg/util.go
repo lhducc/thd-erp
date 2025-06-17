@@ -40,3 +40,31 @@ func GenerateCode(prefix string, digits int, getLastCodeFunc func() (string, err
 
 	return fmt.Sprintf("%s%0*d", prefix, digits, nextNumber), nil
 }
+func GenerateCodeAllowance(prefix string, padding int, getLastCodeFn func() (string, error)) (string, error) {
+	lastCode, err := getLastCodeFn()
+	if err != nil {
+		return "", fmt.Errorf("không thể lấy mã cuối: %w", err)
+	}
+
+	var newNumber int
+
+	if lastCode == "" {
+		newNumber = 1
+	} else {
+		if !strings.HasPrefix(lastCode, prefix) {
+			return "", fmt.Errorf("invalid code format: %s, expected prefix: %s", lastCode, prefix)
+		}
+
+		numberPart := strings.TrimPrefix(lastCode, prefix)
+
+		n, err := strconv.Atoi(numberPart)
+		if err != nil {
+			return "", fmt.Errorf("không thể parse số từ mã: %s", lastCode)
+		}
+		newNumber = n + 1
+	}
+
+	format := "%0" + strconv.Itoa(padding) + "d"
+	newCode := fmt.Sprintf(prefix+format, newNumber)
+	return newCode, nil
+}

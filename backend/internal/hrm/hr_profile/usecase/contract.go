@@ -3,84 +3,78 @@ package usecase
 import (
 	"context"
 	hrmmodel "erp/backend/internal/hrm/hr_profile/model"
+	"erp/backend/internal/hrm/hr_profile/store"
 	utils "erp/backend/pkg"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 )
 
-type ContractRepo interface {
-	CreateContract(context context.Context, data *hrmmodel.Contract) error
-	GetContract(ctx context.Context, id string) (*hrmmodel.Contract, error)
-	GetAllContract(ctx context.Context) ([]hrmmodel.Contract, error)
-	UpdateContract(ctx context.Context, id string, data *hrmmodel.ContractCreate) error
-	DeleteContract(ctx context.Context, id string) error
-	CheckExistName(name string) (bool, error)
-	GetLastContractByCode(ctx context.Context, contract *hrmmodel.Contract) error
-}
-
 type contractBiz struct {
-	repo         ContractRepo
+	repo         store.ContractRepo
 	employeeRepo EmployeeRepo
 }
 
-func NewContractBiz(store ContractRepo, employeeRepo EmployeeRepo) *contractBiz {
+func NewContractBiz(contractRepo store.ContractRepo, employeeRepo EmployeeRepo) *contractBiz {
 	return &contractBiz{
-		repo:         store,
+		repo:         contractRepo,
 		employeeRepo: employeeRepo,
 	}
 }
 
-func (biz *contractBiz) CreateContract(context context.Context, data *hrmmodel.ContractCreate) error {
+func (biz *contractBiz) CreateContract(ctx context.Context, data *hrmmodel.ContractCreate) error {
+	employee, err := biz.employeeRepo.GetUserById(data.Manager)
+	if err != nil {
+		return fmt.Errorf("không tìm thấy nhân viên: %w", err)
+	}
 
-	code, err := utils.GenerateCode("HD", 6, func() (string, error) {
-		var last hrmmodel.Contract
-		err := biz.repo.GetLastContractByCode(context, &last)
+	return biz.repo.WithTransaction(ctx, func(txRepo store.ContractRepo) error {
+		code, err := utils.GenerateCode("HD", 6, func() (string, error) {
+			var last hrmmodel.Contract
+			err := txRepo.GetLastContractByCode(ctx, &last)
+			if err != nil {
+				return "", err
+			}
+			return last.ContractId, nil
+		})
 		if err != nil {
-			return "", err
+			return fmt.Errorf("không thể tạo mã: %w", err)
 		}
-		return last.ContractId, nil
+
+		// 4. Validate
+		now := time.Now()
+		if data.SignDate.After(now) {
+			return errors.New("ngày ký không thể trong tương lai")
+		}
+		if data.EffectiveDate.Before(data.SignDate) {
+			return errors.New("ngày hiệu lực không thể trước ngày ký")
+		}
+		if data.ExpiredDate.Before(data.EffectiveDate) {
+			return errors.New("ngày hết hạn phải sau ngày hiệu lực")
+		}
+
+		// 5. Mapping
+		contract := &hrmmodel.Contract{
+			ContractId:     code,
+			EffectiveDate:  data.EffectiveDate,
+			ExpiredDate:    data.ExpiredDate,
+			SignDate:       data.SignDate,
+			Note:           data.Note,
+			AttachedFile:   data.AttachedFile,
+			Condition:      data.Condition,
+			ContractTypeId: data.ContractTypeId,
+			ApproveStatus:  data.ApproveStatus,
+			EmployeeID:     data.Manager,
+			CreatedDate:    now,
+			Employee:       &employee,
+		}
+
+		if err := txRepo.CreateContract(ctx, contract); err != nil {
+			return fmt.Errorf("không thể tạo hợp đồng: %w", err)
+		}
+		return nil
 	})
-
-	if err != nil {
-		return fmt.Errorf("không thể tạo mã: %w", err)
-	}
-
-	contract := &hrmmodel.Contract{
-		ContractId:     code,
-		EffectiveDate:  data.EffectiveDate,
-		ExpiredDate:    data.ExpiredDate,
-		SignDate:       data.SignDate,
-		Note:           data.Note,
-		AttachedFile:   data.AttachedFile,
-		Condition:      data.Condition,
-		ContractTypeId: data.ContractTypeId,
-		EmployeeID:     data.Manager,
-		CreatedDate:    time.Now(),
-	}
-	now := time.Now()
-	if contract.SignDate.After(now) {
-		return errors.New("Ngày ký không thể trong tương lai")
-	}
-
-	if contract.EffectiveDate.Before(contract.SignDate) {
-		return errors.New("Ngày hiệu lực không thể trước ngày ký")
-	}
-
-	if contract.ExpiredDate.Before(contract.EffectiveDate) {
-		return errors.New("Ngày hết hạn phải sau ngày hiệu lực")
-	}
-	exists, err := biz.employeeRepo.GetUserById(contract.EmployeeID)
-	if err != nil {
-		return err
-	}
-	contract.Employee = &exists
-	err = biz.repo.CreateContract(context, contract)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (biz *contractBiz) GetContract(ctx context.Context, id string) (*hrmmodel.Contract, error) {
@@ -157,6 +151,20 @@ func (e *contractBiz) ExportContractTest(c context.Context, selectedFields []str
 	exporter.RegisterField("contract_type", "Loại hợp đồng", "contract_type", func(item interface{}) any {
 		contract := item.(*hrmmodel.Contract)
 		return contract.ContractTypeId
+	})
+
+	exporter.RegisterField("approve_status", "Trạng thái duyệt", "approve_status", func(item interface{}) any {
+		contract := item.(*hrmmodel.Contract)
+		switch contract.ApproveStatus {
+		case strconv.Itoa(0):
+			return "Chờ duyệt"
+		case strconv.Itoa(1):
+			return "Đã duyệt"
+		case strconv.Itoa(2):
+			return "Từ chối"
+		default:
+			return "Không xác định"
+		}
 	})
 
 	exporter.RegisterField("employee_id", "Mã nhân viên", "employee_id", func(item interface{}) any {

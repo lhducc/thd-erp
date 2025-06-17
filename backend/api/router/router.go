@@ -65,6 +65,11 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	holiday := checkin.NewHolidayHandler(db)
 	attandanceForm := checkin.NewAttendanceFormHandler(db)
 
+	// allowance
+	allowanceRepo := repository.NewAllowanceRepo(db)
+	allowanceUsecase := usecase.NewAllowanceBiz(allowanceRepo)
+	allowanceHandler := handler.NewAllowanceHandler(allowanceUsecase)
+
 	public := router.Group("/auth")
 	public.POST("/login", accountHandler.SignIn)
 
@@ -84,6 +89,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupInsuranceRoutes(hrmRouter, insuranceHandler)
 	setupDecisionTypeRoutes(hrmRouter, decisionTypeHandler)
 	setupContractTypeRoutes(hrmRouter, contractTypeHandler)
+	setupAllowanceRoutes(hrmRouter, allowanceHandler)
 	setupEmployeeDocumentRoutes(hrmRouter, employeeDocumentHandler)
 
 	//CheckIn
@@ -264,6 +270,14 @@ func setupAttandanceFormRoutes(router *gin.RouterGroup, handler *checkin.Attenda
 	attandanceFormGroup.GET("", handler.GetAllAttendanceForm())
 	attandanceFormGroup.PUT("/:id", handler.UpdateAttendanceForm())
 	attandanceFormGroup.DELETE("/:id", handler.DisableAttendanceForm())
+}
+
+func setupAllowanceRoutes(router *gin.RouterGroup, handler *handler.AllowanceHandler) {
+	group := router.Group("/allowance")
+	{
+		group.POST("", handler.Create())
+		group.GET("", handler.GetAll())
+	}
 }
 
 func setupEmployeeDocumentRoutes(router *gin.RouterGroup, employeeDocumentHandler *handler.EmployeeDocumentHandler) {

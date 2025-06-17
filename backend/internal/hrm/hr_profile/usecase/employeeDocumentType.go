@@ -11,8 +11,8 @@ import (
 )
 
 type DocumentTypeRepo interface {
-	CreateDocumentType(ctx context.Context, documentType *model.EmployeeDocumentType) error
-	UpdateDocumentType(ctx context.Context, id string, documentType *model.EmployeeDocumentType) error
+	CreateDocumentType(ctx context.Context, documentType *model.EmployeeDocumentTypeCreate) error
+	UpdateDocumentType(ctx context.Context, id string, documentType *model.EmployeeDocumentTypeUpdate) error
 	DeleteDocumentType(ctx context.Context, id string) error
 	GetDocumentTypeById(ctx context.Context, id string) (*model.EmployeeDocumentType, error)
 	GetAllDocumentType(ctx context.Context) ([]*model.EmployeeDocumentType, error)
@@ -28,7 +28,7 @@ func NewDocumentTypeBiz(repo DocumentTypeRepo) *DocumentTypeBiz {
 }
 
 // CreateDocumentType creates a new document type with generated ID and current date
-func (b *DocumentTypeBiz) CreateDocumentType(ctx context.Context, documentType *model.EmployeeDocumentType) error {
+func (b *DocumentTypeBiz) CreateDocumentType(ctx context.Context, documentType *model.EmployeeDocumentTypeCreate) error {
 	documentType.CreatedDate = utils.GetCurrentDate()
 
 	code, err := b.GenerateDocumentTypeCode(ctx)
@@ -62,7 +62,7 @@ func (b *DocumentTypeBiz) GetAllDocumentType(ctx context.Context) ([]*model.Empl
 }
 
 // UpdateDocumentType updates an existing document type by ID
-func (b *DocumentTypeBiz) UpdateDocumentType(ctx context.Context, id string, data *model.EmployeeDocumentType) error {
+func (b *DocumentTypeBiz) UpdateDocumentType(ctx context.Context, id string, data *model.EmployeeDocumentTypeUpdate) error {
 	if err := b.repo.UpdateDocumentType(ctx, id, data); err != nil {
 		return fmt.Errorf("failed to update document type: %w", err)
 	}
@@ -83,11 +83,11 @@ func (b *DocumentTypeBiz) GenerateDocumentTypeCode(ctx context.Context) (string,
 	err := b.repo.GetLastDocumentTypeByCode(ctx, &lastDocumentType)
 
 	// Start from TL00001 if no record or invalid prefix
-	if err != nil || !strings.HasPrefix(lastDocumentType.ID, "TL") {
-		return "TL00001", nil
+	if err != nil || !strings.HasPrefix(lastDocumentType.ID, "DT") {
+		return "DT00001", nil
 	}
 
-	numberStr := strings.TrimPrefix(lastDocumentType.ID, "TL")
+	numberStr := strings.TrimPrefix(lastDocumentType.ID, "DT")
 	number, err := strconv.Atoi(strings.TrimSpace(numberStr))
 	if err != nil {
 		return "", fmt.Errorf("failed to parse document type number: %w", err)
@@ -95,8 +95,8 @@ func (b *DocumentTypeBiz) GenerateDocumentTypeCode(ctx context.Context) (string,
 
 	nextNumber := number + 1
 	if nextNumber > 99999 {
-		return "", fmt.Errorf("maximum document type code reached: TL99999")
+		return "", fmt.Errorf("maximum document type code reached: DT99999")
 	}
 
-	return fmt.Sprintf("TL%05d", nextNumber), nil
+	return fmt.Sprintf("DT%05d", nextNumber), nil
 }

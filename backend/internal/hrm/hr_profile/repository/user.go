@@ -154,7 +154,7 @@ func (s *userStore) DeleteEmployee(id string) error {
 	s.recoverFromPanic(tx)
 
 	var employee model.Employee
-	if err := s.db.Where("employee_id = ?", id).First(&employee).Error; err != nil {
+	if err := tx.Where("employee_id = ?", id).First(&employee).Error; err != nil {
 		s.db.Rollback()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("employee with ID %d not found", id)

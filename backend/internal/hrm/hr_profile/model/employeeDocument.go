@@ -23,20 +23,20 @@ const (
 )
 
 type EmployeeDocument struct {
-	DocumentID     string            `gorm:"primaryKey;type:char(6)" json:"document_id"`
-	DocumentTypeID string            `gorm:"type:char(6);not null" json:"document_type_id"`
-	EmployeeID     string            `gorm:"type:char(8);not null" json:"employee_id"`
-	EffectiveDate  time.Time         `gorm:"type:date" json:"effective_date"`
-	ExpiredDate    time.Time         `gorm:"type:date" json:"expired_date"`
-	Note           string            `gorm:"type:varchar(100);null" json:"note"`
-	Condition      DocumentCondition `gorm:"type:document_condition_enum;not null" json:"condition"`
-	Status         DocumentStatus    `gorm:"type:document_status_enum;not null" json:"status"`
-	AttachedFile   []byte            `gorm:"type:blob;null" json:"attached_file"`
-	CreatedDate    time.Time         `gorm:"type:date;default:CURRENT_DATE" json:"created_date"`
+	DocumentID     string            `gorm:"column:document_id;primaryKey;type:char(8)" json:"document_id"`
+	DocumentTypeID string            `gorm:"column:document_type_id;type:char(8);not null" json:"document_type_id"`
+	EmployeeID     string            `gorm:"column:employee_id;type:char(6);not null" json:"employee_id"`
+	EffectiveDate  time.Time         `gorm:"column:effective_date;type:date" json:"effective_date"`
+	ExpiredDate    time.Time         `gorm:"column:expired_date;type:date" json:"expired_date"`
+	Note           string            `gorm:"column:note;type:varchar(100)" json:"note"`
+	Condition      DocumentCondition `gorm:"column:condition;type:document_condition_enum;not null" json:"condition"`
+	Status         DocumentStatus    `gorm:"column:status;type:document_status_enum;not null" json:"status"`
+	AttachedFile   []byte            `gorm:"column:attached_file;type:bytea" json:"attached_file"`
+	CreatedDate    time.Time         `gorm:"column:created_date;type:date;default:CURRENT_DATE" json:"created_date"`
 
 	// Foreign key relations
-	DocumentType EmployeeDocumentType `gorm:"foreignKey:DocumentTypeID" json:"document_type"`
-	Employee     *EmployeeDocument    `gorm:"foreignKey:EmployeeID" json:"employee"`
+	DocumentType *EmployeeDocumentType `gorm:"foreignKey:DocumentTypeID;references:ID" json:"document_type,omitempty"`
+	Employee     *Employee             `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"employee"`
 }
 
 // SetCondition
@@ -51,7 +51,7 @@ func (d *EmployeeDocument) SetCondition() {
 }
 
 func (EmployeeDocument) TableName() string {
-	return "employeedocuments"
+	return "employeedocument"
 }
 
 func (d EmployeeDocument) ValidateEmployeeDocument() error {

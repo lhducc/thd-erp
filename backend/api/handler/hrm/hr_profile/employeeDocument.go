@@ -62,6 +62,8 @@ func (h *EmployeeDocumentHandler) UpdateEmployeeDocument() gin.HandlerFunc {
 			return
 		}
 
+		data.DocumentID = id
+
 		if err := h.employeeDocumentBiz.UpdateEmployeeDocument(c.Request.Context(), id, &data); err != nil {
 			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
 			return

@@ -14,11 +14,11 @@ func NewDocumentType(db *gorm.DB) *DocumentType {
 	return &DocumentType{db: db}
 }
 
-func (d *DocumentType) CreateDocumentType(ctx context.Context, documentType *documentTypemodel.EmployeeDocumentType) error {
-	return d.db.WithContext(ctx).Create(documentType).Error
+func (d *DocumentType) CreateDocumentType(ctx context.Context, documentType *documentTypemodel.EmployeeDocumentTypeCreate) error {
+	return d.db.Model(&documentTypemodel.EmployeeDocumentType{}).WithContext(ctx).Create(documentType).Error
 }
 
-func (d *DocumentType) UpdateDocumentType(ctx context.Context, id string, documentType *documentTypemodel.EmployeeDocumentType) error {
+func (d *DocumentType) UpdateDocumentType(ctx context.Context, id string, documentType *documentTypemodel.EmployeeDocumentTypeUpdate) error {
 	return d.db.WithContext(ctx).
 		Model(&documentTypemodel.EmployeeDocumentType{}).
 		Where("id = ?", id).

@@ -18,7 +18,7 @@ type EmployeeDocumentRepo interface {
 	GetAllEmployeeDocuments(ctx context.Context) ([]*model.EmployeeDocument, error)
 	GetEmployeeDocumentsByEmployeeID(ctx context.Context, employeeID string) ([]*model.EmployeeDocument, error)
 	GetEmployeeDocumentsByDocumentTypeID(ctx context.Context, documentTypeID string) ([]*model.EmployeeDocument, error)
-	GetLastDocumentTypeByCode(ctx context.Context, documentType *model.EmployeeDocumentType) error
+	GetLastDocumentByCode(ctx context.Context, documentType *model.EmployeeDocument) error
 }
 
 type EmployeeDocumentBiz struct {
@@ -107,14 +107,14 @@ func (b *EmployeeDocumentBiz) DeleteEmployeeDocument(ctx context.Context, id str
 
 // GenerateDocumentCode generates next document code with prefix "TL"
 func (b *EmployeeDocumentBiz) GenerateDocumentCode(ctx context.Context) (string, error) {
-	var lastDocumentType model.EmployeeDocumentType
-	err := b.repo.GetLastDocumentTypeByCode(ctx, &lastDocumentType)
+	var lastDocument model.EmployeeDocument
+	err := b.repo.GetLastDocumentByCode(ctx, &lastDocument)
 
-	if err != nil || !strings.HasPrefix(lastDocumentType.ID, "TL") {
+	if err != nil || !strings.HasPrefix(lastDocument.DocumentID, "TL") {
 		return "TL00001", nil
 	}
 
-	numberStr := strings.TrimPrefix(lastDocumentType.ID, "TL")
+	numberStr := strings.TrimPrefix(lastDocument.DocumentID, "TL")
 	number, err := strconv.Atoi(strings.TrimSpace(numberStr))
 	if err != nil {
 		return "", fmt.Errorf("failed to parse document type number: %w", err)

@@ -45,17 +45,18 @@ func (h *ContractHandler) CreateContract() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var data model.ContractCreate
 
-		if err := c.ShouldBind(&data); err != nil {
-			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusOK, nil)
+		err := c.ShouldBindJSON(&data)
+		if err != nil {
+			utils.ResponseError(c, "Dữ liệu đầu vào không hợp lệ", err, http.StatusBadRequest)
 			return
 		}
 
 		if err := h.contractBiz.CreateContract(c.Request.Context(), &data); err != nil {
-			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusOK, nil)
+			utils.ResponseError(c, "Không thể tạo hợp đồng", err, http.StatusInternalServerError)
 			return
 		}
 
-		utils.ResponseMessage(c, errors.MsgCreatedSuccess, http.StatusOK, nil)
+		utils.ResponseMessage(c, "Tạo hợp đồng thành công", http.StatusOK, gin.H{"data": data})
 	}
 }
 
@@ -65,7 +66,7 @@ func (h *ContractHandler) GetContract() gin.HandlerFunc {
 
 		result, err := h.contractBiz.GetContract(c.Request.Context(), idParam)
 		if err != nil {
-			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusOK, nil)
+			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
 			return
 		}
 
@@ -79,6 +80,7 @@ func (h *ContractHandler) GetContract() gin.HandlerFunc {
 			Condition:     result.Condition,
 			CreatedDate:   result.CreatedDate,
 			ContractType:  result.ContractTypeId,
+			ApproveStatus: result.ApproveStatus,
 			Employee: model.EmployeeSimple{
 				EmployeeID: result.Employee.EmployeeID,
 				FullName:   result.Employee.Fullname,
@@ -100,7 +102,7 @@ func (h *ContractHandler) GetAllContract() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		result, err := h.contractBiz.GetAllContract(ctx)
 		if err != nil {
-			utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusOK, nil)
+			utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
 		}
 		var responseList []model.ContractResponse
 		for _, v := range result {
@@ -114,6 +116,7 @@ func (h *ContractHandler) GetAllContract() gin.HandlerFunc {
 				Condition:     v.Condition,
 				CreatedDate:   v.CreatedDate,
 				ContractType:  v.ContractTypeId,
+				ApproveStatus: v.ApproveStatus,
 				Employee: model.EmployeeSimple{
 					EmployeeID: v.Employee.EmployeeID,
 					FullName:   v.Employee.Fullname,

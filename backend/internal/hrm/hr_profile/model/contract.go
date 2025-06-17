@@ -12,6 +12,7 @@ type Contract struct {
 	Condition      string    `gorm:"type:varchar(30);column:condition" json:"condition"`
 	CreatedDate    time.Time `gorm:"column:created_date" json:"created_date"`
 	ContractTypeId string    `gorm:"type:varchar(6);column:contract_type_id" json:"contract_type"`
+	ApproveStatus  string    `gorm:"type:approve_status_enum;column:approve_status" json:"approve_status"`
 	EmployeeID     string    `gorm:"type:varchar(8);column:employee_id" json:"employee_id"`
 	Employee       *Employee `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"employee_info"`
 }
@@ -28,6 +29,7 @@ type ContractCreate struct {
 	Condition      string    `gorm:"condition" json:"condition"`
 	CreatedDate    time.Time `gorm:"column:created_date" json:"created_date"`
 	ContractTypeId string    `gorm:"column:contract_type_id" json:"contract_type"`
+	ApproveStatus  string    `gorm:"column:approve_status" json:"approve_status"`
 	Manager        string    `gorm:"column:employee_id" json:"employee_id"`
 }
 
@@ -43,6 +45,7 @@ type ContractResponse struct {
 	Condition     string         `json:"condition"`
 	CreatedDate   time.Time      `json:"created_date"`
 	ContractType  string         `json:"contract_type"`
+	ApproveStatus string         `gorm:"column:approve_status" json:"approve_status"`
 	Employee      EmployeeSimple `json:"employee"`
 }
 

@@ -57,6 +57,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	insuranceRepo := repository.NewInsuranceRepository(db)
 	insuranceUsecase := usecase.NewInsuranceUsecase(insuranceRepo)
 	insuranceHandler := handler.NewInsuranceHandler(insuranceUsecase)
+	employeeDocumentHandler := handler.NewEmployeeDocumentHandler(db)
 
 	//CheckIn
 	workShiftHandler := checkin.NewWorkShiftHandler(db)
@@ -83,6 +84,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupInsuranceRoutes(hrmRouter, insuranceHandler)
 	setupDecisionTypeRoutes(hrmRouter, decisionTypeHandler)
 	setupContractTypeRoutes(hrmRouter, contractTypeHandler)
+	setupEmployeeDocumentRoutes(hrmRouter, employeeDocumentHandler)
 
 	//CheckIn
 	setupAllowedWorkingScheduleRoutes(hrmRouter, allow)
@@ -186,6 +188,7 @@ func setupDocumentTypeRoutes(r *gin.RouterGroup, h *handler.DocumentTypeHandler)
 		group.PUT("/:id", h.UpdateDocumentType())
 		group.DELETE("/:id", h.DeleteDocumentType())
 		group.GET("/:id", h.GetDocumentTypeById())
+		group.GET("", h.GetAllDocumentType())
 	}
 }
 
@@ -261,4 +264,15 @@ func setupAttandanceFormRoutes(router *gin.RouterGroup, handler *checkin.Attenda
 	attandanceFormGroup.GET("", handler.GetAllAttendanceForm())
 	attandanceFormGroup.PUT("/:id", handler.UpdateAttendanceForm())
 	attandanceFormGroup.DELETE("/:id", handler.DisableAttendanceForm())
+}
+
+func setupEmployeeDocumentRoutes(router *gin.RouterGroup, employeeDocumentHandler *handler.EmployeeDocumentHandler) {
+	employeeDoc := router.Group("/employee-document")
+	{
+		employeeDoc.POST("", employeeDocumentHandler.CreateEmployeeDocument())
+		employeeDoc.GET("", employeeDocumentHandler.GetAllEmployeeDocuments())
+		employeeDoc.GET("/:id", employeeDocumentHandler.GetEmployeeDocumentById())
+		employeeDoc.DELETE("/:id", employeeDocumentHandler.DeleteEmployeeDocument())
+		employeeDoc.PUT("/:id", employeeDocumentHandler.UpdateEmployeeDocument())
+	}
 }

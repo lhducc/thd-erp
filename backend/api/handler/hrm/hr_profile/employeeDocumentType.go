@@ -12,10 +12,10 @@ import (
 )
 
 type DocumentTypeBiz interface {
-	CreateDocumentType(ctx context.Context, data *documentTypemodel.EmployeeDocumentType) error
+	CreateDocumentType(ctx context.Context, data *documentTypemodel.EmployeeDocumentTypeCreate) error
 	GetDocumentType(ctx context.Context, id string) (*documentTypemodel.EmployeeDocumentType, error)
 	GetAllDocumentType(ctx context.Context) ([]*documentTypemodel.EmployeeDocumentType, error)
-	UpdateDocumentType(ctx context.Context, id string, data *documentTypemodel.EmployeeDocumentType) error
+	UpdateDocumentType(ctx context.Context, id string, data *documentTypemodel.EmployeeDocumentTypeUpdate) error
 	DeleteDocumentType(ctx context.Context, id string) error
 }
 
@@ -36,7 +36,7 @@ func NewDocumentTypeHandler(db *gorm.DB) *DocumentTypeHandler {
 func (h *DocumentTypeHandler) UpdateDocumentType() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		var data documentTypemodel.EmployeeDocumentType
+		var data documentTypemodel.EmployeeDocumentTypeUpdate
 
 		if err := c.ShouldBindJSON(&data); err != nil {
 			utils.ResponseMessage(c, "Không thể đọc dữ liệu", http.StatusBadRequest, nil)
@@ -96,7 +96,7 @@ func (h *DocumentTypeHandler) GetDocumentTypeById() gin.HandlerFunc {
 
 func (h *DocumentTypeHandler) CreateDocumentType() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var data documentTypemodel.EmployeeDocumentType
+		var data documentTypemodel.EmployeeDocumentTypeCreate
 
 		if err := c.ShouldBindJSON(&data); err != nil {
 			utils.ResponseMessage(c, "Không thể đọc dữ liệu", http.StatusBadRequest, nil)

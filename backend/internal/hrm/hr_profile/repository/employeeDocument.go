@@ -21,7 +21,7 @@ func (e *EmployeeDocument) CreateEmployeeDocument(ctx context.Context, employeeD
 func (e *EmployeeDocument) UpdateEmployeeDocument(ctx context.Context, id string, employeeDocument *model.EmployeeDocument) error {
 	return e.db.WithContext(ctx).
 		Model(&model.EmployeeDocument{}).
-		Where("id = ?", id).
+		Where("document_id = ?", id).
 		Updates(employeeDocument).Error
 }
 
@@ -36,6 +36,8 @@ func (e *EmployeeDocument) GetEmployeeDocumentById(ctx context.Context, id strin
 	var employeeDocument model.EmployeeDocument
 	if err := e.db.WithContext(ctx).
 		Where("id = ?", id).
+		Preload("DocumentType").
+		Preload("Employee").
 		First(&employeeDocument).Error; err != nil {
 		return nil, err
 	}
@@ -44,7 +46,10 @@ func (e *EmployeeDocument) GetEmployeeDocumentById(ctx context.Context, id strin
 
 func (e *EmployeeDocument) GetAllEmployeeDocuments(ctx context.Context) ([]*model.EmployeeDocument, error) {
 	var list []*model.EmployeeDocument
-	if err := e.db.WithContext(ctx).Find(&list).Error; err != nil {
+	if err := e.db.WithContext(ctx).
+		Preload("DocumentType").
+		Preload("Employee").
+		Find(&list).Error; err != nil {
 		return nil, err
 	}
 	return list, nil
@@ -60,6 +65,8 @@ func (e *EmployeeDocument) GetEmployeeDocumentsByEmployeeID(ctx context.Context,
 	var documents []*model.EmployeeDocument
 	if err := e.db.WithContext(ctx).
 		Where("employee_id = ?", employeeID).
+		Preload("DocumentType").
+		Preload("Employee").
 		Find(&documents).Error; err != nil {
 		return nil, err
 	}
@@ -70,15 +77,16 @@ func (e *EmployeeDocument) GetEmployeeDocumentsByDocumentTypeID(ctx context.Cont
 	var documents []*model.EmployeeDocument
 	if err := e.db.WithContext(ctx).
 		Where("document_type_id = ?", documentTypeID).
+		Preload("DocumentType").
+		Preload("Employee").
 		Find(&documents).Error; err != nil {
 		return nil, err
 	}
 	return documents, nil
 }
 
-func (e *EmployeeDocument) GetLastDocumentTypeByCode(ctx context.Context, documentType *model.EmployeeDocumentType) error {
+func (e *EmployeeDocument) GetLastDocumentByCode(ctx context.Context, document *model.EmployeeDocument) error {
 	return e.db.WithContext(ctx).
-		Where("document_type_id = ?", documentType.ID).
-		Order("id DESC").
-		First(documentType).Error
+		Order("document_id DESC").
+		First(document).Error
 }

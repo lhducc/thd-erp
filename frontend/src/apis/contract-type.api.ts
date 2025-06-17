@@ -4,6 +4,7 @@ import api from "@/apis/api.ts";
 export const getAllContractsTypeApi = async (): Promise<ContractType[]> => {
     try {
         const response = await api.get("/contracttype");
+        console.log(response);
         console.log(response.data.data);
         return response.data.data;
     } catch (error: any) {

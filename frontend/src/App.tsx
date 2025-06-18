@@ -9,9 +9,10 @@ import DepartmentPage from "./pages/setting/DepartmentPage.tsx";
 import PositionPage from "./pages/setting/PositionPage.tsx";
 import JobTitlePage from "./pages/setting/JobTitlePage.tsx";
 import HierarchyLevelPage from "./pages/setting/HierarchyLevelPage.tsx";
-import SettingContractPage from "./pages/setting/ContractPage.tsx";
 import ContractPage from "@/pages/ContractPage.tsx";
 import EmployeeDocumentPage from "@/pages/setting/EmployeeDocumentPage.tsx";
+import SettingContractPage from "@/pages/setting/SettingContractPage.tsx";
+import AllowancePage from "@/pages/setting/AllowancePage.tsx";
 
 const App = () => {
     const settingRoutes = [
@@ -37,7 +38,11 @@ const App = () => {
         },
         {
             path: PATH.SETTING_CONTRACT,
-            element: <SettingContractPage />
+            element: <SettingContractPage />,
+        },
+        {
+            path: PATH.SETTING_ALLOWANCE,
+            element: <AllowancePage />,
         },
         {
             path: PATH.SETTING_EMPLOYEE_DOCUMENT,

@@ -148,8 +148,6 @@ export function ContractForm({open, setOpen, contractId}: Props) {
                                 >
                                     <option value="">Chọn loại hợp đồng</option>
                                     {contractTypes.map((type) => {
-                                        console.log(type)
-                                        console.log(contract?.contract_type);
                                         return (
                                         <option selected={contract?.contract_type === type.contract_type_id} key={type.contract_type_id} value={type.contract_type}>
                                             {type.contract_type}

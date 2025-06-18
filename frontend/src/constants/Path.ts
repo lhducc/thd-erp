@@ -16,6 +16,7 @@ const PATH = {
   SETTING_JOB_TITLE: `${SETTING_BASE}/job-title`,
   SETTING_HIERARCHY_LEVEL: `${SETTING_BASE}/hierarchy-level`,
   SETTING_CONTRACT: `${SETTING_BASE}/contract`,
+  SETTING_ALLOWANCE: `${SETTING_BASE}/allowance`,
   SETTING_EMPLOYEE_DOCUMENT: `${SETTING_BASE}/employee-document`,
 };
 

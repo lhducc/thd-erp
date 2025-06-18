@@ -128,7 +128,15 @@ func createEnums(db *gorm.DB) error {
             'Hết hiệu lực',
             'Thanh lý'
         );
-    END IF;
+    	END IF;
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'document_group_enum') THEN
+		  CREATE TYPE document_group_enum AS ENUM (
+			 'Loại chứng chỉ',
+			 'Loại lao động',
+			 'Thủ tục tiếp nhận',
+			 'Thủ tục thôi việc'
+		  );
+	   END IF;
 	END
 	$$;
 	`

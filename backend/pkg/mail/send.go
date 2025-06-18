@@ -100,13 +100,13 @@ func SendEmailWithAccountInfo(receiver, receiverName, password string) error {
 	`, receiverName, receiver, password)
 
 	m := gomail.NewMessage()
-	m.SetHeader("From", "tranvandu3802@gmail.com")
+	m.SetHeader("From", "mail nguồn")
 	m.SetHeader("To", receiver)
 	m.SetHeader("Subject", "[HỆ THỐNG APP CHẤM CÔNG] TÀI KHOẢN MAIL SỬ DỤNG ĐỂ ĐĂNG NHẬP")
 	m.SetBody("text/html", emailContent)
 
 	// d := gomail.NewDialer(mailer.Host, mailer.Port, mailer.UserName, mailer.Password)
-	d := gomail.NewDialer("smtp.gmail.com", 587, "tranvandu3802@gmail.com", "hzim xqcv ebff hfot")
+	d := gomail.NewDialer("mail.thdcybersecurity.xyz", 587, "điền mail nguồn ở đây", "password???")
 
 	if err := d.DialAndSend(m); err != nil {
 		panic(err)

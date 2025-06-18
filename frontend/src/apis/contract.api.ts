@@ -25,80 +25,81 @@ export const updateContractApi = async (id: string, payload: ContractFormValues)
 export const getAllContractsApi = async (): Promise<Contract[]> => {
     try {
         const response = await api.get("/contract");
-        console.log(response);
-        // return response.data.data;
-        const mock: Contract[] = [{
-            "contract_id": "C001",
-            "effective_date": "2025-01-01T00:00:00Z",
-            "expired_date": "2025-12-31T23:59:59Z",
-            "sign_date": "2024-12-15T00:00:00Z",
-            "note": "Annual employment contract",
-            "attached_file": "https://example.com/contracts/C001.pdf",
-            "condition": "Full-time employment",
-            "created_date": "2024-12-16T10:00:00Z",
-            "contract_type": "Employment",
-            "approve_status": "Đã duyệt",
-            "employee": {
-                "employee_id": "E1001",
-                "full_name": "Alice Johnson",
-                "department": {
-                    "department_id": "D001",
-                    "department_name": "Human Resources",
-                    "office": {
-                        "office_id": "O001",
-                        "office_name": "Head Office"
-                    }
-                }
-            }
-        },
-            {
-                "contract_id": "C002",
-                "effective_date": "2025-02-01T00:00:00Z",
-                "expired_date": "2026-01-31T23:59:59Z",
-                "sign_date": "2025-01-10T00:00:00Z",
-                "note": "Consulting agreement for marketing project",
-                "attached_file": "https://example.com/contracts/C002.pdf",
-                "condition": "Fixed-term contract",
-                "created_date": "2025-01-11T08:30:00Z",
-                "contract_type": "Consulting",
-                "approve_status": "Chưa duyệt",
-                "employee": {
-                    "employee_id": "E1002",
-                    "full_name": "Bob Smith",
-                    "department": {
-                        "department_id": "D002",
-                        "department_name": "Marketing",
-                        "office": {
-                            "office_id": "O002",
-                            "office_name": "Branch Office"
-                        }
-                    }
-                }
-            }, {
-                "contract_id": "C002",
-                "effective_date": "2025-02-01T00:00:00Z",
-                "expired_date": "2026-01-31T23:59:59Z",
-                "sign_date": "2025-01-10T00:00:00Z",
-                "note": "Consulting agreement for marketing project",
-                "attached_file": "https://example.com/contracts/C002.pdf",
-                "condition": "Fixed-term contract",
-                "created_date": "2025-01-11T08:30:00Z",
-                "contract_type": "Consulting",
-                "approve_status": "Chưa duyệt",
-                "employee": {
-                    "employee_id": "E1002",
-                    "full_name": "Bob Smith",
-                    "department": {
-                        "department_id": "D002",
-                        "department_name": "Marketing",
-                        "office": {
-                            "office_id": "O002",
-                            "office_name": "Branch Office"
-                        }
-                    }
-                }
-            }]
-        return mock;
+        // console.log(response);
+        // // return response.data.data;
+        // const mock: Contract[] = [{
+        //     "contract_id": "C001",
+        //     "effective_date": "2025-01-01T00:00:00Z",
+        //     "expired_date": "2025-12-31T23:59:59Z",
+        //     "sign_date": "2024-12-15T00:00:00Z",
+        //     "note": "Annual employment contract",
+        //     "attached_file": "https://example.com/contracts/C001.pdf",
+        //     "condition": "Full-time employment",
+        //     "created_date": "2024-12-16T10:00:00Z",
+        //     "contract_type": "Employment",
+        //     "approve_status": "Đã duyệt",
+        //     "employee": {
+        //         "employee_id": "E1001",
+        //         "full_name": "Alice Johnson",
+        //         "department": {
+        //             "department_id": "D001",
+        //             "department_name": "Human Resources",
+        //             "office": {
+        //                 "office_id": "O001",
+        //                 "office_name": "Head Office"
+        //             }
+        //         }
+        //     }
+        // },
+        //     {
+        //         "contract_id": "C002",
+        //         "effective_date": "2025-02-01T00:00:00Z",
+        //         "expired_date": "2026-01-31T23:59:59Z",
+        //         "sign_date": "2025-01-10T00:00:00Z",
+        //         "note": "Consulting agreement for marketing project",
+        //         "attached_file": "https://example.com/contracts/C002.pdf",
+        //         "condition": "Fixed-term contract",
+        //         "created_date": "2025-01-11T08:30:00Z",
+        //         "contract_type": "Consulting",
+        //         "approve_status": "Chưa duyệt",
+        //         "employee": {
+        //             "employee_id": "E1002",
+        //             "full_name": "Bob Smith",
+        //             "department": {
+        //                 "department_id": "D002",
+        //                 "department_name": "Marketing",
+        //                 "office": {
+        //                     "office_id": "O002",
+        //                     "office_name": "Branch Office"
+        //                 }
+        //             }
+        //         }
+        //     }, {
+        //         "contract_id": "C002",
+        //         "effective_date": "2025-02-01T00:00:00Z",
+        //         "expired_date": "2026-01-31T23:59:59Z",
+        //         "sign_date": "2025-01-10T00:00:00Z",
+        //         "note": "Consulting agreement for marketing project",
+        //         "attached_file": "https://example.com/contracts/C002.pdf",
+        //         "condition": "Fixed-term contract",
+        //         "created_date": "2025-01-11T08:30:00Z",
+        //         "contract_type": "Consulting",
+        //         "approve_status": "Chưa duyệt",
+        //         "employee": {
+        //             "employee_id": "E1002",
+        //             "full_name": "Bob Smith",
+        //             "department": {
+        //                 "department_id": "D002",
+        //                 "department_name": "Marketing",
+        //                 "office": {
+        //                     "office_id": "O002",
+        //                     "office_name": "Branch Office"
+        //                 }
+        //             }
+        //         }
+        //     }]
+        // return mock;
+        return response.data.data;
     } catch (error: any) {
         console.error("Error fetching all contracts API:", error);
         throw new Error(error.response.data.message);

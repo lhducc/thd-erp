@@ -17,6 +17,7 @@ type DocumentTypeBiz interface {
 	GetAllDocumentType(ctx context.Context) ([]*documentTypemodel.EmployeeDocumentType, error)
 	UpdateDocumentType(ctx context.Context, id string, data *documentTypemodel.EmployeeDocumentTypeUpdate) error
 	DeleteDocumentType(ctx context.Context, id string) error
+	GetEnumDocumentType(ctx context.Context) ([]string, error)
 }
 
 type DocumentTypeHandler struct {
@@ -109,5 +110,17 @@ func (h *DocumentTypeHandler) CreateDocumentType() gin.HandlerFunc {
 		}
 
 		utils.ResponseMessage(c, "Tạo loại tài liệu thành công", http.StatusOK, nil)
+	}
+}
+
+func (h *DocumentTypeHandler) GetEnumDocumentType() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		result, err := h.documentTypeBiz.GetEnumDocumentType(c.Request.Context())
+		if err != nil {
+			utils.ResponseMessage(c, "Không lấy được danh sách enum", http.StatusInternalServerError, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Lấy danh sách enum thành công", http.StatusOK, result)
 	}
 }

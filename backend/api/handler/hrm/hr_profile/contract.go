@@ -7,6 +7,7 @@ import (
 	"erp/backend/internal/hrm/hr_profile/usecase"
 	utils "erp/backend/pkg"
 	"erp/backend/pkg/errors"
+	"log"
 
 	"fmt"
 	"net/http"
@@ -23,6 +24,7 @@ type ContractBiz interface {
 	UpdateContract(ctx context.Context, id string, data *model.ContractCreate) error
 	DeleteContract(ctx context.Context, id string) error
 	ExportContractTest(c context.Context, selectedFields []string) ([]byte, string, error)
+	UpdateApproveStatus(ctx context.Context, id string, status string) error
 }
 
 type ContractHandler struct {
@@ -103,9 +105,29 @@ func (h *ContractHandler) GetAllContract() gin.HandlerFunc {
 		result, err := h.contractBiz.GetAllContract(ctx)
 		if err != nil {
 			utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
+			log.Printf("Lỗi lấy hợp đồng: %+v", err)
 		}
 		var responseList []model.ContractResponse
 		for _, v := range result {
+			empSimple := model.EmployeeSimple{}
+
+			if v.Employee != nil {
+				empSimple.EmployeeID = v.Employee.EmployeeID
+				empSimple.FullName = v.Employee.Fullname
+
+				if v.Employee.Department != nil {
+					empSimple.Department.DepartmentID = v.Employee.Department.ID
+					empSimple.Department.DepartmentName = v.Employee.Department.Name
+
+					if v.Employee.Department.Office != nil {
+						empSimple.Department.Office.OfficeID = v.Employee.Department.Office.ID
+						empSimple.Department.Office.OfficeName = v.Employee.Department.Office.Name
+					}
+				}
+			} else {
+				fmt.Println("Contract", v.ContractId, "không có employee")
+			}
+
 			res := model.ContractResponse{
 				ContractID:    v.ContractId,
 				EffectiveDate: v.EffectiveDate,
@@ -117,19 +139,9 @@ func (h *ContractHandler) GetAllContract() gin.HandlerFunc {
 				CreatedDate:   v.CreatedDate,
 				ContractType:  v.ContractTypeId,
 				ApproveStatus: v.ApproveStatus,
-				Employee: model.EmployeeSimple{
-					EmployeeID: v.Employee.EmployeeID,
-					FullName:   v.Employee.Fullname,
-					Department: model.DepartmentSimple{
-						DepartmentID:   v.Employee.Department.ID,
-						DepartmentName: v.Employee.Department.Name,
-						Office: model.OfficeSimple{
-							OfficeID:   v.Employee.Department.Office.ID,
-							OfficeName: v.Employee.Department.Office.Name,
-						},
-					},
-				},
+				Employee:      empSimple,
 			}
+
 			responseList = append(responseList, res)
 		}
 		utils.ResponseMessage(ctx, errors.MsgListData, http.StatusOK, responseList)
@@ -151,6 +163,24 @@ func (h *ContractHandler) UpdateContract() gin.HandlerFunc {
 		}
 
 		utils.ResponseMessage(c, errors.MsgUpdateSuccess, http.StatusOK, nil)
+	}
+}
+
+func (h *ContractHandler) ReapproveContract() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		if id == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Thiếu mã hợp đồng"})
+			return
+		}
+
+		err := h.contractBiz.UpdateApproveStatus(c.Request.Context(), id, "Chờ duyệt")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Hợp đồng đã gửi yêu cầu duyệt lại"})
 	}
 }
 

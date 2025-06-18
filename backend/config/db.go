@@ -113,6 +113,22 @@ func createEnums(db *gorm.DB) error {
 				'Chờ duyệt'
 			);
 		END IF;
+		-- enum approve_status_enum
+	   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'approve_status_enum') THEN
+		  CREATE TYPE approve_status_enum AS ENUM (
+			 'Đã duyệt',
+			'Không duyệt',
+			'Chờ duyệt'
+		  );
+	   END IF;
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'condition_enum') THEN
+        CREATE TYPE condition_enum AS ENUM (
+            'Chưa hiệu lực',
+            'Đang hiệu lực',
+            'Hết hiệu lực',
+            'Thanh lý'
+        );
+    END IF;
 	END
 	$$;
 	`
@@ -136,6 +152,7 @@ func AutoMigrate(db *gorm.DB) error {
 	// &model.Holiday{},
 	// &model.AllowedWorkingSchedule{},
 	// &model.WorkShifts{},
+	// &hrmmodel.Allowance{}
 	)
 	if err != nil {
 		return fmt.Errorf("migrate thất bại: %w", err)

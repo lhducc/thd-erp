@@ -31,7 +31,7 @@ func (r *AuthenticationHandler) SignIn(ctx *gin.Context) {
 		return
 	}
 
-	ctx.SetCookie("access_token", accessToken, 15*60, "/", "", false, true)
+	ctx.SetCookie("access_token", accessToken, 24*60*60, "/", "", false, true)
 	ctx.SetCookie("refresh_token", refreshToken, 7*24*60*60, "/", "", false, true)
 
 	utils.ResponseMessage(ctx, "Đăng nhập thành công", http.StatusOK, gin.H{

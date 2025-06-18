@@ -278,6 +278,9 @@ func setupAllowanceRoutes(router *gin.RouterGroup, handler *handler.AllowanceHan
 	{
 		group.POST("", handler.Create())
 		group.GET("", handler.GetAll())
+		group.DELETE("/:id", handler.Delete())
+		group.PUT("/:id", handler.Update())
+		group.GET("/:id", handler.GetByID())
 	}
 }
 

@@ -15,9 +15,9 @@ import CreateAllowance from "@/components/CreateAllowance.tsx";
 const AllowancePage = () => {
     const location = useLocation().pathname;
     const {
-        data: types,
-        isPending: pendingTypes,
-        refetch: refetchTypes,
+        data: allowance,
+        isPending: pendingAllowances,
+        refetch: refetchAllowances,
     } = useQuery({
         queryKey: ["allowance"],
         queryFn: getAllAllowancesApi,
@@ -25,11 +25,11 @@ const AllowancePage = () => {
         staleTime: 0,
     });
 
-    const { mutateAsync: deleteTypes } = useMutation({
+    const { mutateAsync: deleteAllowances } = useMutation({
         mutationFn: (id: string) => deleteAllowanceApi(id),
         onSuccess: () => {
             toast.success("Xóa phụ cấp thành công");
-            refetchTypes();
+            refetchAllowances();
         },
         onError: (error) => {
             toast.error(error.message);
@@ -42,8 +42,15 @@ const AllowancePage = () => {
             header: "Mã",
         },
         {
+            accessorKey: "allowance_name",
+            header: "Tên phụ cấp",
+        },
+        {
             accessorKey: "amount",
             header: "Số tiền",
+            cell: ({ row }) => {
+                return new Intl.NumberFormat('vi-VN').format(row.original.amount);
+            },
         },
         {
             accessorKey: "unit",
@@ -52,6 +59,9 @@ const AllowancePage = () => {
         {
             accessorKey: "tax",
             header: "Chịu thuế",
+            cell: ({ row }) => {
+                return row.original.tax ? "Có" : "Không";
+            },
         },
         {
             id: "actions",
@@ -69,16 +79,16 @@ const AllowancePage = () => {
                             }
                             data={data}
                             type="edit"
-                            refetch={refetchTypes}
+                            refetch={refetchAllowances}
                         />
-                        <ConfirmDelete deleteFn={() => deleteTypes(data.id)}/>
+                        <ConfirmDelete deleteFn={() => deleteAllowances(data.id)}/>
                     </div>
                 );
             },
         },
     ]);
 
-    if (pendingTypes) {
+    if (pendingAllowances) {
         return <Loading />;
     }
 
@@ -117,11 +127,11 @@ const AllowancePage = () => {
         <>
             <DataTable
                 columns={columns}
-                data={types || []}
+                data={allowance || []}
                 title="Loại hợp đồng"
                 navLink={navLink}
-                buttonCreate={<CreateAllowance refetch={refetchTypes} />}
-                keyFilter="contract_type"
+                buttonCreate={<CreateAllowance refetch={refetchAllowances} />}
+                keyFilter="allowance_name"
             />
         </>
     );

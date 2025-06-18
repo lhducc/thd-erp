@@ -36,7 +36,6 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-// Define enum values for TypeScript
 const ContractGroup = {
     ConfirmTime: "Hợp đồng xác định thời hạn",
     NoTimeConfirmation: "Hợp đồng không xác định thời hạn",
@@ -140,8 +139,6 @@ const CreateContractType = ({ editBtn, data, type, refetch }: Props) => {
             } else {
                 await createContractType({
                     ...values,
-                    // created_date: new Date().toISOString(),
-                    // is_delete: false,
                 });
             }
         } catch (error) {
@@ -151,27 +148,25 @@ const CreateContractType = ({ editBtn, data, type, refetch }: Props) => {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger>
+            <DialogTrigger asChild>
                 {editBtn ? (
                     editBtn
                 ) : (
-                    <Button>
-                        <Plus />
+                    <Button className="w-full sm:w-auto">
+                        <Plus className="mr-2 h-4 w-4" />
                         Thêm loại hợp đồng
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="md:max-w-2xl">
+            <DialogContent className="w-[95vw] max-w-md sm:max-w-xl md:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    {type === "edit" ? (
-                        <DialogTitle>Chỉnh sửa loại hợp đồng</DialogTitle>
-                    ) : (
-                        <DialogTitle>Thêm loại hợp đồng</DialogTitle>
-                    )}
+                    <DialogTitle className="text-lg sm:text-xl">
+                        {type === "edit" ? "Chỉnh sửa loại hợp đồng" : "Thêm loại hợp đồng"}
+                    </DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
                                 name="contract_type"
@@ -179,7 +174,11 @@ const CreateContractType = ({ editBtn, data, type, refetch }: Props) => {
                                     <FormItem>
                                         <FormLabel>Tên loại hợp đồng</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Nhập tên loại hợp đồng" {...field} />
+                                            <Input
+                                                placeholder="Nhập tên loại hợp đồng"
+                                                {...field}
+                                                className="w-full"
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -193,11 +192,11 @@ const CreateContractType = ({ editBtn, data, type, refetch }: Props) => {
                                         <FormLabel>Nhóm hợp đồng</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Chọn nhóm hợp đồng" />
                                                 </SelectTrigger>
                                             </FormControl>
-                                            <SelectContent>
+                                            <SelectContent className="max-h-60 overflow-auto">
                                                 {Object.values(ContractGroup).map((group) => (
                                                     <SelectItem key={group} value={group}>
                                                         {group}
@@ -211,7 +210,7 @@ const CreateContractType = ({ editBtn, data, type, refetch }: Props) => {
                             />
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <FormField
                                 control={form.control}
                                 name="duration"
@@ -223,6 +222,7 @@ const CreateContractType = ({ editBtn, data, type, refetch }: Props) => {
                                                 type="number"
                                                 min="0"
                                                 placeholder="Nhập thời hạn"
+                                                className="w-full"
                                                 {...field}
                                                 onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                                             />
@@ -239,11 +239,11 @@ const CreateContractType = ({ editBtn, data, type, refetch }: Props) => {
                                         <FormLabel>Đơn vị</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Chọn đơn vị" />
                                                 </SelectTrigger>
                                             </FormControl>
-                                            <SelectContent>
+                                            <SelectContent className="max-h-60 overflow-auto">
                                                 {Object.values(Unit).map((unit) => (
                                                     <SelectItem key={unit} value={unit}>
                                                         {unit}
@@ -263,11 +263,11 @@ const CreateContractType = ({ editBtn, data, type, refetch }: Props) => {
                                         <FormLabel>Hình thức làm việc</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Chọn hình thức" />
                                                 </SelectTrigger>
                                             </FormControl>
-                                            <SelectContent>
+                                            <SelectContent className="max-h-60 overflow-auto">
                                                 {Object.values(WorkingForm).map((form) => (
                                                     <SelectItem key={form} value={form}>
                                                         {form}
@@ -281,19 +281,26 @@ const CreateContractType = ({ editBtn, data, type, refetch }: Props) => {
                             />
                         </div>
 
-                        <Button
-                            type="submit"
-                            className="w-full mt-4"
-                            disabled={pendingCreate || pendingUpdate}
-                        >
-                            {pendingCreate || pendingUpdate ? (
-                                <Loader2 className="animate-spin" />
-                            ) : type === "edit" ? (
-                                "Cập nhật"
-                            ) : (
-                                "Thêm"
-                            )}
-                        </Button>
+                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => setOpen(false)}
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="w-full"
+                                disabled={pendingCreate || pendingUpdate}
+                            >
+                                {pendingCreate || pendingUpdate ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : null}
+                                {type === "edit" ? "Cập nhật" : "Thêm"}
+                            </Button>
+                        </div>
                     </form>
                 </Form>
             </DialogContent>

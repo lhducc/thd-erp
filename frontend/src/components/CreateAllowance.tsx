@@ -5,11 +5,11 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { Loader2, Plus } from "lucide-react";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
+import {Loader2, Plus} from "lucide-react";
+import {z} from "zod";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {useForm} from "react-hook-form";
+import {Button} from "@/components/ui/button";
 import {
     Form,
     FormControl,
@@ -18,11 +18,11 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
-import type { Allowance } from "@/types/allowance";
+import {Input} from "@/components/ui/input";
+import {useEffect, useState} from "react";
+import {useMutation} from "@tanstack/react-query";
+import {toast} from "sonner";
+import type {Allowance} from "@/types/allowance";
 import {
     createAllowanceApi,
     updateAllowanceApi,
@@ -49,10 +49,10 @@ type Props = {
     refetch?: () => void;
 };
 
-const CreateAllowance = ({ editBtn, data, type, refetch }: Props) => {
+const CreateAllowance = ({editBtn, data, type, refetch}: Props) => {
     const [open, setOpen] = useState(false);
 
-    const { mutateAsync: createAllowance, isPending: pendingCreate } = useMutation({
+    const {mutateAsync: createAllowance, isPending: pendingCreate} = useMutation({
         mutationFn: (payload: Omit<Allowance, "id" | "is_deleted" | "created_date">) =>
             createAllowanceApi({
                 ...payload,
@@ -71,8 +71,8 @@ const CreateAllowance = ({ editBtn, data, type, refetch }: Props) => {
         },
     });
 
-    const { mutateAsync: updateAllowance, isPending: pendingUpdate } = useMutation({
-        mutationFn: ({ id, payload }: { id: string; payload: Partial<Allowance> }) =>
+    const {mutateAsync: updateAllowance, isPending: pendingUpdate} = useMutation({
+        mutationFn: ({id, payload}: { id: string; payload: Partial<Allowance> }) =>
             updateAllowanceApi(id, payload),
         onSuccess: () => {
             refetch?.();
@@ -133,39 +133,50 @@ const CreateAllowance = ({ editBtn, data, type, refetch }: Props) => {
                     editBtn
                 ) : (
                     <Button>
-                        <Plus />
+                        <Plus/>
                         Thêm phụ cấp
                     </Button>
                 )}
             </DialogTrigger>
             <DialogContent className="md:max-w-2xl">
-                <DialogHeader>
-                    {type === "edit" ? (
-                        <DialogTitle>Chỉnh sửa phụ cấp</DialogTitle>
-                    ) : (
-                        <DialogTitle>Thêm phụ cấp</DialogTitle>
-                    )}
-                </DialogHeader>
+                <div className="flex md:flex-row flex-col gap-3 justify-between items-center w-full p-5">
+                    <DialogHeader>
+                        {type === "edit" ? (
+                            <DialogTitle>Chỉnh sửa phụ cấp</DialogTitle>
+                        ) : (
+                            <DialogTitle>Thêm phụ cấp</DialogTitle>
+                        )}
+                    </DialogHeader>
+                    {
+                        data?.id ? (
+                            <div className="border p-3 w-fit rounded-lg border-black">
+                                {data?.id}
+                            </div>
+                        ) :
+                            null
+                    }
+
+                </div>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
                                 name="allowance_name"
-                                render={({ field }) => (
+                                render={({field}) => (
                                     <FormItem>
                                         <FormLabel>Tên phụ cấp</FormLabel>
                                         <FormControl>
                                             <Input placeholder="Nhập tên phụ cấp" {...field} />
                                         </FormControl>
-                                        <FormMessage />
+                                        <FormMessage/>
                                     </FormItem>
                                 )}
                             />
                             <FormField
                                 control={form.control}
                                 name="amount"
-                                render={({ field }) => (
+                                render={({field}) => (
                                     <FormItem>
                                         <FormLabel>Số tiền</FormLabel>
                                         <FormControl>
@@ -177,7 +188,7 @@ const CreateAllowance = ({ editBtn, data, type, refetch }: Props) => {
                                                 onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                                             />
                                         </FormControl>
-                                        <FormMessage />
+                                        <FormMessage/>
                                     </FormItem>
                                 )}
                             />
@@ -187,36 +198,37 @@ const CreateAllowance = ({ editBtn, data, type, refetch }: Props) => {
                             <FormField
                                 control={form.control}
                                 name="unit"
-                                render={({ field }) => (
+                                render={({field}) => (
                                     <FormItem>
                                         <FormLabel>Đơn vị</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Chọn đơn vị" />
+                                                    <SelectValue placeholder="Chọn đơn vị"/>
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
                                                 <SelectItem value="VND">VND</SelectItem>
                                                 <SelectItem value="USD">USD</SelectItem>
                                                 <SelectItem value="EUR">EUR</SelectItem>
-                                                <SelectItem value="%">%</SelectItem>
+                                                <SelectItem value="JPY">JPY</SelectItem>
+                                                <SelectItem value="GBP">GBP</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        <FormMessage />
+                                        <FormMessage/>
                                     </FormItem>
                                 )}
                             />
                             <FormField
                                 control={form.control}
                                 name="tax"
-                                render={({ field }) => (
+                                render={({field}) => (
                                     <FormItem>
                                         <FormLabel>Chịu thuế</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Chọn trạng thái" />
+                                                    <SelectValue placeholder="Chọn trạng thái"/>
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -224,7 +236,7 @@ const CreateAllowance = ({ editBtn, data, type, refetch }: Props) => {
                                                 <SelectItem value="No">Không</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        <FormMessage />
+                                        <FormMessage/>
                                     </FormItem>
                                 )}
                             />
@@ -236,7 +248,7 @@ const CreateAllowance = ({ editBtn, data, type, refetch }: Props) => {
                             disabled={pendingCreate || pendingUpdate}
                         >
                             {pendingCreate || pendingUpdate ? (
-                                <Loader2 className="animate-spin" />
+                                <Loader2 className="animate-spin"/>
                             ) : type === "edit" ? (
                                 "Cập nhật"
                             ) : (

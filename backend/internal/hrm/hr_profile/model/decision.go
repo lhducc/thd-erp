@@ -15,8 +15,8 @@ type Decision struct {
 	DecisionTypeID string    `gorm:"type:varchar(6);column:decision_type_id" json:"decision_type_id"`
 
 	// Nếu bạn có struct Employee và DecisionType, bạn có thể dùng các khóa ngoại:
-	Employee *Employee `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"employee,omitempty"`
-	// DecisionType   DecisionType `gorm:"foreignKey:DecisionTypeID"`
+	Employee     *Employee     `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"employee,omitempty"`
+	DecisionType *DecisionType `gorm:"foreignKey:DecisionTypeID;references:DecisionTypeID" json:"decision_type,omitempty"`
 }
 
 func (Decision) TableName() string {
@@ -34,6 +34,21 @@ type DecisionCreate struct {
 	CreatedDate    time.Time `gorm:"column:created_date" json:"created_date"`
 	EmployeeID     string    `gorm:"column:employee_id" json:"employee_id"`
 	DecisionTypeID string    `gorm:"column:decision_type_id" json:"decision_type_id"`
+}
+
+type DecisionResponse struct {
+	DecisionID       string    `json:"decision_id"`
+	DecisionName     string    `json:"decision_name"`
+	EmployeeID       string    `json:"employee_id"`
+	EmployeeName     string    `json:"employee_name"`
+	DecisionTypeID   string    `json:"decision_type_id"`
+	DecisionTypeName string    `json:"decision_type_name"`
+	EffectiveDate    string    `json:"effective_date"` // YYYY-MM-DD
+	SignDate         string    `json:"sign_date"`      // YYYY-MM-DD
+	Condition        string    `json:"condition"`
+	Content          string    `json:"content"`
+	AttachedFile     string    `json:"attached_file"`
+	CreatedDate      time.Time `json:"created_date"`
 }
 
 func (DecisionCreate) TableName() string { return "decision" }

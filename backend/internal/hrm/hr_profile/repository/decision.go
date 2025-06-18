@@ -26,7 +26,9 @@ func (s *decisionStore) CreateDecision(context context.Context, data *model.Deci
 
 func (r *decisionStore) GetDecision(ctx context.Context, id string) (*model.Decision, error) {
 	var decision model.Decision
-	if err := r.db.WithContext(ctx).Table("decision").
+	if err := r.db.WithContext(ctx).
+		Preload("Employee").
+		Preload("DecisionType").
 		Where("decision_id = ?", id).
 		First(&decision).Error; err != nil {
 		return nil, err
@@ -35,13 +37,17 @@ func (r *decisionStore) GetDecision(ctx context.Context, id string) (*model.Deci
 }
 
 func (r *decisionStore) GetAllDecision(ctx context.Context) ([]model.Decision, error) {
+	var decisions []model.Decision
 
-	var positions []model.Decision
-	if err := r.db.WithContext(ctx).Table("decision").Find(&positions).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Joins("LEFT JOIN decisiontype dt ON dt.decision_type_id = decision.decision_type_id").
+		Preload("Employee").
+		Preload("DecisionType").
+		Find(&decisions).Error; err != nil {
 		return nil, err
 	}
 
-	return positions, nil
+	return decisions, nil
 }
 
 func (r *decisionStore) UpdateDecision(ctx context.Context, id string, data *model.DecisionCreate) error {

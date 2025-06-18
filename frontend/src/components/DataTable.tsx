@@ -68,6 +68,8 @@ export default function DataTable<TData, TValue>({
         pageSize: 10,
     });
 
+    console.log(data)
+
     const table = useReactTable({
         data,
         columns,
@@ -109,7 +111,7 @@ export default function DataTable<TData, TValue>({
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
-                            // Nếu xóa hover:bg-[#DB3B21] thì khi hover bg sẽ thành white
+                            // if remove hover:bg-[#DB3B21] when user hover bg will become white
                             <TableRow key={headerGroup.id} className="bg-[#DB3B21] hover:bg-[#DB3B21]">
                                 {headerGroup.headers.map((header) => {
                                     return (

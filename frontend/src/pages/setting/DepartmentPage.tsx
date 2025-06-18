@@ -1,12 +1,12 @@
 import {
   deleteDepartmentApi,
   getAllDepartmentsApi,
-} from "@/apis/department.api";
-import ConfirmDelete from "@/components/ConfirmDelete";
-import CreateDepartmentForm from "@/components/CreateDepartmentForm";
-import DataTable from "@/components/DataTable";
-import Loading from "@/components/Loading";
-import { Button } from "@/components/ui/button";
+} from "@/apis/department.api.ts";
+import ConfirmDelete from "@/components/ConfirmDelete.tsx";
+import CreateDepartmentForm from "@/components/CreateDepartmentForm.tsx";
+import DataTable from "@/components/DataTable.tsx";
+import Loading from "@/components/Loading.tsx";
+import { Button } from "@/components/ui/button.tsx";
 import type { Department } from "@/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";

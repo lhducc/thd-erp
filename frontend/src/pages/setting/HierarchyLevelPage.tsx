@@ -1,13 +1,13 @@
 import {
   deleteHierarchyLevelApi,
   getAllHierarchyLevelApi,
-} from "@/apis/hierarchyLevel.api";
-import ConfirmDelete from "@/components/ConfirmDelete";
-import CreateHierarchyLevelForm from "@/components/CreateHierarchyLevelForm";
-import DataTable from "@/components/DataTable";
-import Loading from "@/components/Loading";
-import TitleNavLink from "@/components/TitleNavLink";
-import { Button } from "@/components/ui/button";
+} from "@/apis/hierarchyLevel.api.ts";
+import ConfirmDelete from "@/components/ConfirmDelete.tsx";
+import CreateHierarchyLevelForm from "@/components/CreateHierarchyLevelForm.tsx";
+import DataTable from "@/components/DataTable.tsx";
+import Loading from "@/components/Loading.tsx";
+import TitleNavLink from "@/components/TitleNavLink.tsx";
+import { Button } from "@/components/ui/button.tsx";
 import type { HierarchyLevel } from "@/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";

@@ -1,9 +1,9 @@
-import { deleteOfficeApi, getAllOfficesApi } from "@/apis/office.api";
-import ConfirmDelete from "@/components/ConfirmDelete";
-import CreateOfficeForm from "@/components/CreateOfficeForm";
-import DataTable from "@/components/DataTable";
-import Loading from "@/components/Loading";
-import { Button } from "@/components/ui/button";
+import { deleteOfficeApi, getAllOfficesApi } from "@/apis/office.api.ts";
+import ConfirmDelete from "@/components/ConfirmDelete.tsx";
+import CreateOfficeForm from "@/components/CreateOfficeForm.tsx";
+import DataTable from "@/components/DataTable.tsx";
+import Loading from "@/components/Loading.tsx";
+import { Button } from "@/components/ui/button.tsx";
 import type { Office } from "@/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";

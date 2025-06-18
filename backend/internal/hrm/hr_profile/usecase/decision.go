@@ -31,20 +31,18 @@ func NewDecisionBiz(store DecisionRepo, employeeRepo EmployeeRepo) *decisionBiz 
 	}
 }
 
-func (biz *decisionBiz) CreateDecision(context context.Context, data *model.DecisionCreate) error {
+func (biz *decisionBiz) CreateDecision(ctx context.Context, data *model.DecisionCreate) (string, error) {
 	code, err := utils.GenerateCode("QD", 6, func() (string, error) {
 		var last model.Decision
-		err := biz.repo.GetLastDecisionByCode(context, &last)
+		err := biz.repo.GetLastDecisionByCode(ctx, &last)
 		if err != nil {
 			return "", err
 		}
 		return last.DecisionID, nil
 	})
-
 	if err != nil {
-		return fmt.Errorf("không thể tạo mã: %w", err)
+		return "", fmt.Errorf("không thể tạo mã: %w", err)
 	}
-
 	decision := &model.Decision{
 		DecisionID:     code,
 		DecisionName:   data.DecisionName,
@@ -57,29 +55,34 @@ func (biz *decisionBiz) CreateDecision(context context.Context, data *model.Deci
 		EmployeeID:     data.EmployeeID,
 		CreatedDate:    time.Now(),
 	}
+
 	check, err := biz.repo.CheckExistName(data.DecisionName)
-	if err != nil || check {
-		return err
+	if err != nil {
+		return "", err
 	}
-	now := time.Now()
-	if decision.SignDate.After(now) {
-		return errors.New("Ngày ký không thể trong tương lai")
+	if check {
+		return "", fmt.Errorf("Tên quyết định đã tồn tại")
 	}
 
+	now := time.Now()
+	if decision.SignDate.After(now) {
+		return "", errors.New("Ngày ký không thể trong tương lai")
+	}
 	if decision.EffectiveDate.Before(decision.SignDate) {
-		return errors.New("Ngày hiệu lực không thể trước ngày ký")
+		return "", errors.New("Ngày hiệu lực không thể trước ngày ký")
 	}
 
 	_, err = biz.employeeRepo.GetUserById(decision.EmployeeID)
 	if err != nil {
-		return err
-	}
-	err = biz.repo.CreateDecision(context, decision)
-	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	err = biz.repo.CreateDecision(ctx, decision)
+	if err != nil {
+		return "", err
+	}
+
+	return code, nil
 }
 
 func (biz *decisionBiz) GetDecision(ctx context.Context, id string) (*model.Decision, error) {

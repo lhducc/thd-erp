@@ -17,6 +17,7 @@ type DocumentTypeRepo interface {
 	GetDocumentTypeById(ctx context.Context, id string) (*model.EmployeeDocumentType, error)
 	GetAllDocumentType(ctx context.Context) ([]*model.EmployeeDocumentType, error)
 	GetLastDocumentTypeByCode(ctx context.Context, documentType *model.EmployeeDocumentType) error
+	GetEnumDocumentType(ctx context.Context) ([]string, error)
 }
 
 type DocumentTypeBiz struct {
@@ -99,4 +100,11 @@ func (b *DocumentTypeBiz) GenerateDocumentTypeCode(ctx context.Context) (string,
 	}
 
 	return fmt.Sprintf("DT%05d", nextNumber), nil
+}
+func (b *DocumentTypeBiz) GetEnumDocumentType(ctx context.Context) ([]string, error) {
+	enumValue, err := b.repo.GetEnumDocumentType(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get enum value: %w", err)
+	}
+	return enumValue, nil
 }

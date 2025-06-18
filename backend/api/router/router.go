@@ -196,6 +196,7 @@ func setupDocumentTypeRoutes(r *gin.RouterGroup, h *handler.DocumentTypeHandler)
 		group.DELETE("/:id", h.DeleteDocumentType())
 		group.GET("/:id", h.GetDocumentTypeById())
 		group.GET("", h.GetAllDocumentType())
+		group.GET("/enums", h.GetEnumDocumentType())
 	}
 }
 

@@ -1,10 +1,10 @@
-import { deleteJobTitleApi, getJobTitles } from "@/apis/jobTitle.api";
-import ConfirmDelete from "@/components/ConfirmDelete";
-import CreateJobTitleForm from "@/components/CreateJobTitleForm";
-import DataTable from "@/components/DataTable";
-import Loading from "@/components/Loading";
-import TitleNavLink from "@/components/TitleNavLink";
-import { Button } from "@/components/ui/button";
+import { deleteJobTitleApi, getJobTitles } from "@/apis/jobTitle.api.ts";
+import ConfirmDelete from "@/components/ConfirmDelete.tsx";
+import CreateJobTitleForm from "@/components/CreateJobTitleForm.tsx";
+import DataTable from "@/components/DataTable.tsx";
+import Loading from "@/components/Loading.tsx";
+import TitleNavLink from "@/components/TitleNavLink.tsx";
+import { Button } from "@/components/ui/button.tsx";
 import type { JobTitle } from "@/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";

@@ -1,10 +1,10 @@
-import { deletePositionApi, getAllPositionApi } from "@/apis/position.api";
-import ConfirmDelete from "@/components/ConfirmDelete";
-import CreatePositionForm from "@/components/CreatePositionForm";
-import DataTable from "@/components/DataTable";
-import Loading from "@/components/Loading";
-import TitleNavLink from "@/components/TitleNavLink";
-import { Button } from "@/components/ui/button";
+import { deletePositionApi, getAllPositionApi } from "@/apis/position.api.ts";
+import ConfirmDelete from "@/components/ConfirmDelete.tsx";
+import CreatePositionForm from "@/components/CreatePositionForm.tsx";
+import DataTable from "@/components/DataTable.tsx";
+import Loading from "@/components/Loading.tsx";
+import TitleNavLink from "@/components/TitleNavLink.tsx";
+import { Button } from "@/components/ui/button.tsx";
 import type { Position } from "@/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";

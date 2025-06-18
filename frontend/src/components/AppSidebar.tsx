@@ -97,21 +97,21 @@ const AppSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
                         <SidebarMenuSub>
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <Link to={PATH.OFFICE}>
+                              <Link to={PATH.SETTING_OFFICE}>
                                 <span>Văn Phòng</span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <Link to={PATH.DEPARTMENT}>
+                              <Link to={PATH.SETTING_DEPARTMENT}>
                                 <span>Phòng ban</span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <Link to={PATH.POSITION}>
+                              <Link to={PATH.SETTING_POSITION}>
                                 <span>Chức danh</span>
                               </Link>
                             </SidebarMenuSubButton>
@@ -129,28 +129,28 @@ const AppSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
                         <SidebarMenuSub>
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <Link to={PATH.HOME}>
+                              <Link to={PATH.SETTING_CONTRACT}>
                                 <span>Hợp đồng</span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <Link to={PATH.HOME}>
+                              <Link to={PATH.DECISION}>
                                 <span>Quyết định</span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <Link to={PATH.HOME}>
+                              <Link to={PATH.INSURANCE}>
                                 <span>Thông tin bảo hiểm</span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <Link to={PATH.HOME}>
+                              <Link to={PATH.SETTING_EMPLOYEE_DOCUMENT}>
                                 <span>Tài liệu nhân sự</span>
                               </Link>
                             </SidebarMenuSubButton>

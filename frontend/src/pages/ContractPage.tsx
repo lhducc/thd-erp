@@ -33,9 +33,9 @@ const ContractPage = () => {
             case 'approved':
                 return contract.approve_status === 'Đã duyệt';
             case 'pending':
-                return contract.approve_status === 'Chưa duyệt';
+                return contract.approve_status === 'Chờ duyệt';
             case 'rejected':
-                return contract.approve_status === 'Không duyệt';
+                return contract.approve_status === 'Chưa duyệt';
             default:
                 return true;
         }
@@ -47,8 +47,8 @@ const ContractPage = () => {
 
         return {
             approved: contracts.filter(c => c.approve_status === 'Đã duyệt').length,
-            pending: contracts.filter(c => c.approve_status === 'Chưa duyệt').length,
-            rejected: contracts.filter(c => c.approve_status === 'Không duyệt').length,
+            pending: contracts.filter(c => c.approve_status === 'Chờ duyệt').length,
+            rejected: contracts.filter(c => c.approve_status === 'Chưa duyệt').length,
         };
     };
 

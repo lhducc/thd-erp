@@ -1,22 +1,22 @@
-const createPath = () => {
-  const PROFILE = "/profile";
-  const CONTRACT = "/contract";
-  const DECISION = "/decision";
-  return {
-    HOME: "/",
-    SIGN_IN: "/sign-in",
-    FIRSRT_CHANGE_PASSWORD: "/first-change-password",
-    PROFILE,
-    CONTRACT,
-    DECISION,
-    OFFICE: "/office",
-    DEPARTMENT: "/department",
-    POSITION: "/position",
-    JOB_TITLE: "/job-title",
-    HIERARCHY_LEVEL: "/hierarchy-level",
-  };
-};
+const SETTING_BASE = "/setting";
 
-const PATH = createPath();
+const PATH = {
+  HOME: "/",
+  SIGN_IN: "/sign-in",
+  FIRST_CHANGE_PASSWORD: "/first-change-password",
+  PROFILE: "/profile",
+  CONTRACT: "/contract",
+  DECISION: "/decision",
+  INSURANCE: "/insurance",
+
+  SETTING: SETTING_BASE,
+  SETTING_OFFICE: `${SETTING_BASE}/office`,
+  SETTING_DEPARTMENT: `${SETTING_BASE}/department`,
+  SETTING_POSITION: `${SETTING_BASE}/position`,
+  SETTING_JOB_TITLE: `${SETTING_BASE}/job-title`,
+  SETTING_HIERARCHY_LEVEL: `${SETTING_BASE}/hierarchy-level`,
+  SETTING_CONTRACT: `${SETTING_BASE}/contract`,
+  SETTING_EMPLOYEE_DOCUMENT: `${SETTING_BASE}/employee-document`,
+};
 
 export default PATH;

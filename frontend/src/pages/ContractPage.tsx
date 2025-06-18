@@ -149,7 +149,7 @@ const ContractPage = () => {
                     data-tabs-toggle="#default-tab-content" role="tablist">
                     <li className="me-2" role="presentation">
                         <button
-                            className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'approved' ? 'border-blue-500 text-blue-600' : 'hover:text-gray-600 hover:border-gray-300'}`}
+                            className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'approved' ? 'border-[#DB3B21]' : 'hover:text-gray-600 hover:border-gray-300 text-gray-500'}`}
                             onClick={() => setActiveTab('approved')}
                             type="button"
                             role="tab"
@@ -159,7 +159,7 @@ const ContractPage = () => {
                     </li>
                     <li className="me-2" role="presentation">
                         <button
-                            className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'pending' ? 'border-blue-500 text-blue-600' : 'hover:text-gray-600 hover:border-gray-300'}`}
+                            className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'pending' ? 'border-[#DB3B21]' : 'hover:text-gray-600 hover:border-gray-300 text-gray-500'}`}
                             onClick={() => setActiveTab('pending')}
                             type="button"
                             role="tab"
@@ -169,7 +169,7 @@ const ContractPage = () => {
                     </li>
                     <li className="me-2" role="presentation">
                         <button
-                            className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'rejected' ? 'border-blue-500 text-blue-600' : 'hover:text-gray-600 hover:border-gray-300'}`}
+                            className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'rejected' ? 'border-[#DB3B21]' : 'hover:text-gray-600 hover:border-gray-300 text-gray-500'}`}
                             onClick={() => setActiveTab('rejected')}
                             type="button"
                             role="tab"

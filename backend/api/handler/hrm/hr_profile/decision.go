@@ -62,24 +62,76 @@ func (h *DecisionHandler) GetDecision() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idParam := c.Param("id")
 
-		result, err := h.decisionBiz.GetDecision(c.Request.Context(), idParam)
+		d, err := h.decisionBiz.GetDecision(c.Request.Context(), idParam)
 		if err != nil {
 			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusInternalServerError, nil)
 			return
 		}
 
-		utils.ResponseMessage(c, "Danh sách dữ liệu", http.StatusOK, result)
+		response := model.DecisionResponse{
+			DecisionID:       d.DecisionID,
+			DecisionName:     d.DecisionName,
+			EmployeeID:       d.EmployeeID,
+			EmployeeName:     "",
+			DecisionTypeID:   d.DecisionTypeID,
+			DecisionTypeName: "",
+			EffectiveDate:    d.EffectiveDate.Format("2006-01-02"),
+			SignDate:         d.SignDate.Format("2006-01-02"),
+			Condition:        d.Condition,
+			Content:          d.Content,
+			AttachedFile:     d.AttachedFile,
+			CreatedDate:      d.CreatedDate,
+		}
+
+		if d.Employee != nil {
+			response.EmployeeName = d.Employee.Fullname
+		}
+
+		if d.DecisionType != nil {
+			response.DecisionTypeName = d.DecisionType.DecisionType
+		}
+
+		utils.ResponseMessage(c, "Thông tin quyết định", http.StatusOK, response)
 	}
 }
 
 func (h *DecisionHandler) GetAllDecision() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		result, err := h.decisionBiz.GetAllDecision(ctx)
+		decisions, err := h.decisionBiz.GetAllDecision(ctx)
 		if err != nil {
 			utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
 			return
 		}
-		utils.ResponseMessage(ctx, "Danh sách dữ liệu", http.StatusOK, result)
+
+		var responses []model.DecisionResponse
+		for _, d := range decisions {
+			response := model.DecisionResponse{
+				DecisionID:       d.DecisionID,
+				DecisionName:     d.DecisionName,
+				EmployeeID:       d.EmployeeID,
+				EmployeeName:     "",
+				DecisionTypeID:   d.DecisionTypeID,
+				DecisionTypeName: "",
+				EffectiveDate:    d.EffectiveDate.Format("2006-01-02"),
+				SignDate:         d.SignDate.Format("2006-01-02"),
+				Condition:        d.Condition,
+				Content:          d.Content,
+				AttachedFile:     d.AttachedFile,
+				CreatedDate:      d.CreatedDate,
+			}
+
+			if d.Employee != nil {
+				response.EmployeeName = d.Employee.Fullname
+			}
+
+			if d.DecisionType != nil {
+				response.DecisionTypeName = d.DecisionType.DecisionType
+			}
+
+			responses = append(responses, response)
+		}
+
+		utils.ResponseMessage(ctx, "Danh sách dữ liệu", http.StatusOK, responses)
 	}
 }
 

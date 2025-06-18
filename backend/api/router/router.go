@@ -181,6 +181,7 @@ func setupContractRoutes(router *gin.RouterGroup, handler *handler.ContractHandl
 	contractGroup := router.Group("/contract")
 	contractGroup.POST("", handler.CreateContract())
 	contractGroup.PUT("/:id", handler.UpdateContract())
+	contractGroup.PUT("/:id/reapprove", handler.ReapproveContract())
 	contractGroup.DELETE("/:id", handler.DeleteContract())
 	contractGroup.GET("/:id", handler.GetContract())
 	contractGroup.GET("", handler.GetAllContract())

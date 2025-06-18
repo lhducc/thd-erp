@@ -7,6 +7,7 @@ import (
 	utils "erp/backend/pkg"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"strconv"
 	"time"
 )
@@ -73,6 +74,21 @@ func (biz *contractBiz) CreateContract(ctx context.Context, data *hrmmodel.Contr
 		if err := txRepo.CreateContract(ctx, contract); err != nil {
 			return fmt.Errorf("không thể tạo hợp đồng: %w", err)
 		}
+		unique := map[string]struct{}{}
+		for _, aid := range data.AllowanceIDs {
+			if _, exists := unique[aid]; exists {
+				continue
+			}
+			unique[aid] = struct{}{}
+			ca := &hrmmodel.ContractAllowance{
+				ID:          uuid.NewString(),
+				ContractID:  contract.ContractId,
+				AllowanceID: aid,
+			}
+			if err := txRepo.CreateContractAllowance(ctx, ca); err != nil {
+				return fmt.Errorf("không thể lưu phụ cấp cho hợp đồng: %w", err)
+			}
+		}
 		return nil
 	})
 }
@@ -84,12 +100,67 @@ func (biz *contractBiz) GetContract(ctx context.Context, id string) (*hrmmodel.C
 	}
 	return Contract, nil
 }
+
+func determineCondition(start, end time.Time) string {
+	now := time.Now()
+	switch {
+	case now.Before(start):
+		return "Chưa hiệu lực"
+	case now.After(end):
+		return "Hết hiệu lực"
+	default:
+		return "Đang hiệu lực"
+	}
+}
+
+func isExpired(contract *hrmmodel.Contract) bool {
+	return contract.ExpiredDate.Before(time.Now())
+}
+
+func (biz *contractBiz) UpdateApproveStatus(ctx context.Context, id string, status string) error {
+	contract, err := biz.repo.GetContract(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if contract.ApproveStatus != "Không duyệt" {
+		return fmt.Errorf("Chỉ được yêu cầu duyệt lại khi hợp đồng bị từ chối")
+	}
+
+	return biz.repo.UpdateApproveStatus(ctx, id, "Chờ duyệt")
+}
+
 func (biz *contractBiz) UpdateContract(ctx context.Context, id string, data *hrmmodel.ContractCreate) error {
+	contract, err := biz.repo.GetContract(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if contract.ApproveStatus == "Đã duyệt" {
+		return errors.New("Không thể chỉnh sửa hợp đồng đã được duyệt")
+	}
+
+	if data.Condition == "Thanh lý" {
+		if !isExpired(contract) {
+			return errors.New("Chỉ có thể thanh lý hợp đồng đã hết hiệu lực")
+		}
+		data.Condition = "Thanh lý"
+	} else {
+		data.Condition = determineCondition(data.EffectiveDate, data.ExpiredDate)
+	}
+
+	if contract.ApproveStatus == "Chưa duyệt" {
+		data.ApproveStatus = "Đang duyệt"
+	} else {
+		data.ApproveStatus = contract.ApproveStatus
+	}
+
 	if err := biz.repo.UpdateContract(ctx, id, data); err != nil {
 		return err
 	}
 	return nil
 }
+
 func (biz *contractBiz) DeleteContract(ctx context.Context, id string) error {
 	if err := biz.repo.DeleteContract(ctx, id); err != nil {
 		return err

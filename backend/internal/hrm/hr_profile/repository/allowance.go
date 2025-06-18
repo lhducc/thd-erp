@@ -41,7 +41,8 @@ func (r *allowanceRepo) GetLastCode(ctx context.Context) (string, error) {
 	var last model.Allowance
 	err := r.db.WithContext(ctx).
 		Where("id LIKE ?", "PC%").
-		Order("id DESC").
+		Order("CAST(SUBSTRING(id FROM 3) AS INTEGER) DESC").
+		//Order("LENGTH(id) DESC, id DESC").
 		First(&last).Error
 
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {

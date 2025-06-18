@@ -14,4 +14,6 @@ type ContractRepo interface {
 	CheckExistName(name string) (bool, error)
 	GetLastContractByCode(context.Context, *model.Contract) error
 	WithTransaction(ctx context.Context, fn func(txRepo ContractRepo) error) error
+	CreateContractAllowance(ctx context.Context, ca *model.ContractAllowance) error
+	UpdateApproveStatus(ctx context.Context, id string, status string) error
 }

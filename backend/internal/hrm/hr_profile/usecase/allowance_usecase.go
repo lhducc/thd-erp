@@ -23,10 +23,10 @@ func NewAllowanceBiz(repo repository.AllowanceRepository) AllowanceUsecase {
 }
 
 func (b *allowanceBiz) Create(ctx context.Context, data *model.AllowanceCreate) error {
-	code, err := utils.GenerateCodeAllowance("PC", 3, func() (string, error) {
+	code, err := utils.GenerateCodeAllowance("PC", 4, func() (string, error) {
 		return b.repo.GetLastCode(ctx)
 	})
-
+	
 	if err != nil {
 		return fmt.Errorf("không thể tạo mã: %w", err)
 	}

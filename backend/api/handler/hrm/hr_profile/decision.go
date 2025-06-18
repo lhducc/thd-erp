@@ -16,7 +16,7 @@ import (
 )
 
 type DecisionBiz interface {
-	CreateDecision(context context.Context, data *model.DecisionCreate) error
+	CreateDecision(ctx context.Context, data *model.DecisionCreate) (string, error)
 	GetDecision(ctx context.Context, id string) (*model.Decision, error)
 	GetAllDecision(ctx context.Context) ([]model.Decision, error)
 	UpdateDecision(ctx context.Context, id string, data *model.DecisionCreate) error
@@ -48,13 +48,14 @@ func (h *DecisionHandler) CreateDecision() gin.HandlerFunc {
 			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
 			return
 		}
-
-		if err := h.decisionBiz.CreateDecision(c.Request.Context(), &data); err != nil {
+		code, err := h.decisionBiz.CreateDecision(c.Request.Context(), &data)
+		if err != nil {
 			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusInternalServerError, nil)
-			return
 		}
+		utils.ResponseMessage(c, "Tạo thành công", http.StatusOK, gin.H{
+			"decision_id": code,
+		})
 
-		utils.ResponseMessage(c, "Tạo thành công", http.StatusOK, nil)
 	}
 }
 

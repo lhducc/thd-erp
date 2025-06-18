@@ -14,7 +14,6 @@ type Decision struct {
 	EmployeeID     string    `gorm:"type:varchar(8);column:employee_id" json:"employee_id"`
 	DecisionTypeID string    `gorm:"type:varchar(6);column:decision_type_id" json:"decision_type_id"`
 
-	// Nếu bạn có struct Employee và DecisionType, bạn có thể dùng các khóa ngoại:
 	Employee     *Employee     `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"employee,omitempty"`
 	DecisionType *DecisionType `gorm:"foreignKey:DecisionTypeID;references:DecisionTypeID" json:"decision_type,omitempty"`
 }

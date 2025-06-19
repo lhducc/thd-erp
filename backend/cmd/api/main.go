@@ -11,6 +11,7 @@ import (
 
 func main() {
 	config.LoadConfig()
+	config.LoadMailConfig()
 	config.ConnectPostgres()
 
 	db := config.GetDB()

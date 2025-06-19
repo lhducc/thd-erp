@@ -4,6 +4,7 @@ import (
 	"context"
 	"erp/backend/internal/hrm/hr_profile/model"
 	utils "erp/backend/pkg"
+	"erp/backend/pkg/mail"
 	"errors"
 	"fmt"
 )
@@ -77,7 +78,9 @@ func (s *employeeBiz) CreateEmployeeWithAccount(employee model.Employee) error {
 		return err
 	}
 
-	//mail.SendEmailWithAccountInfo(account.LoginMail, employee.Fullname, password)
+	if err := mail.SendEmailWithAccountInfo(employee.Email, employee.Fullname, password); err != nil {
+		return fmt.Errorf("tạo nhân viên thành công nhưng gửi email thất bại: %w", err)
+	}
 
 	if err := s.repo.UpdateEmployeeWithAccount(&employee, account.ID); err != nil {
 		return err

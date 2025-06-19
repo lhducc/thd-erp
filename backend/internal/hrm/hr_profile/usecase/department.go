@@ -27,7 +27,7 @@ func NewDepartmentBiz(store DepartmentRepo) *departmentBiz {
 
 func (biz *departmentBiz) CreateDepartment(context context.Context, data *model.DepartmentCreate) error {
 	data.CreatedDate = utils.GetCurrentDate()
-	code, err := utils.GenerateCode("BP", 4, func() (string, error) {
+	code, err := utils.GenerateCode("PB", 4, func() (string, error) {
 		var last model.Department
 		err := biz.repo.GetLastDepartmentByCode(context, &last)
 		if err != nil {

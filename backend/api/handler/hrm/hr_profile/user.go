@@ -19,7 +19,7 @@ type EmployeeBiz interface {
 	GetUserById(id string) (model.Employee, error)
 	UpdateEmployee(id string, updatedEmployee model.Employee) error
 	DeleteEmployee(id string) error
-	GetAllEmployees(page, pageSize int) ([]model.Employee, error)
+	GetAllEmployees(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error)
 	GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error)
 	ExportEmployeeTest(selectedFields []string) ([]byte, string, error)
 }
@@ -72,7 +72,7 @@ func (biz *EmployeeHandler) CreateEmployee() gin.HandlerFunc {
 	}
 }
 
-func (biz *EmployeeHandler) GetAllEmployees() gin.HandlerFunc {
+func (h *EmployeeHandler) GetAllEmployees() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		page, err := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 		if err != nil || page < 1 {
@@ -82,19 +82,40 @@ func (biz *EmployeeHandler) GetAllEmployees() gin.HandlerFunc {
 		if err != nil || pageSize < 1 {
 			pageSize = 10
 		}
-		employees, err := biz.employeeBiz.GetAllEmployees(page, pageSize)
+
+		// filter
+		filterFields := []string{"job_title_id", "department_id", "position_id", "office_id"}
+		filters := make(map[string]interface{})
+
+		for _, field := range filterFields {
+			values := ctx.QueryArray(field)
+			cleaned := make([]string, 0)
+			for _, v := range values {
+				for _, part := range strings.Split(v, ",") {
+					if trimmed := strings.TrimSpace(part); trimmed != "" {
+						cleaned = append(cleaned, trimmed)
+					}
+				}
+			}
+			if len(cleaned) > 0 {
+				filters[field] = cleaned
+			}
+		}
+
+		// get data
+		employees, totalRecords, err := h.employeeBiz.GetAllEmployees(page, pageSize, filters)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}
 
-		// Bổ sung thông tin Department cho từng nhân viên
+		//Add department information
 		for i, emp := range employees {
 			deparmentID := emp.DepartmentID
 			if deparmentID == "" {
 				continue
 			}
-			dept, err := biz.departmentBiz.GetDepartment(ctx.Request.Context(), emp.DepartmentID)
+			dept, err := h.departmentBiz.GetDepartment(ctx.Request.Context(), emp.DepartmentID)
 			if err != nil {
 				utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi khi lấy department: %s", err.Error()), http.StatusNotFound, nil)
 				return
@@ -102,7 +123,18 @@ func (biz *EmployeeHandler) GetAllEmployees() gin.HandlerFunc {
 			employees[i].Department = dept
 		}
 
-		utils.ResponseMessage(ctx, "Danh sách dữ liệu", http.StatusOK, employees)
+		// caculator the total of page number
+		totalPages := (totalRecords + int64(pageSize) - 1) / int64(pageSize)
+
+		response := gin.H{
+			"employees":    employees,
+			"totalRecords": totalRecords,
+			"page":         page,
+			"pageSize":     pageSize,
+			"totalPages":   totalPages,
+		}
+
+		utils.ResponseMessage(ctx, "Danh sách dữ liệu", http.StatusOK, response)
 	}
 }
 
@@ -125,7 +157,7 @@ func (biz *EmployeeHandler) GetAllEmployeeByStatus() gin.HandlerFunc {
 			return
 		}
 
-		// Bổ sung thông tin Department cho từng nhân viên
+		//Add department information
 		for i, emp := range employees {
 			if emp.DepartmentID == "" {
 				// Bỏ qua, không cần load department

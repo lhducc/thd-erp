@@ -25,6 +25,7 @@ type ContractBiz interface {
 	DeleteContract(ctx context.Context, id string) error
 	ExportContractTest(c context.Context, selectedFields []string) ([]byte, string, error)
 	UpdateApproveStatus(ctx context.Context, id string, status string) error
+	GetContractByEmployeeID(ctx context.Context, employeeId string) ([]model.ContractBasicInfo, error)
 }
 
 type ContractHandler struct {
@@ -59,6 +60,23 @@ func (h *ContractHandler) CreateContract() gin.HandlerFunc {
 		}
 
 		utils.ResponseMessage(c, "Tạo hợp đồng thành công", http.StatusOK, gin.H{"data": data})
+	}
+}
+func (h *ContractHandler) GetContractByEmployeeID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		employeeID := c.Param("id")
+		if employeeID == "" {
+			utils.ResponseMessage(c, "Thiếu mã nhân viên", http.StatusBadRequest, nil)
+			return
+		}
+
+		contracts, err := h.contractBiz.GetContractByEmployeeID(c.Request.Context(), employeeID)
+		if err != nil {
+			utils.ResponseMessage(c, "Lỗi khi lấy hợp đồng", http.StatusInternalServerError, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Danh sách hợp đồng của nhân viên", http.StatusOK, contracts)
 	}
 }
 

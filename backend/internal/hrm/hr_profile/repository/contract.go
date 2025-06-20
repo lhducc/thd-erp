@@ -20,7 +20,6 @@ func NewContractStore(db *gorm.DB) *ContractStore {
 
 func (r *ContractStore) WithTransaction(ctx context.Context, fn func(txRepo store.ContractRepo) error) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Tạo store mới dùng transaction
 		txRepo := &ContractStore{db: tx}
 		return fn(txRepo)
 	})
@@ -42,6 +41,16 @@ func (r *ContractStore) GetContract(ctx context.Context, id string) (*hrmmodel.C
 		return nil, err
 	}
 	return &contract, nil
+}
+func (r *ContractStore) GetContractByEmployeeID(ctx context.Context, employeeId string) ([]hrmmodel.Contract, error) {
+	var contracts []hrmmodel.Contract
+	if err := r.db.WithContext(ctx).
+		Preload("ContractType").
+		Where("employee_id = ?", employeeId).
+		Find(&contracts).Error; err != nil {
+		return nil, err
+	}
+	return contracts, nil
 }
 
 func (r *ContractStore) GetAllContract(ctx context.Context) ([]hrmmodel.Contract, error) {

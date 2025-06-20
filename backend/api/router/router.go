@@ -186,6 +186,7 @@ func setupContractRoutes(router *gin.RouterGroup, handler *handler.ContractHandl
 	contractGroup.GET("/:id", handler.GetContract())
 	contractGroup.GET("", handler.GetAllContract())
 	contractGroup.GET("/export", handler.ExportContract())
+	contractGroup.GET("/by-employee/:id", handler.GetContractByEmployeeID())
 }
 
 func setupDocumentTypeRoutes(r *gin.RouterGroup, h *handler.DocumentTypeHandler) {

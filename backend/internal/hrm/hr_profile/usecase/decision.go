@@ -14,7 +14,8 @@ import (
 type DecisionRepo interface {
 	CreateDecision(ctx context.Context, data *model.Decision, employeeIDs []string) error
 	GetDecision(ctx context.Context, id string) (*model.Decision, error)
-	GetAllDecision(ctx context.Context) ([]model.Decision, error)
+	GetAllDecision(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]model.Decision, int64, error)
+	GetAllDecisionNoPagination(ctx context.Context) ([]model.Decision, error)
 	UpdateDecision(ctx context.Context, id string, data *model.DecisionCreate) error
 	DeleteDecision(ctx context.Context, id string) error
 	CheckExistName(name string) (bool, error)
@@ -108,12 +109,12 @@ func (biz *decisionBiz) DeleteDecision(ctx context.Context, id string) error {
 	return nil
 }
 
-func (biz *decisionBiz) GetAllDecision(ctx context.Context) ([]model.Decision, error) {
-	positions, err := biz.repo.GetAllDecision(ctx)
+func (biz *decisionBiz) GetAllDecisionPagination(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]model.Decision, int64, error) {
+	decisions, totalRecords, err := biz.repo.GetAllDecision(ctx, page, pageSize, filters)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return positions, nil
+	return decisions, totalRecords, nil
 }
 
 func (d *decisionBiz) ExportDecisionTest(ctx context.Context, selectedFields []string) ([]byte, string, error) {
@@ -180,7 +181,7 @@ func (d *decisionBiz) ExportDecisionTest(ctx context.Context, selectedFields []s
 	})
 
 	// Load data
-	decisions, err := d.repo.GetAllDecision(ctx)
+	decisions, err := d.repo.GetAllDecisionNoPagination(ctx)
 	if err != nil {
 		return nil, "", fmt.Errorf("không thể lấy dữ liệu quyết định: %w", err)
 	}

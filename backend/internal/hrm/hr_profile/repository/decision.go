@@ -4,7 +4,7 @@ import (
 	"context"
 	model "erp/backend/internal/hrm/hr_profile/model"
 	"errors"
-
+	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -47,17 +47,39 @@ func (r *decisionStore) GetDecision(ctx context.Context, id string) (*model.Deci
 	return &decision, nil
 }
 
-func (r *decisionStore) GetAllDecision(ctx context.Context) ([]model.Decision, error) {
-	var decisions []model.Decision
+func (r *decisionStore) GetAllDecision(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]model.Decision, int64, error) {
+	var (
+		decisions    []model.Decision
+		totalRecords int64
+	)
 
-	if err := r.db.WithContext(ctx).
-		Preload("Employees").
-		Preload("DecisionType").
-		Find(&decisions).Error; err != nil {
-		return nil, err
+	db := r.db.WithContext(ctx).Model(&model.Decision{})
+
+	for key, value := range filters {
+		if arr, ok := value.([]string); ok && len(arr) > 0 {
+			db = db.Where(fmt.Sprintf("decision.%s IN (?)", key), arr)
+		} else if value != nil && value != "" {
+			db = db.Where(fmt.Sprintf("decision.%s = ?", key), value)
+		}
 	}
 
-	return decisions, nil
+	// Count total records after filter
+	if err := db.Count(&totalRecords).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Pagination
+	offset := (page - 1) * pageSize
+	if err := db.
+		Preload("Employees").
+		Preload("DecisionType").
+		Offset(offset).
+		Limit(pageSize).
+		Find(&decisions).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return decisions, totalRecords, nil
 }
 
 func (r *decisionStore) UpdateDecision(ctx context.Context, id string, data *model.DecisionCreate) error {
@@ -87,6 +109,17 @@ func (s *decisionStore) GetLastDecisionByCode(ctx context.Context, decision *mod
 	return s.db.WithContext(ctx).
 		Order("decision_id DESC").
 		First(decision).Error
+}
+func (s *decisionStore) GetAllDecisionNoPagination(ctx context.Context) ([]model.Decision, error) {
+	var decisions []model.Decision
+
+	if err := s.db.
+		Preload("Employees").
+		Preload("DecisionType").
+		Find(&decisions).Error; err != nil {
+		return nil, err
+	}
+	return decisions, nil
 }
 
 func (s *decisionStore) InsertDecisionEmployee(ctx context.Context, decisionID, employeeID string) error {

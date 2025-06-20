@@ -16,18 +16,29 @@ func NewDicisionStore(db *gorm.DB) *decisionStore {
 	return &decisionStore{db: db}
 }
 
-func (s *decisionStore) CreateDecision(context context.Context, data *model.Decision) error {
-	if err := s.db.Create(&data).Error; err != nil {
-		return err
-	}
+func (s *decisionStore) CreateDecision(ctx context.Context, data *model.Decision, employeeIDs []string) error {
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&data).Error; err != nil {
+			return err
+		}
 
-	return nil
+		for _, empID := range employeeIDs {
+			link := model.DecisionEmployee{
+				DecisionID: data.DecisionID,
+				EmployeeID: empID,
+			}
+			if err := tx.Create(&link).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (r *decisionStore) GetDecision(ctx context.Context, id string) (*model.Decision, error) {
 	var decision model.Decision
 	if err := r.db.WithContext(ctx).
-		Preload("Employee").
+		Preload("Employees").
 		Preload("DecisionType").
 		Where("decision_id = ?", id).
 		First(&decision).Error; err != nil {
@@ -40,8 +51,7 @@ func (r *decisionStore) GetAllDecision(ctx context.Context) ([]model.Decision, e
 	var decisions []model.Decision
 
 	if err := r.db.WithContext(ctx).
-		Joins("LEFT JOIN decisiontype dt ON dt.decision_type_id = decision.decision_type_id").
-		Preload("Employee").
+		Preload("Employees").
 		Preload("DecisionType").
 		Find(&decisions).Error; err != nil {
 		return nil, err
@@ -77,4 +87,12 @@ func (s *decisionStore) GetLastDecisionByCode(ctx context.Context, decision *mod
 	return s.db.WithContext(ctx).
 		Order("decision_id DESC").
 		First(decision).Error
+}
+
+func (s *decisionStore) InsertDecisionEmployee(ctx context.Context, decisionID, employeeID string) error {
+	link := model.DecisionEmployee{
+		DecisionID: decisionID,
+		EmployeeID: employeeID,
+	}
+	return s.db.WithContext(ctx).Create(&link).Error
 }

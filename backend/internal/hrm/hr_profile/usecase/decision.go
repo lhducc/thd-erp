@@ -6,11 +6,13 @@ import (
 	utils "erp/backend/pkg"
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
+	"strings"
 	"time"
 )
 
 type DecisionRepo interface {
-	CreateDecision(context context.Context, data *model.Decision) error
+	CreateDecision(ctx context.Context, data *model.Decision, employeeIDs []string) error
 	GetDecision(ctx context.Context, id string) (*model.Decision, error)
 	GetAllDecision(ctx context.Context) ([]model.Decision, error)
 	UpdateDecision(ctx context.Context, id string, data *model.DecisionCreate) error
@@ -35,7 +37,7 @@ func (biz *decisionBiz) CreateDecision(ctx context.Context, data *model.Decision
 	code, err := utils.GenerateCode("QD", 6, func() (string, error) {
 		var last model.Decision
 		err := biz.repo.GetLastDecisionByCode(ctx, &last)
-		if err != nil {
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return "", err
 		}
 		return last.DecisionID, nil
@@ -43,43 +45,44 @@ func (biz *decisionBiz) CreateDecision(ctx context.Context, data *model.Decision
 	if err != nil {
 		return "", fmt.Errorf("không thể tạo mã: %w", err)
 	}
+
+	exists, err := biz.repo.CheckExistName(data.DecisionName)
+	if err != nil {
+		return "", err
+	}
+	if exists {
+		return "", fmt.Errorf("tên quyết định đã tồn tại")
+	}
+
+	now := time.Now()
+	if data.SignDate.After(now) {
+		return "", errors.New("ngày ký không thể trong tương lai")
+	}
+	if data.EffectiveDate.Before(data.SignDate) {
+		return "", errors.New("ngày hiệu lực không thể trước ngày ký")
+	}
+
+	for _, empID := range data.EmployeeIDs {
+		_, err := biz.employeeRepo.GetUserById(empID)
+		if err != nil {
+			return "", fmt.Errorf("không tìm thấy nhân viên ID: %s", empID)
+		}
+	}
+
 	decision := &model.Decision{
 		DecisionID:     code,
 		DecisionName:   data.DecisionName,
 		EffectiveDate:  data.EffectiveDate,
 		SignDate:       data.SignDate,
 		Content:        data.Content,
-		AttachedFile:   data.AttachedFile,
 		Condition:      data.Condition,
-		DecisionTypeID: data.DecisionTypeID,
-		EmployeeID:     data.EmployeeID,
+		AttachedFile:   data.AttachedFile,
 		CreatedDate:    time.Now(),
+		DecisionTypeID: data.DecisionTypeID,
 	}
 
-	check, err := biz.repo.CheckExistName(data.DecisionName)
-	if err != nil {
-		return "", err
-	}
-	if check {
-		return "", fmt.Errorf("Tên quyết định đã tồn tại")
-	}
-
-	now := time.Now()
-	if decision.SignDate.After(now) {
-		return "", errors.New("Ngày ký không thể trong tương lai")
-	}
-	if decision.EffectiveDate.Before(decision.SignDate) {
-		return "", errors.New("Ngày hiệu lực không thể trước ngày ký")
-	}
-
-	_, err = biz.employeeRepo.GetUserById(decision.EmployeeID)
-	if err != nil {
-		return "", err
-	}
-
-	err = biz.repo.CreateDecision(ctx, decision)
-	if err != nil {
-		return "", err
+	if err := biz.repo.CreateDecision(ctx, decision, data.EmployeeIDs); err != nil {
+		return "", fmt.Errorf("lỗi tạo quyết định: %w", err)
 	}
 
 	return code, nil
@@ -117,68 +120,72 @@ func (d *decisionBiz) ExportDecisionTest(ctx context.Context, selectedFields []s
 	exporter := utils.NewExcelExporter("Decisions")
 
 	exporter.RegisterField("decision_id", "Mã quyết định", "decision_id", func(item interface{}) any {
-		dec := item.(*model.Decision)
-		return dec.DecisionID
+		return item.(*model.Decision).DecisionID
 	})
 
 	exporter.RegisterField("decision_name", "Tên quyết định", "decision_name", func(item interface{}) any {
-		dec := item.(*model.Decision)
-		return dec.DecisionName
+		return item.(*model.Decision).DecisionName
 	})
 
 	exporter.RegisterField("effective_date", "Ngày hiệu lực", "effective_date", func(item interface{}) any {
-		dec := item.(*model.Decision)
-		return dec.EffectiveDate.Format("2006-01-02")
+		return item.(*model.Decision).EffectiveDate.Format("2006-01-02")
 	})
 
 	exporter.RegisterField("sign_date", "Ngày ký", "sign_date", func(item interface{}) any {
-		dec := item.(*model.Decision)
-		return dec.SignDate.Format("2006-01-02")
+		return item.(*model.Decision).SignDate.Format("2006-01-02")
 	})
 
 	exporter.RegisterField("content", "Nội dung", "content", func(item interface{}) any {
-		dec := item.(*model.Decision)
-		return dec.Content
+		return item.(*model.Decision).Content
 	})
 
 	exporter.RegisterField("condition", "Điều kiện", "condition", func(item interface{}) any {
-		dec := item.(*model.Decision)
-		return dec.Condition
+		return item.(*model.Decision).Condition
 	})
 
 	exporter.RegisterField("attached_file", "Tệp đính kèm", "attached_file", func(item interface{}) any {
-		dec := item.(*model.Decision)
-		return dec.AttachedFile
+		return item.(*model.Decision).AttachedFile
 	})
 
 	exporter.RegisterField("created_date", "Ngày tạo", "created_date", func(item interface{}) any {
-		dec := item.(*model.Decision)
-		return dec.CreatedDate.Format("2006-01-02")
+		return item.(*model.Decision).CreatedDate.Format("2006-01-02")
 	})
 
-	exporter.RegisterField("employee_id", "Mã nhân viên", "employee_id", func(item interface{}) any {
+	exporter.RegisterField("employee_ids", "Mã nhân viên", "employee_ids", func(item interface{}) any {
 		dec := item.(*model.Decision)
-		return dec.EmployeeID
-	})
-
-	exporter.RegisterField("employee_name", "Tên nhân viên", "employee_name", func(item interface{}) any {
-		dec := item.(*model.Decision)
-		if dec.Employee != nil {
-			return dec.Employee.Fullname
+		if len(dec.Employees) == 0 {
+			return ""
 		}
-		return ""
+		ids := make([]string, 0, len(dec.Employees))
+		for _, emp := range dec.Employees {
+			ids = append(ids, emp.EmployeeID)
+		}
+		return strings.Join(ids, ", ")
+	})
+
+	exporter.RegisterField("employee_names", "Tên nhân viên", "employee_names", func(item interface{}) any {
+		dec := item.(*model.Decision)
+		if len(dec.Employees) == 0 {
+			return ""
+		}
+		names := make([]string, 0, len(dec.Employees))
+		for _, emp := range dec.Employees {
+			names = append(names, emp.Fullname)
+		}
+		return strings.Join(names, ", ")
 	})
 
 	exporter.RegisterField("decision_type_id", "Loại quyết định", "decision_type_id", func(item interface{}) any {
-		dec := item.(*model.Decision)
-		return dec.DecisionTypeID
+		return item.(*model.Decision).DecisionTypeID
 	})
 
+	// Load data
 	decisions, err := d.repo.GetAllDecision(ctx)
 	if err != nil {
 		return nil, "", fmt.Errorf("không thể lấy dữ liệu quyết định: %w", err)
 	}
 
+	// Convert slice
 	decisionPtrs := make([]*model.Decision, len(decisions))
 	for i := range decisions {
 		decisionPtrs[i] = &decisions[i]

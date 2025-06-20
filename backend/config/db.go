@@ -149,18 +149,19 @@ func GetDB() *gorm.DB {
 
 func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
-	//&officemodel.Office{},
-	//&hrmmodel.EmployeeDocumentType{},
-	//&hrmmodel.Employee{},
-	//&hrmmodel.ContractType{},
-	//&hrmmodel.Contract{},
-	//&hrmmodel.DecisionType{},
-	//&hrmmodel.Decision{},
-	//&hrmmodel.Insurance{},
-	// &model.Holiday{},
-	// &model.AllowedWorkingSchedule{},
-	// &model.WorkShifts{},
-	// &hrmmodel.Allowance{}
+		//&officemodel.Office{},
+		//&hrmmodel.EmployeeDocumentType{},
+		//&hrmmodel.Employee{},
+		//&hrmmodel.ContractType{},
+		//&hrmmodel.Contract{},
+		//&hrmmodel.DecisionType{},
+		//&hrmmodel.Decision{},
+		//&hrmmodel.DecisionEmployee{},
+		//&hrmmodel.Insurance{},
+		// &model.Holiday{},
+		// &model.AllowedWorkingSchedule{},
+		// &model.WorkShifts{},
+		// &hrmmodel.Allowance{}
 	)
 	if err != nil {
 		return fmt.Errorf("migrate thất bại: %w", err)

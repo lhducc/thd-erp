@@ -11,10 +11,9 @@ type Decision struct {
 	Condition      string    `gorm:"type:varchar(20);column:condition" json:"condition"`
 	AttachedFile   string    `gorm:"column:attached_file" json:"attached_file"`
 	CreatedDate    time.Time `gorm:"column:created_date" json:"created_date"`
-	EmployeeID     string    `gorm:"type:varchar(8);column:employee_id" json:"employee_id"`
 	DecisionTypeID string    `gorm:"type:varchar(6);column:decision_type_id" json:"decision_type_id"`
-
-	Employee     *Employee     `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"employee,omitempty"`
+	
+	Employees    []Employee    `gorm:"many2many:decision_employees;joinForeignKey:DecisionID;joinReferences:EmployeeID"`
 	DecisionType *DecisionType `gorm:"foreignKey:DecisionTypeID;references:DecisionTypeID" json:"decision_type,omitempty"`
 }
 
@@ -22,32 +21,45 @@ func (Decision) TableName() string {
 	return "decision"
 }
 
+type DecisionEmployee struct {
+	DecisionID string `gorm:"type:varchar(8);primaryKey;column:decision_id"`
+	EmployeeID string `gorm:"type:varchar(8);primaryKey;column:employee_id"`
+}
+
+func (DecisionEmployee) TableName() string {
+	return "decision_employees"
+}
+
 type DecisionCreate struct {
-	DecisionID     string    `gorm:"column:decision_id;primaryKey" json:"decision_id"`
-	DecisionName   string    `gorm:"column:decision_name" json:"decision_name"`
-	EffectiveDate  time.Time `gorm:"column:effective_date" json:"effective_date"`
-	SignDate       time.Time `gorm:"column:sign_date" json:"sign_date"`
-	Content        string    `gorm:"column:content" json:"content"`
-	Condition      string    `gorm:"column:condition" json:"condition"`
-	AttachedFile   string    `gorm:"column:attached_file" json:"attached_file"`
-	CreatedDate    time.Time `gorm:"column:created_date" json:"created_date"`
-	EmployeeID     string    `gorm:"column:employee_id" json:"employee_id"`
-	DecisionTypeID string    `gorm:"column:decision_type_id" json:"decision_type_id"`
+	DecisionID     string    `json:"decision_id"`
+	DecisionName   string    `json:"decision_name" binding:"required"`
+	EffectiveDate  time.Time `json:"effective_date" binding:"required"`
+	SignDate       time.Time `json:"sign_date" binding:"required"`
+	Content        string    `json:"content" binding:"required"`
+	Condition      string    `json:"condition"`
+	AttachedFile   string    `json:"attached_file"`
+	CreatedDate    time.Time `json:"created_date"`
+	EmployeeIDs    []string  `json:"employee_ids"`
+	DecisionTypeID string    `json:"decision_type_id" binding:"required"`
+}
+
+type EmployeeShort struct {
+	EmployeeID string `json:"employee_id"`
+	Fullname   string `json:"fullname"`
 }
 
 type DecisionResponse struct {
-	DecisionID       string    `json:"decision_id"`
-	DecisionName     string    `json:"decision_name"`
-	EmployeeID       string    `json:"employee_id"`
-	EmployeeName     string    `json:"employee_name"`
-	DecisionTypeID   string    `json:"decision_type_id"`
-	DecisionTypeName string    `json:"decision_type_name"`
-	EffectiveDate    string    `json:"effective_date"` // YYYY-MM-DD
-	SignDate         string    `json:"sign_date"`      // YYYY-MM-DD
-	Condition        string    `json:"condition"`
-	Content          string    `json:"content"`
-	AttachedFile     string    `json:"attached_file"`
-	CreatedDate      time.Time `json:"created_date"`
+	DecisionID       string          `json:"decision_id"`
+	DecisionName     string          `json:"decision_name"`
+	Employees        []EmployeeShort `json:"employees"`
+	DecisionTypeID   string          `json:"decision_type_id"`
+	DecisionTypeName string          `json:"decision_type_name"`
+	EffectiveDate    string          `json:"effective_date"` // YYYY-MM-DD
+	SignDate         string          `json:"sign_date"`      // YYYY-MM-DD
+	Condition        string          `json:"condition"`
+	Content          string          `json:"content"`
+	AttachedFile     string          `json:"attached_file"`
+	CreatedDate      time.Time       `json:"created_date"`
 }
 
 func (DecisionCreate) TableName() string { return "decision" }

@@ -98,12 +98,47 @@ func (s *userStore) GetAllEmployees() ([]model.Employee, error) {
 	return employees, nil
 }
 
-func (s *userStore) GetAllEmployeesPagination(page, pageSize int) ([]model.Employee, error) {
+func (s *userStore) GetAllEmployeesPagination(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error) {
 	var employees []model.Employee
-	offset := (page - 1) * pageSize
+	var totalRecords int64
 
-	if err := s.db.
-		Order("employee_id ASC").
+	db := s.db.Model(&model.Employee{})
+
+	joinedDepartment := false
+
+	for key, value := range filters {
+		switch key {
+		case "office_id":
+			if arr, ok := value.([]string); ok && len(arr) > 0 {
+				db = db.Joins("JOIN department d ON employee.department_id = d.department_id").
+					Where("d.office_id IN (?)", arr)
+				joinedDepartment = true
+			}
+		case "department_id":
+			if arr, ok := value.([]string); ok && len(arr) > 0 {
+				// Luôn chỉ rõ bảng/alias để tránh ambiguous!
+				if joinedDepartment {
+					db = db.Where("employee.department_id IN (?)", arr)
+				} else {
+					db = db.Where("employee.department_id IN (?)", arr)
+				}
+			}
+		default:
+			if arr, ok := value.([]string); ok && len(arr) > 0 {
+				db = db.Where(fmt.Sprintf("employee.%s IN (?)", key), arr)
+			} else if value != nil && value != "" {
+				db = db.Where(fmt.Sprintf("employee.%s = ?", key), value)
+			}
+		}
+	}
+
+	// total records
+	if err := db.Count(&totalRecords).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to count employees: %w", err)
+	}
+
+	offset := (page - 1) * pageSize
+	if err := db.Order("employee.employee_id ASC").
 		Limit(pageSize).
 		Offset(offset).
 		Preload("Account").
@@ -111,9 +146,9 @@ func (s *userStore) GetAllEmployeesPagination(page, pageSize int) ([]model.Emplo
 		Preload("JobTitle").
 		Preload("Position").
 		Find(&employees).Error; err != nil {
-		return nil, fmt.Errorf("failed to get employees: %w", err)
+		return nil, 0, fmt.Errorf("failed to get employees: %w", err)
 	}
-	return employees, nil
+	return employees, totalRecords, nil
 }
 
 func (s *userStore) UpdateEmployee(id string, updatedEmployee model.Employee) error {
@@ -151,29 +186,32 @@ func (s *userStore) DeleteEmployee(id string) error {
 		return errors.New("failed to start transaction")
 	}
 
-	s.recoverFromPanic(tx)
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 
 	var employee model.Employee
 	if err := tx.Where("employee_id = ?", id).First(&employee).Error; err != nil {
-		s.db.Rollback()
+		tx.Rollback()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("employee with ID %s not found", id)
 		}
 		return fmt.Errorf("failed to check employee: %w", err)
 	}
 
-	if employee.Status == "Inactive" {
-		s.db.Rollback()
+	if employee.Status == "inactive" {
+		tx.Rollback()
 		return fmt.Errorf("employee status is deleted")
 	}
 
-	if err := s.db.Model(&employee).Update("status", "Inactive").Error; err != nil {
-		s.db.Rollback()
-		return fmt.Errorf("failed to update employee status to 'Inactive': %w", err)
+	if err := tx.Model(&employee).Update("status", "inactive").Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to update employee status to 'inactive': %w", err)
 	}
 
-	if err := s.db.Commit().Error; err != nil {
-		s.db.Rollback()
+	if err := tx.Commit().Error; err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 

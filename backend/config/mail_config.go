@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
@@ -26,6 +27,8 @@ func LoadMailConfig() {
 	Mail.From = os.Getenv("EMAIL_FROM")
 
 	portStr := os.Getenv("SMTP_PORT")
+	fmt.Printf("SMTP_PORT='%s'\n", os.Getenv("SMTP_PORT"))
+
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
 		log.Fatalf("Invalid SMTP_PORT: %s", portStr)

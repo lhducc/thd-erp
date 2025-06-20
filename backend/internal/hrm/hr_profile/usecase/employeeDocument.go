@@ -19,6 +19,7 @@ type EmployeeDocumentRepo interface {
 	GetEmployeeDocumentsByEmployeeID(ctx context.Context, employeeID string) ([]*model.EmployeeDocument, error)
 	GetEmployeeDocumentsByDocumentTypeID(ctx context.Context, documentTypeID string) ([]*model.EmployeeDocument, error)
 	GetLastDocumentByCode(ctx context.Context, documentType *model.EmployeeDocument) error
+	GetEmployeeDocumentsPaginated(ctx context.Context, search, status, condition string, offset, limit int) ([]*model.EmployeeDocumentResponse, int64, error)
 }
 
 type EmployeeDocumentBiz struct {
@@ -65,6 +66,10 @@ func (b *EmployeeDocumentBiz) GetAllEmployeeDocuments(ctx context.Context) ([]*m
 		return nil, fmt.Errorf("failed to get all employee documents: %w", err)
 	}
 	return list, nil
+}
+
+func (b *EmployeeDocumentBiz) GetEmployeeDocumentsPaginated(ctx context.Context, search, status, condition string, offset, limit int) ([]*model.EmployeeDocumentResponse, int64, error) {
+	return b.repo.GetEmployeeDocumentsPaginated(ctx, search, status, condition, offset, limit)
 }
 
 // GetEmployeeDocumentsByEmployeeID returns documents by employee ID

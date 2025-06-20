@@ -4,6 +4,7 @@ import (
 	"context"
 	"erp/backend/internal/hrm/hr_profile/model"
 	"gorm.io/gorm"
+	"strings"
 )
 
 type EmployeeDocument struct {
@@ -42,6 +43,46 @@ func (e *EmployeeDocument) GetEmployeeDocumentById(ctx context.Context, id strin
 		return nil, err
 	}
 	return &employeeDocument, nil
+}
+
+func (e *EmployeeDocument) GetEmployeeDocumentsPaginated(ctx context.Context, search, status, condition string, offset, limit int) ([]*model.EmployeeDocumentResponse, int64, error) {
+	var docs []*model.EmployeeDocumentResponse
+	var total int64
+
+	query := e.db.WithContext(ctx).
+		Model(&model.EmployeeDocument{}).
+		Joins("JOIN employee ON employee.employee_id = employeedocument.employee_id").
+		Joins("JOIN employeedocumenttype ON employeedocumenttype.id = employeedocument.document_type_id")
+	query = query.Select(
+		"employeedocument.document_id",
+		"employee.full_name as employee_name",
+		"employeedocumenttype.document_type_name as document_type",
+		"employeedocument.effective_date",
+		"employeedocument.expired_date",
+		"employeedocument.condition",
+		"employeedocument.employee_id",
+	)
+
+	if search != "" {
+		query = query.Where("LOWER(employee.full_name) LIKE ?", "%"+strings.ToLower(search)+"%")
+	}
+	if status != "" {
+		query = query.Where("employeedocument.status = ?", status)
+	}
+	if condition != "" {
+		query = query.Where("employeedocument.condition = ?", condition)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.Offset(offset).Limit(limit).
+		Order("employeedocument.created_date DESC").Find(&docs).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return docs, total, nil
 }
 
 func (e *EmployeeDocument) GetAllEmployeeDocuments(ctx context.Context) ([]*model.EmployeeDocument, error) {

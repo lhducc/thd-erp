@@ -75,3 +75,13 @@ func (d EmployeeDocument) ValidateEmployeeDocument() error {
 	}
 	return nil
 }
+
+type EmployeeDocumentResponse struct {
+	DocumentID    string            `json:"document_id"`
+	EmployeeName  string            `json:"employee_name"`
+	DocumentType  string            `json:"document_type"`
+	EffectiveDate time.Time         `json:"effective_date"`
+	ExpiredDate   time.Time         `json:"expired_date"`
+	Condition     DocumentCondition `json:"condition"`
+	EmployeeID    string            `json:"employee_id"`
+}

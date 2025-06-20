@@ -44,13 +44,14 @@ func (h *DecisionHandler) CreateDecision() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var data model.DecisionCreate
 
-		if err := c.ShouldBind(&data); err != nil {
-			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
+		if err := c.ShouldBindJSON(&data); err != nil {
+			utils.ResponseMessage(c, fmt.Sprintf("%+v", data), http.StatusBadRequest, data)
 			return
 		}
 		code, err := h.decisionBiz.CreateDecision(c.Request.Context(), &data)
 		if err != nil {
 			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusInternalServerError, nil)
+			return
 		}
 		utils.ResponseMessage(c, "Tạo thành công", http.StatusOK, gin.H{
 			"decision_id": code,
@@ -72,8 +73,6 @@ func (h *DecisionHandler) GetDecision() gin.HandlerFunc {
 		response := model.DecisionResponse{
 			DecisionID:       d.DecisionID,
 			DecisionName:     d.DecisionName,
-			EmployeeID:       d.EmployeeID,
-			EmployeeName:     "",
 			DecisionTypeID:   d.DecisionTypeID,
 			DecisionTypeName: "",
 			EffectiveDate:    d.EffectiveDate.Format("2006-01-02"),
@@ -83,11 +82,13 @@ func (h *DecisionHandler) GetDecision() gin.HandlerFunc {
 			AttachedFile:     d.AttachedFile,
 			CreatedDate:      d.CreatedDate,
 		}
-
-		if d.Employee != nil {
-			response.EmployeeName = d.Employee.Fullname
+		response.Employees = make([]model.EmployeeShort, 0)
+		for _, emp := range d.Employees {
+			response.Employees = append(response.Employees, model.EmployeeShort{
+				EmployeeID: emp.EmployeeID,
+				Fullname:   emp.Fullname,
+			})
 		}
-
 		if d.DecisionType != nil {
 			response.DecisionTypeName = d.DecisionType.DecisionType
 		}
@@ -109,8 +110,6 @@ func (h *DecisionHandler) GetAllDecision() gin.HandlerFunc {
 			response := model.DecisionResponse{
 				DecisionID:       d.DecisionID,
 				DecisionName:     d.DecisionName,
-				EmployeeID:       d.EmployeeID,
-				EmployeeName:     "",
 				DecisionTypeID:   d.DecisionTypeID,
 				DecisionTypeName: "",
 				EffectiveDate:    d.EffectiveDate.Format("2006-01-02"),
@@ -121,10 +120,13 @@ func (h *DecisionHandler) GetAllDecision() gin.HandlerFunc {
 				CreatedDate:      d.CreatedDate,
 			}
 
-			if d.Employee != nil {
-				response.EmployeeName = d.Employee.Fullname
+			response.Employees = make([]model.EmployeeShort, 0)
+			for _, emp := range d.Employees {
+				response.Employees = append(response.Employees, model.EmployeeShort{
+					EmployeeID: emp.EmployeeID,
+					Fullname:   emp.Fullname,
+				})
 			}
-
 			if d.DecisionType != nil {
 				response.DecisionTypeName = d.DecisionType.DecisionType
 			}
@@ -170,7 +172,13 @@ func (h *DecisionHandler) DeleteDecision() gin.HandlerFunc {
 
 func (biz *DecisionHandler) ExportDecision() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		fields := strings.Split(c.Query("fields"), ",")
+		fieldStr := c.Query("fields")
+		if strings.TrimSpace(fieldStr) == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Thiếu tham số 'fields'"})
+			return
+		}
+
+		fields := strings.Split(fieldStr, ",")
 		data, filename, err := biz.decisionBiz.ExportDecisionTest(c, fields)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -180,6 +188,5 @@ func (biz *DecisionHandler) ExportDecision() gin.HandlerFunc {
 		c.Header("Content-Description", "File Transfer")
 		c.Header("Content-Disposition", "attachment; filename="+filename)
 		c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", data)
-
 	}
 }

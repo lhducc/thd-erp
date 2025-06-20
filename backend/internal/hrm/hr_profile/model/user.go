@@ -45,6 +45,7 @@ type Employee struct {
 	Department   *Department       `gorm:"foreignKey:DepartmentID;references:department_id" json:"department,omitempty"`
 	// Contracts []Contract gorm:"foreignKey:EmployeeID;references:employee_id" json:"contracts,omitempty"
 	// Decisions []Decision gorm:"foreignKey:EmployeeID;references:employee_id" json:"decisions,omitempty"
+	Decisions []Decision `gorm:"many2many:decision_employees;joinForeignKey:EmployeeID;joinReferences:DecisionID"`
 }
 
 type ManagerResponse struct {

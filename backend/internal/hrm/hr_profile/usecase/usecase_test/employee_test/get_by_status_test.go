@@ -1,4 +1,4 @@
-package usecase_test
+package employee_test_test
 
 import (
 	"erp/backend/internal/hrm/hr_profile/model"

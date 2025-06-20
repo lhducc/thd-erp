@@ -1,4 +1,4 @@
-package usecase_test
+package employee_test_test
 
 import (
 	"bytes"
@@ -114,7 +114,7 @@ func TestExportEmployeeTest(t *testing.T) {
 			Account: &model.Account{
 				LoginMail: "nguyenvana@example.com",
 			},
-			Manager: &model.Employee{
+			Manager: &model.ManagerResponse{
 				Fullname: "Tran Thi B (Manager)",
 			},
 			CreatedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),

@@ -158,9 +158,9 @@ const CreateContractType = ({ editBtn, data, type, refetch }: Props) => {
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="w-[95vw] max-w-md sm:max-w-xl md:max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[95vw] max-w-md sm:max-w-xl md:max-w-2xl max-h-[90vh]">
                 <DialogHeader>
-                    <DialogTitle className="text-lg sm:text-xl">
+                    <DialogTitle className="text-lg sm:text-[25px]">
                         {type === "edit" ? "Chỉnh sửa loại hợp đồng" : "Thêm loại hợp đồng"}
                     </DialogTitle>
                 </DialogHeader>
@@ -281,18 +281,18 @@ const CreateContractType = ({ editBtn, data, type, refetch }: Props) => {
                             />
                         </div>
 
-                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                        <div className="flex flex-col sm:flex-row gap-3 pt-2 mx-auto">
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="w-full"
+                                className="w-full md:w-[300px]"
                                 onClick={() => setOpen(false)}
                             >
                                 Hủy
                             </Button>
                             <Button
                                 type="submit"
-                                className="w-full"
+                                className="w-full md:w-[300px]"
                                 disabled={pendingCreate || pendingUpdate}
                             >
                                 {pendingCreate || pendingUpdate ? (

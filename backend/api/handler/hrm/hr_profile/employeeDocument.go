@@ -8,7 +8,9 @@ import (
 	"erp/backend/pkg"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"log"
 	"net/http"
+	"strconv"
 )
 
 type EmployeeDocumentBiz interface {
@@ -17,6 +19,7 @@ type EmployeeDocumentBiz interface {
 	GetAllEmployeeDocuments(ctx context.Context) ([]*model.EmployeeDocument, error)
 	UpdateEmployeeDocument(ctx context.Context, id string, data *model.EmployeeDocument) error
 	DeleteEmployeeDocument(ctx context.Context, id string) error
+	GetEmployeeDocumentsPaginated(ctx context.Context, search, status, condition string, offset, limit int) ([]*model.EmployeeDocumentResponse, int64, error)
 }
 
 type EmployeeDocumentHandler struct {
@@ -97,6 +100,30 @@ func (h *EmployeeDocumentHandler) GetAllEmployeeDocuments() gin.HandlerFunc {
 		}
 
 		utils.ResponseMessage(c, "Lấy danh sách tài liệu nhân viên thành công", http.StatusOK, results)
+	}
+}
+
+func (h *EmployeeDocumentHandler) GetPaginated() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		search := c.Query("search")
+		status := c.Query("status")
+		condition := c.Query("condition")
+		offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+		limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+		log.Printf("DEBUG: GetPaginated called with search='%s', status='%s', condition='%s', offset=%d, limit=%d", search, status, condition, offset, limit)
+
+		docs, total, err := h.employeeDocumentBiz.GetEmployeeDocumentsPaginated(c.Request.Context(), search, status, condition, offset, limit)
+		if err != nil {
+			log.Printf("ERROR in GetPaginated: %v", err) // Rất quan trọng!
+			utils.ResponseMessage(c, "Không thể lấy danh sách tài liệu", http.StatusInternalServerError, nil)
+			return
+		}
+		res := map[string]interface{}{
+			"data":  docs,
+			"total": total,
+		}
+		utils.ResponseMessage(c, "Lấy danh sách thành công", http.StatusOK, res)
 	}
 }
 

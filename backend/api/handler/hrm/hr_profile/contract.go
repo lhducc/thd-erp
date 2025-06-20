@@ -28,7 +28,7 @@ type ContractBiz interface {
 }
 
 type ContractHandler struct {
-	contractBiz ContractBiz
+	ContractBiz ContractBiz
 	employeeBiz usecase.EmployeeRepo
 }
 
@@ -38,7 +38,7 @@ func NewContractHandler(db *gorm.DB) *ContractHandler {
 	biz := usecase.NewContractBiz(storeJob, storeUser)
 
 	return &ContractHandler{
-		contractBiz: biz,
+		ContractBiz: biz,
 		employeeBiz: storeUser,
 	}
 }
@@ -53,7 +53,7 @@ func (h *ContractHandler) CreateContract() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.contractBiz.CreateContract(c.Request.Context(), &data); err != nil {
+		if err := h.ContractBiz.CreateContract(c.Request.Context(), &data); err != nil {
 			utils.ResponseError(c, "Không thể tạo hợp đồng", err, http.StatusInternalServerError)
 			return
 		}
@@ -66,7 +66,7 @@ func (h *ContractHandler) GetContract() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idParam := c.Param("id")
 
-		result, err := h.contractBiz.GetContract(c.Request.Context(), idParam)
+		result, err := h.ContractBiz.GetContract(c.Request.Context(), idParam)
 		if err != nil {
 			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
 			return
@@ -102,7 +102,7 @@ func (h *ContractHandler) GetContract() gin.HandlerFunc {
 
 func (h *ContractHandler) GetAllContract() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		result, err := h.contractBiz.GetAllContract(ctx)
+		result, err := h.ContractBiz.GetAllContract(ctx)
 		if err != nil {
 			utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
 			log.Printf("Lỗi lấy hợp đồng: %+v", err)
@@ -157,7 +157,7 @@ func (h *ContractHandler) UpdateContract() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.contractBiz.UpdateContract(c.Request.Context(), idParam, &data); err != nil {
+		if err := h.ContractBiz.UpdateContract(c.Request.Context(), idParam, &data); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -188,9 +188,8 @@ func (h *ContractHandler) DeleteContract() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idParam := c.Param("id")
 
-		if err := h.contractBiz.DeleteContract(c.Request.Context(), idParam); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			utils.ResponseMessage(c, fmt.Sprintf("Lỗi xóa hợp đồng: %s", err.Error()), http.StatusOK, nil)
+		if err := h.ContractBiz.DeleteContract(c.Request.Context(), idParam); err != nil {
+			utils.ResponseMessage(c, fmt.Sprintf("Lỗi xóa hợp đồng: %s", err.Error()), http.StatusInternalServerError, nil)
 			return
 		}
 
@@ -201,7 +200,7 @@ func (h *ContractHandler) DeleteContract() gin.HandlerFunc {
 func (biz *ContractHandler) ExportContract() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		fields := strings.Split(c.Query("fields"), ",")
-		data, filename, err := biz.contractBiz.ExportContractTest(c, fields)
+		data, filename, err := biz.ContractBiz.ExportContractTest(c, fields)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

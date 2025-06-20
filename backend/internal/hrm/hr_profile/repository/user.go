@@ -79,7 +79,7 @@ func (s *userStore) GetUserById(id string) (model.Employee, error) {
 		Preload("JobTitle").
 		Preload("Position").
 		First(&employee).Error; err != nil {
-		return model.Employee{}, fmt.Errorf("employee not found with id %d", id)
+		return model.Employee{}, fmt.Errorf("employee not found with id %s", id)
 	}
 	return employee, nil
 }
@@ -157,7 +157,7 @@ func (s *userStore) DeleteEmployee(id string) error {
 	if err := tx.Where("employee_id = ?", id).First(&employee).Error; err != nil {
 		s.db.Rollback()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fmt.Errorf("employee with ID %d not found", id)
+			return fmt.Errorf("employee with ID %s not found", id)
 		}
 		return fmt.Errorf("failed to check employee: %w", err)
 	}

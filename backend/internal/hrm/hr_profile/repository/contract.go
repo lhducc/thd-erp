@@ -5,6 +5,7 @@ import (
 	hrmmodel "erp/backend/internal/hrm/hr_profile/model"
 	"erp/backend/internal/hrm/hr_profile/store"
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -53,8 +54,49 @@ func (r *ContractStore) GetContractByEmployeeID(ctx context.Context, employeeId 
 	return contracts, nil
 }
 
-func (r *ContractStore) GetAllContract(ctx context.Context) ([]hrmmodel.Contract, error) {
+func (r *ContractStore) GetAllContractPagination(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]hrmmodel.Contract, int64, error) {
+	var contracts []hrmmodel.Contract
+	var totalRecords int64
 
+	offset := (page - 1) * pageSize
+
+	db := r.db.Model(&hrmmodel.Contract{})
+
+	for key, value := range filters {
+		switch key {
+		case "department_id":
+			if arr, ok := value.([]string); ok && len(arr) > 0 {
+				db = db.Joins("JOIN employee e ON contract.employee_id = e.employee_id").
+					Where("e.department_id IN (?)", arr)
+			}
+		default:
+			if arr, ok := value.([]string); ok && len(arr) > 0 {
+				db = db.Where(fmt.Sprintf("contract.%s IN (?)", key), arr)
+			} else if value != nil && value != "" {
+				db = db.Where(fmt.Sprintf("contract.%s = ?", key), value)
+			}
+		}
+	}
+
+	// totalRecords
+	if err := db.Count(&totalRecords).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to count employees: %w", err)
+	}
+
+	if err := db.WithContext(ctx).
+		Offset(offset).
+		Limit(pageSize).
+		Preload("Employee").
+		Preload("Employee.Department").
+		Preload("Employee.Department.Office").
+		Preload("Allowances").
+		Find(&contracts).Error; err != nil {
+		return nil, 0, err
+	}
+	return contracts, totalRecords, nil
+}
+
+func (r *ContractStore) GetAllContract(ctx context.Context) ([]hrmmodel.Contract, error) {
 	var contracts []hrmmodel.Contract
 	if err := r.db.WithContext(ctx).
 		Preload("Employee").

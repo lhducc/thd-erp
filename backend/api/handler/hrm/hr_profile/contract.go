@@ -8,6 +8,7 @@ import (
 	utils "erp/backend/pkg"
 	"erp/backend/pkg/errors"
 	"log"
+	"strconv"
 
 	"fmt"
 	"net/http"
@@ -20,7 +21,7 @@ import (
 type ContractBiz interface {
 	CreateContract(context context.Context, data *model.ContractCreate) error
 	GetContract(ctx context.Context, id string) (*model.Contract, error)
-	GetAllContract(ctx context.Context) ([]model.Contract, error)
+	GetAllContract(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]model.Contract, int64, error)
 	UpdateContract(ctx context.Context, id string, data *model.ContractCreate) error
 	DeleteContract(ctx context.Context, id string) error
 	ExportContractTest(c context.Context, selectedFields []string) ([]byte, string, error)
@@ -70,7 +71,7 @@ func (h *ContractHandler) GetContractByEmployeeID() gin.HandlerFunc {
 			return
 		}
 
-		contracts, err := h.contractBiz.GetContractByEmployeeID(c.Request.Context(), employeeID)
+		contracts, err := h.ContractBiz.GetContractByEmployeeID(c.Request.Context(), employeeID)
 		if err != nil {
 			utils.ResponseMessage(c, "Lỗi khi lấy hợp đồng", http.StatusInternalServerError, nil)
 			return
@@ -120,13 +121,42 @@ func (h *ContractHandler) GetContract() gin.HandlerFunc {
 
 func (h *ContractHandler) GetAllContract() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		result, err := h.ContractBiz.GetAllContract(ctx)
+		page, err := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+		if err != nil || page < 1 {
+			page = 1
+		}
+		pageSize, err := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
+		if err != nil || pageSize < 1 {
+			pageSize = 10
+		}
+
+		filterFields := []string{"department_id", "contract_type_id", "condition"}
+		filters := make(map[string]interface{})
+
+		for _, field := range filterFields {
+			values := ctx.QueryArray(field)
+			cleaned := make([]string, 0)
+			for _, v := range values {
+				for _, part := range strings.Split(v, ",") {
+					if trimmed := strings.TrimSpace(part); trimmed != "" {
+						cleaned = append(cleaned, trimmed)
+					}
+				}
+			}
+			if len(cleaned) > 0 {
+				filters[field] = cleaned
+			}
+		}
+
+		// get data
+		contract, totalRecords, err := h.ContractBiz.GetAllContract(ctx, page, pageSize, filters)
 		if err != nil {
 			utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
 			log.Printf("Lỗi lấy hợp đồng: %+v", err)
 		}
-		var responseList []model.ContractResponse
-		for _, v := range result {
+
+		var contractResponses []model.ContractResponse
+		for _, v := range contract {
 			empSimple := model.EmployeeSimple{}
 
 			if v.Employee != nil {
@@ -160,9 +190,21 @@ func (h *ContractHandler) GetAllContract() gin.HandlerFunc {
 				Employee:      empSimple,
 			}
 
-			responseList = append(responseList, res)
+			contractResponses = append(contractResponses, res)
 		}
-		utils.ResponseMessage(ctx, errors.MsgListData, http.StatusOK, responseList)
+
+		// total page
+		totalPages := (totalRecords + int64(pageSize) - 1) / int64(pageSize)
+
+		// response data
+		response := gin.H{
+			"employees":    contractResponses,
+			"totalRecords": totalRecords,
+			"page":         page,
+			"pageSize":     pageSize,
+			"totalPages":   totalPages,
+		}
+		utils.ResponseMessage(ctx, errors.MsgListData, http.StatusOK, response)
 	}
 }
 
@@ -192,7 +234,7 @@ func (h *ContractHandler) ReapproveContract() gin.HandlerFunc {
 			return
 		}
 
-		err := h.contractBiz.UpdateApproveStatus(c.Request.Context(), id, "Chờ duyệt")
+		err := h.ContractBiz.UpdateApproveStatus(c.Request.Context(), id, "Chờ duyệt")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return

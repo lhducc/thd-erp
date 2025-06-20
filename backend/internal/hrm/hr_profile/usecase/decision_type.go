@@ -77,7 +77,7 @@ func (u *decisionTypeUsecase) generateDecisionTypeCode(ctx context.Context) (str
 	var last model.DecisionType
 	err := u.repo.GetLastDecisionTypeByCode(ctx, &last)
 	if err != nil || !strings.HasPrefix(last.DecisionTypeID, "TL") {
-		return "TL00001", nil
+		return "TL0001", nil
 	}
 
 	numStr := strings.TrimSpace(strings.TrimPrefix(last.DecisionTypeID, "TL"))
@@ -86,9 +86,9 @@ func (u *decisionTypeUsecase) generateDecisionTypeCode(ctx context.Context) (str
 		return "", fmt.Errorf("failed to parse decision code number: %w", err)
 	}
 
-	if next := num + 1; next <= 99999 {
-		return fmt.Sprintf("TL%05d", next), nil
+	if next := num + 1; next <= 9999 {
+		return fmt.Sprintf("TL%04d", next), nil
 	}
 
-	return "", fmt.Errorf("maximum office code reached: TL99999")
+	return "", fmt.Errorf("maximum office code reached: TL9999")
 }

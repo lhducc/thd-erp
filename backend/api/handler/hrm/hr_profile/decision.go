@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"erp/backend/internal/hrm/hr_profile/repository"
+	"strconv"
 	"strings"
 
 	"erp/backend/internal/hrm/hr_profile/model"
@@ -18,7 +19,7 @@ import (
 type DecisionBiz interface {
 	CreateDecision(ctx context.Context, data *model.DecisionCreate) (string, error)
 	GetDecision(ctx context.Context, id string) (*model.Decision, error)
-	GetAllDecision(ctx context.Context) ([]model.Decision, error)
+	GetAllDecisionPagination(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]model.Decision, int64, error)
 	UpdateDecision(ctx context.Context, id string, data *model.DecisionCreate) error
 	DeleteDecision(ctx context.Context, id string) error
 	ExportDecisionTest(ctx context.Context, selectedFields []string) ([]byte, string, error)
@@ -99,13 +100,41 @@ func (h *DecisionHandler) GetDecision() gin.HandlerFunc {
 
 func (h *DecisionHandler) GetAllDecision() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		decisions, err := h.decisionBiz.GetAllDecision(ctx)
+		page, err := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+		if err != nil || page < 1 {
+			page = 1
+		}
+		pageSize, err := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
+		if err != nil || pageSize < 1 {
+			pageSize = 10
+		}
+
+		// Filter processing if necessary
+		filterFields := []string{"decision_type_id", "condition"}
+		filters := make(map[string]interface{})
+
+		for _, field := range filterFields {
+			values := ctx.QueryArray(field)
+			cleaned := make([]string, 0)
+			for _, v := range values {
+				for _, part := range strings.Split(v, ",") {
+					if trimmed := strings.TrimSpace(part); trimmed != "" {
+						cleaned = append(cleaned, trimmed)
+					}
+				}
+			}
+			if len(cleaned) > 0 {
+				filters[field] = cleaned
+			}
+		}
+
+		decisions, totalRecords, err := h.decisionBiz.GetAllDecisionPagination(ctx, page, pageSize, filters)
 		if err != nil {
 			utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
 			return
 		}
 
-		var responses []model.DecisionResponse
+		var decisionResponses []model.DecisionResponse
 		for _, d := range decisions {
 			response := model.DecisionResponse{
 				DecisionID:       d.DecisionID,
@@ -130,8 +159,16 @@ func (h *DecisionHandler) GetAllDecision() gin.HandlerFunc {
 			if d.DecisionType != nil {
 				response.DecisionTypeName = d.DecisionType.DecisionType
 			}
-
-			responses = append(responses, response)
+			decisionResponses = append(decisionResponses, response)
+		}
+		// Calculate the total number of pages
+		totalPages := (totalRecords + int64(pageSize) - 1) / int64(pageSize)
+		responses := gin.H{
+			"employees":    decisionResponses,
+			"totalRecords": totalRecords,
+			"page":         page,
+			"pageSize":     pageSize,
+			"totalPages":   totalPages,
 		}
 
 		utils.ResponseMessage(ctx, "Danh sách dữ liệu", http.StatusOK, responses)

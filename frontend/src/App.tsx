@@ -13,6 +13,7 @@ import ContractPage from "@/pages/ContractPage.tsx";
 import EmployeeDocumentPage from "@/pages/setting/EmployeeDocumentPage.tsx";
 import SettingContractPage from "@/pages/setting/SettingContractPage.tsx";
 import AllowancePage from "@/pages/setting/AllowancePage.tsx";
+import SettingDecisionPage from "@/pages/setting/SettingDecisionPage.tsx";
 
 const App = () => {
     const settingRoutes = [
@@ -39,6 +40,10 @@ const App = () => {
         {
             path: PATH.SETTING_CONTRACT,
             element: <SettingContractPage />,
+        },
+        {
+            path: PATH.SETTING_DECISION,
+            element: <SettingDecisionPage />
         },
         {
             path: PATH.SETTING_ALLOWANCE,

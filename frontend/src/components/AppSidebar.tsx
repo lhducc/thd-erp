@@ -136,7 +136,7 @@ const AppSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
                           </SidebarMenuSubItem>
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <Link to={PATH.DECISION}>
+                              <Link to={PATH.SETTING_DECISION}>
                                 <span>Quyết định</span>
                               </Link>
                             </SidebarMenuSubButton>

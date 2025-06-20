@@ -176,12 +176,12 @@ func (biz *contractBiz) DeleteContract(ctx context.Context, id string) error {
 	return nil
 }
 
-func (biz *contractBiz) GetAllContract(ctx context.Context) ([]hrmmodel.Contract, error) {
-	positions, err := biz.repo.GetAllContract(ctx)
+func (biz *contractBiz) GetAllContract(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]hrmmodel.Contract, int64, error) {
+	contract, totalRecords, err := biz.repo.GetAllContractPagination(ctx, page, pageSize, filters)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return positions, nil
+	return contract, totalRecords, nil
 }
 
 func (e *contractBiz) ExportContractTest(c context.Context, selectedFields []string) ([]byte, string, error) {

@@ -8,7 +8,8 @@ import (
 type ContractRepo interface {
 	CreateContract(context.Context, *model.Contract) error
 	GetContract(context.Context, string) (*model.Contract, error)
-	GetAllContract(context.Context) ([]model.Contract, error)
+	GetAllContractPagination(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]model.Contract, int64, error)
+	GetAllContract(ctx context.Context) ([]model.Contract, error)
 	UpdateContract(context.Context, string, *model.ContractCreate) error
 	DeleteContract(context.Context, string) error
 	CheckExistName(name string) (bool, error)

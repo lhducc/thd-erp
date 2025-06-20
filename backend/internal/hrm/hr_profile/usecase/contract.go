@@ -101,6 +101,14 @@ func (biz *contractBiz) GetContract(ctx context.Context, id string) (*hrmmodel.C
 	return Contract, nil
 }
 
+func (biz *contractBiz) GetContractByEmployeeID(ctx context.Context, employeeId string) ([]hrmmodel.ContractBasicInfo, error) {
+	contracts, err := biz.repo.GetContractByEmployeeID(ctx, employeeId)
+	if err != nil {
+		return nil, err
+	}
+	return hrmmodel.ConvertToBasicContracts(contracts), nil
+}
+
 func determineCondition(start, end time.Time) string {
 	now := time.Now()
 	switch {

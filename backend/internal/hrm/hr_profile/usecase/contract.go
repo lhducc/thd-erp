@@ -5,6 +5,7 @@ import (
 	hrmmodel "erp/backend/internal/hrm/hr_profile/model"
 	"erp/backend/internal/hrm/hr_profile/store"
 	utils "erp/backend/pkg"
+	errpkg "erp/backend/pkg/errors"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -145,12 +146,12 @@ func (biz *contractBiz) UpdateContract(ctx context.Context, id string, data *hrm
 	}
 
 	if contract.ApproveStatus == "Đã duyệt" {
-		return errors.New("Không thể chỉnh sửa hợp đồng đã được duyệt")
+		return errpkg.ErrApprovedContractCannotEdit
 	}
 
 	if data.Condition == "Thanh lý" {
 		if !isExpired(contract) {
-			return errors.New("Chỉ có thể thanh lý hợp đồng đã hết hiệu lực")
+			return errpkg.ErrOnlyExpiredContractCanBeLiquidated
 		}
 		data.Condition = "Thanh lý"
 	} else {

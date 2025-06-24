@@ -37,7 +37,7 @@ func (a *Authentication) SignIn(ctx context.Context, email, password string) (st
 		return "", "", fmt.Errorf("password is incorrect")
 	}
 
-	accessToken, refreshToken, err := a.CreateToken(account)
+	accessToken, refreshToken, err := a.CreateToken(ctx, account)
 	if err != nil {
 		return "", "", err
 	}
@@ -70,13 +70,21 @@ func (a *Authentication) ChangePassword(ctx context.Context, accountId, newPassw
 	return nil
 }
 
-func (a *Authentication) CreateToken(account hrmmodel.Account) (string, string, error) {
-	accessToken, _, err := a.tokenMaker.CreateToken(fmt.Sprint(account.ID), account.Role.RoleName, 15*time.Minute)
+func (a *Authentication) CreateToken(ctx context.Context, account hrmmodel.Account) (string, string, error) {
+	var fullname string
+
+	emp, err := a.accountRepo.GetEmployeeByAccountID(ctx, account.ID) // Lấy thông tin employee
+	if err != nil {
+		return "", "", fmt.Errorf("lỗi khi lấy thông tin nhân viên theo account id: %w", err)
+	}
+	fullname = emp.Fullname
+
+	accessToken, _, err := a.tokenMaker.CreateToken(fmt.Sprint(account.ID), fullname, account.Role.RoleName, 15*time.Minute)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, _, err := a.tokenMaker.CreateToken(fmt.Sprint(account.ID), account.Role.RoleName, 7*24*time.Hour)
+	refreshToken, _, err := a.tokenMaker.CreateToken(fmt.Sprint(account.ID), fullname, account.Role.RoleName, 7*24*time.Hour)
 	if err != nil {
 		return "", "", err
 	}

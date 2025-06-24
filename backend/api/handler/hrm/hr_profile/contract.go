@@ -7,11 +7,11 @@ import (
 	"erp/backend/internal/hrm/hr_profile/usecase"
 	utils "erp/backend/pkg"
 	"erp/backend/pkg/errors"
-	"log"
-	"strconv"
-
+	errpkg "erp/backend/pkg/errors"
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -197,14 +197,13 @@ func (h *ContractHandler) GetAllContract() gin.HandlerFunc {
 		totalPages := (totalRecords + int64(pageSize) - 1) / int64(pageSize)
 
 		// response data
-		response := gin.H{
-			"employees":    contractResponses,
+		utils.ResponseSuccess(ctx, errors.MsgListData, http.StatusOK, gin.H{
+			"data":         contractResponses,
 			"totalRecords": totalRecords,
 			"page":         page,
 			"pageSize":     pageSize,
 			"totalPages":   totalPages,
-		}
-		utils.ResponseMessage(ctx, errors.MsgListData, http.StatusOK, response)
+		})
 	}
 }
 
@@ -217,8 +216,15 @@ func (h *ContractHandler) UpdateContract() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.ContractBiz.UpdateContract(c.Request.Context(), idParam, &data); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		err := h.ContractBiz.UpdateContract(c.Request.Context(), idParam, &data)
+		if err != nil {
+			switch err {
+			case errpkg.ErrApprovedContractCannotEdit,
+				errpkg.ErrOnlyExpiredContractCanBeLiquidated:
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			default:
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Lỗi hệ thống: " + err.Error()})
+			}
 			return
 		}
 

@@ -30,9 +30,10 @@ func ResponseMessage(c *gin.Context, message string, statusCode int, data interf
 	})
 }
 
-func ResponseSuccess(c *gin.Context, message string, data interface{}, statusCode int) {
-	c.JSON(statusCode, gin.H{
+func ResponseSuccess(c *gin.Context, message string, status int, data interface{}) {
+	c.JSON(status, gin.H{
 		"message": message,
+		"status":  status,
 		"data":    data,
 	})
 }

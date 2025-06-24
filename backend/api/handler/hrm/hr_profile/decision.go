@@ -163,15 +163,14 @@ func (h *DecisionHandler) GetAllDecision() gin.HandlerFunc {
 		}
 		// Calculate the total number of pages
 		totalPages := (totalRecords + int64(pageSize) - 1) / int64(pageSize)
-		responses := gin.H{
-			"employees":    decisionResponses,
+
+		utils.ResponseSuccess(ctx, "Danh sách dữ liệu", http.StatusOK, gin.H{
+			"data":         decisionResponses,
 			"totalRecords": totalRecords,
 			"page":         page,
 			"pageSize":     pageSize,
 			"totalPages":   totalPages,
-		}
-
-		utils.ResponseMessage(ctx, "Danh sách dữ liệu", http.StatusOK, responses)
+		})
 	}
 }
 

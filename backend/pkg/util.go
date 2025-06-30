@@ -21,6 +21,10 @@ func GenerateCode(prefix string, digits int, getLastCodeFunc func() (string, err
 		return "", fmt.Errorf("failed to get last code: %w", err)
 	}
 
+	if lastCode == "" {
+		return fmt.Sprintf("%s%0*d", prefix, digits, 1), nil
+	}
+
 	if !strings.HasPrefix(lastCode, prefix) {
 		return "", fmt.Errorf("invalid code format: %s, expected prefix: %s", lastCode, prefix)
 	}

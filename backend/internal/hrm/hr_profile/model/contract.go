@@ -11,18 +11,19 @@ type Contract struct {
 	AttachedFile   string        `gorm:"attached_file" json:"attached_file"`
 	Condition      string        `gorm:"type:condition_enum;column:condition" json:"condition"`
 	CreatedDate    time.Time     `gorm:"column:created_date" json:"created_date"`
+	IsDeleted      bool          `gorm:"column:is_deleted" json:"is_deleted"`
 	ContractTypeId string        `gorm:"type:varchar(6);column:contract_type_id" json:"contract_type"`
 	ContractType   *ContractType `gorm:"foreignKey:ContractTypeId;references:ContractTypeID" json:"contract_type_info,omitempty"`
 	ApproveStatus  string        `gorm:"type:approve_status_enum;column:approve_status" json:"approve_status"`
 	EmployeeID     string        `gorm:"type:varchar(8);column:employee_id" json:"employee_id"`
 	Employee       *Employee     `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"employee_info"`
-	Allowances     []*Allowance  `gorm:"many2many:contract_allowances;foreignKey:ContractId;joinForeignKey:ContractId;References:ID;joinReferences:ID" json:"allowances,omitempty"`
+	Allowances     []*Allowance  `gorm:"many2many:contract_allowances;joinForeignKey:ContractID;joinReferences:AllowanceID" json:"allowances,omitempty"`
 }
 
 func (Contract) TableName() string { return "contract" }
 
 type ContractAllowance struct {
-	ID          string `gorm:"column:id;primaryKey" json:"id"`
+	ID          uint   `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
 	ContractID  string `gorm:"column:contract_id" json:"contract_id"`
 	AllowanceID string `gorm:"column:allowance_id" json:"allowance_id"`
 }
@@ -61,6 +62,7 @@ type ContractResponse struct {
 	ContractType  string         `json:"contract_type"`
 	ApproveStatus string         `gorm:"column:approve_status" json:"approve_status"`
 	Employee      EmployeeSimple `json:"employee"`
+	Allowances    []*Allowance   `json:"allowances"`
 }
 
 type EmployeeSimple struct {

@@ -74,14 +74,30 @@ export type PayloadEmployee = {
   full_name: string;
   birthday: string;
   gender: string;
-  work_type: string;
   phone_number: string;
   email: string;
-  account_id: number;
+  work_type: string;
   position_id: string;
   job_title_id: string;
   status: string;
   manager_id: string;
+  address: string;
+  department_id: string;
+};
+
+export interface EmployeeFormValues {
+  full_name: string;
+  birthday: string;
+  gender: string;
+  phone_number: string;
+  email: string;
+  work_type: string;
+  position_id: string;
+  job_title_id: string;
+  status: string;
+  manager_id: string;
+  address: string;
+  department_id: string;
 };
 
 export type Employee = {
@@ -99,3 +115,46 @@ export type Employee = {
   manager_id: string;
   created_date: string; 
 };
+
+export type HrDocument = {
+  employee_id: string;
+  full_name: string;
+  birthday: string;
+  gender: string;
+  work_type: string;
+  phone_number: string;
+  email: string;
+  account_id: number;
+  position_id: string;
+  job_title_id: string;
+  status: string;
+  manager_id: string;
+  created_date: string; 
+};
+
+export type PayloadDecision = {
+  decision_name: string;     
+  effective_date: Date;    
+  sign_date: Date;          
+  content: string;           
+  condition: string;          
+  attached_file: File | null;    
+  employee_ids: string;        
+  decision_type_id: string;  
+};
+
+
+export type Decision = {
+  decision_id: string;        
+  decision_name: string;      
+  effective_date: string;     
+  sign_date: string;          
+  content: string;            
+  condition: string;          
+  attached_file: string;      
+  created_date: string;       
+  employee_id: string;        
+  decision_type_id: string;  
+  decision_type_name: string; 
+};
+

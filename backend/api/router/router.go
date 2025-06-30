@@ -186,7 +186,6 @@ func setupContractRoutes(router *gin.RouterGroup, handler *handler.ContractHandl
 	contractGroup.GET("/:id", handler.GetContract())
 	contractGroup.GET("", handler.GetAllContract())
 	contractGroup.GET("/export", handler.ExportContract())
-	contractGroup.GET("/by-employee/:id", handler.GetContractByEmployeeID())
 }
 
 func setupDocumentTypeRoutes(r *gin.RouterGroup, h *handler.DocumentTypeHandler) {
@@ -290,10 +289,9 @@ func setupEmployeeDocumentRoutes(router *gin.RouterGroup, employeeDocumentHandle
 	employeeDoc := router.Group("/employee-document")
 	{
 		employeeDoc.POST("", employeeDocumentHandler.CreateEmployeeDocument())
-		employeeDoc.GET("", employeeDocumentHandler.GetPaginated())
+		employeeDoc.GET("", employeeDocumentHandler.GetAllEmployeeDocuments())
 		employeeDoc.GET("/:id", employeeDocumentHandler.GetEmployeeDocumentById())
 		employeeDoc.DELETE("/:id", employeeDocumentHandler.DeleteEmployeeDocument())
 		employeeDoc.PUT("/:id", employeeDocumentHandler.UpdateEmployeeDocument())
-		employeeDoc.GET("/employee-documents", employeeDocumentHandler.GetAllEmployeeDocuments())
 	}
 }

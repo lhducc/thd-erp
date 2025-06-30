@@ -23,7 +23,7 @@ const ConfirmDelete = ({ deleteFn }: Props) => {
           <X />
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className={`w-md`}>
         <DialogHeader>
           <DialogTitle className="text-center">Xác nhận xóa?</DialogTitle>
         </DialogHeader>

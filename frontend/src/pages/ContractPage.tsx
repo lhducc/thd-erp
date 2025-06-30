@@ -1,58 +1,45 @@
-import {useQuery} from "@tanstack/react-query";
-import {exportContractsFile, getAllContractsApi} from "@/apis/contract.api.ts";
+import ConfirmDelete from "@/components/ConfirmDelete.tsx";
 import DataTable from "@/components/DataTable.tsx";
 import Loading from "@/components/Loading.tsx";
+import {useMutation, useQuery} from "@tanstack/react-query";
 import type {ColumnDef} from "@tanstack/react-table";
-import {Button} from "@/components/ui/button.tsx";
+import {toast} from "sonner";
 import type {Contract} from "@/types/contract.ts";
-import export_file from "@/assets/export-file.svg";
-import {ContractForm} from "@/components/ContractForm.tsx";
+import {CreateContract} from "@/components/CreateContract.tsx";
+import {deleteContractById, getAllContractsApi} from "@/apis/contract.api.ts";
 import {useState} from "react";
-import {ContractActions} from "@/components/ContractActions.tsx";
+import {ContractFilter} from "@/components/ContractFilter.tsx";
+import {Button} from "@/components/ui/button.tsx";
+import {SquarePen} from "lucide-react";
 
 const ContractPage = () => {
-    const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'approved' | 'pending' | 'rejected'>('approved');
-    const [open, setOpen] = useState(false);
-
+    const [filters, setFilters] = useState({
+        department: '',
+        contractType: '',
+        condition: ''
+    });
     const {
         data: contracts,
         isPending: pendingContracts,
+        refetch: refetchContracts,
     } = useQuery({
-        queryKey: ["contracts"],
+        queryKey: ["contract"],
         queryFn: getAllContractsApi,
+        gcTime: 0,
+        staleTime: 0,
     });
 
-    if (pendingContracts) {
-        return <Loading/>;
-    }
-
-    // Filter contracts based on active tab
-    const filteredContracts = contracts?.filter(contract => {
-        switch (activeTab) {
-            case 'approved':
-                return contract.approve_status === 'Đã duyệt';
-            case 'pending':
-                return contract.approve_status === 'Chờ duyệt';
-            case 'rejected':
-                return contract.approve_status === 'Chưa duyệt';
-            default:
-                return true;
-        }
-    }) || [];
-
-    // Count contracts by status
-    const countContractsByStatus = () => {
-        if (!contracts) return { approved: 0, pending: 0, rejected: 0 };
-
-        return {
-            approved: contracts.filter(c => c.approve_status === 'Đã duyệt').length,
-            pending: contracts.filter(c => c.approve_status === 'Chờ duyệt').length,
-            rejected: contracts.filter(c => c.approve_status === 'Chưa duyệt').length,
-        };
-    };
-
-    const statusCounts = countContractsByStatus();
+    const {mutateAsync: deleteContract} = useMutation({
+        mutationFn: (id: string) => deleteContractById(id),
+        onSuccess: () => {
+            toast.success("Xóa hợp đồng thành công");
+            refetchContracts();
+        },
+        onError: (error) => {
+            toast.error(error.message);
+        },
+    });
 
     const columns: ColumnDef<Contract>[] = [
         {
@@ -74,6 +61,7 @@ const ContractPage = () => {
         {
             accessorKey: "sign_date",
             header: "Ngày ký",
+            cell: ({getValue}) => new Date(getValue<string>()).toLocaleDateString(),
         },
         {
             accessorKey: "effective_date",
@@ -94,105 +82,146 @@ const ContractPage = () => {
             header: "Thao tác",
             cell: ({row}) => {
                 const contract = row.original;
-                return <ContractActions contractId={contract.contract_id}/>;
+
+                return (
+                    <div className="flex gap-4">
+                        <CreateContract
+                            editBtn={
+                                <Button variant="outline">
+                                    <SquarePen />
+                                </Button>
+                            }
+                            data={contract}
+                            type={activeTab}
+                            refetch={refetchContracts}
+                        />
+                        <ConfirmDelete deleteFn={() => deleteContract(contract.contract_id)}/>
+                    </div>
+                );
             },
         },
     ];
 
-    const exportFile = async () => {
-        try {
-            setLoading(true);
-            const file = await exportContractsFile();
-            const url = URL.createObjectURL(file);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = file.name;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error("Error exporting file:", error);
-        } finally {
-            setLoading(false);
+    if (pendingContracts) {
+        return <Loading/>;
+    }
+
+    const departments = Array.from(new Set(
+        contracts?.map(c => c.employee.department.department_name) || []
+    ));
+
+    const contractTypes = Array.from(new Set(
+        contracts?.map(c => c.contract_type) || []
+    ));
+
+    const conditions = Array.from(new Set(
+        contracts?.map(c => c.condition) || []
+    ));
+
+    // Filter contracts based on active tab and filters
+    const filteredContracts = contracts?.filter(contract => {
+        // Filter by tab
+        let tabMatch = false;
+        switch (activeTab) {
+            case 'approved':
+                tabMatch = contract.approve_status === 'Đã duyệt';
+                break;
+            case 'pending':
+                tabMatch = contract.approve_status === 'Chờ duyệt';
+                break;
+            case 'rejected':
+                tabMatch = contract.approve_status === 'Không duyệt';
+                break;
+            default:
+                tabMatch = true;
         }
+
+        // Filter by department
+        const departmentMatch = !filters.department ||
+            contract.employee.department.department_name === filters.department;
+
+        // Filter by contract type
+        const contractTypeMatch = !filters.contractType ||
+            contract.contract_type === filters.contractType;
+
+        // Filter by condition
+        const conditionMatch = !filters.condition ||
+            contract.condition === filters.condition;
+
+        return tabMatch && departmentMatch && contractTypeMatch && conditionMatch;
+    }) || [];
+
+    // Count contracts by status
+    const countContractsByStatus = () => {
+        if (!contracts) return {approved: 0, pending: 0, rejected: 0};
+
+        return {
+            approved: contracts.filter(c => c.approve_status === 'Đã duyệt').length,
+            pending: contracts.filter(c => c.approve_status === 'Chờ duyệt').length,
+            rejected: contracts.filter(c => c.approve_status === 'Không duyệt').length,
+        };
     };
 
-    const groupButton = (
-        <>
-            <Button onClick={() => setOpen(!open)} variant="default" className={`px-8 py-5 text-[17px] rounded-[15px]`}>
-                <span className={`mb-1 text-[24px]`}>+</span>
-                Thêm hợp đồng
-            </Button>
-            <ContractForm open={open} setOpen={setOpen} contractId={null}/>
-            <Button
-                onClick={exportFile}
-                variant={"default"}
-                className={`px-10 py-5 rounded-[15px] text-[17px]`}
-                disabled={loading}
-            >
-                {loading ? "Đang xuất..." : (
-                    <>
-                        <img src={export_file} alt="export-file" className="w-[24px]"/>
-                        Xuất file
-                    </>
-                )}
-            </Button>
-        </>
-    )
+    const statusCounts = countContractsByStatus();
 
     const navLink = (
         <>
             <hr className={`mb-10`}/>
-            <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
-                <ul className="flex flex-wrap -mb-px text-sm font-medium text-center" id="default-tab"
-                    data-tabs-toggle="#default-tab-content" role="tablist">
-                    <li className="me-2" role="presentation">
-                        <button
-                            className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'approved' ? 'border-[#DB3B21]' : 'hover:text-gray-600 hover:border-gray-300 text-gray-500'}`}
-                            onClick={() => setActiveTab('approved')}
-                            type="button"
-                            role="tab"
-                        >
-                            Đã duyệt ({statusCounts.approved})
-                        </button>
-                    </li>
-                    <li className="me-2" role="presentation">
-                        <button
-                            className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'pending' ? 'border-[#DB3B21]' : 'hover:text-gray-600 hover:border-gray-300 text-gray-500'}`}
-                            onClick={() => setActiveTab('pending')}
-                            type="button"
-                            role="tab"
-                        >
-                            Chờ duyệt ({statusCounts.pending})
-                        </button>
-                    </li>
-                    <li className="me-2" role="presentation">
-                        <button
-                            className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'rejected' ? 'border-[#DB3B21]' : 'hover:text-gray-600 hover:border-gray-300 text-gray-500'}`}
-                            onClick={() => setActiveTab('rejected')}
-                            type="button"
-                            role="tab"
-                        >
-                            Không duyệt ({statusCounts.rejected})
-                        </button>
-                    </li>
-                </ul>
+            <div className={`flex justify-between`}>
+                <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
+                    <ul className="flex flex-wrap -mb-px text-sm font-medium text-center" id="default-tab"
+                        data-tabs-toggle="#default-tab-content" role="tablist">
+                        <li className="me-2" role="presentation">
+                            <button
+                                className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'approved' ? 'border-[#DB3B21]' : 'hover:text-gray-600 hover:border-gray-300 text-gray-500'}`}
+                                onClick={() => setActiveTab('approved')}
+                                type="button"
+                                role="tab"
+                            >
+                                Đã duyệt ({statusCounts.approved})
+                            </button>
+                        </li>
+                        <li className="me-2" role="presentation">
+                            <button
+                                className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'pending' ? 'border-[#DB3B21]' : 'hover:text-gray-600 hover:border-gray-300 text-gray-500'}`}
+                                onClick={() => setActiveTab('pending')}
+                                type="button"
+                                role="tab"
+                            >
+                                Chờ duyệt ({statusCounts.pending})
+                            </button>
+                        </li>
+                        <li className="me-2" role="presentation">
+                            <button
+                                className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'rejected' ? 'border-[#DB3B21]' : 'hover:text-gray-600 hover:border-gray-300 text-gray-500'}`}
+                                onClick={() => setActiveTab('rejected')}
+                                type="button"
+                                role="tab"
+                            >
+                                Không duyệt ({statusCounts.rejected})
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <ContractFilter departments={departments} contractTypes={contractTypes} conditions={conditions}
+                                onFilterChange={setFilters}/>
             </div>
+
         </>
     )
 
     return (
-        <div>
+        <>
             <DataTable
                 columns={columns}
+                // data={contracts || []}
                 data={filteredContracts}
-                title="Hợp đồng"
                 navLink={navLink}
-                buttonCreate={groupButton}
-                keyFilter="contract_id"
+                title="Hợp đồng"
+                buttonCreate={<CreateContract refetch={refetchContracts}/>}
+                keyFilter="contract_type"
             />
-        </div>
+        </>
     );
 };
 

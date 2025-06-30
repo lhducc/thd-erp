@@ -127,7 +127,7 @@ func (h *EmployeeHandler) GetAllEmployees() gin.HandlerFunc {
 		totalPages := (totalRecords + int64(pageSize) - 1) / int64(pageSize)
 
 		response := gin.H{
-			"employees":    employees,
+			"data":         employees,
 			"totalRecords": totalRecords,
 			"page":         page,
 			"pageSize":     pageSize,

@@ -188,6 +188,7 @@ func (h *ContractHandler) GetAllContract() gin.HandlerFunc {
 				ContractType:  v.ContractTypeId,
 				ApproveStatus: v.ApproveStatus,
 				Employee:      empSimple,
+				Allowances:    v.Allowances,
 			}
 
 			contractResponses = append(contractResponses, res)

@@ -10,7 +10,7 @@ const HomePage = () => {
         <header className="bg-rose-500 sticky top-0">
           <SidebarTrigger />
         </header>
-        <div className="p-8 flex-1">
+        <div className="flex-1">
           <Outlet />
         </div>
       </main>

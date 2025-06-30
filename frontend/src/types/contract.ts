@@ -3,13 +3,14 @@ export interface Contract {
     effective_date: string; // ISO date string
     expired_date: string;   // ISO date string
     sign_date: string;      // ISO date string
-    approve_status: "Chờ duyệt" | "Đã duyệt" | "Chưa duyệt";
+    approve_status: "Chờ duyệt" | "Đã duyệt" | "Không duyệt";
     note: string;
     attached_file: string;  // URL string
     condition: string;
     created_date: string;   // ISO date string
     contract_type: string;
     employee: ContractEmployee;
+    allowances: []
 }
 
 interface ContractEmployee {
@@ -30,16 +31,19 @@ interface Office {
 }
 
 export interface ContractFormValues {
-    employeeId: string;
-    contractType: string;
-    signingDate: string;
-    effectiveDate: string;
-    expirationDate: string;
-    employeeName: string;
+    contract_id: string;
+    employee_id: string;
+    contract_type: string;
+    condition: string;
+    sign_date: string;
+    effective_date: string;
+    expired_date: string;
+    employee_name: string;
     department: string;
     status: "Chưa hiệu lực" | "Hiệu lực";
     note: string;
-    approve_status: "Chờ duyệt" | "Đã duyệt" | "Chưa duyệt";
+    approve_status: "Chờ duyệt" | "Đã duyệt" | "Không duyệt";
+    allowance_ids: [];
 }
 
 export interface ContractType {

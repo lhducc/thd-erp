@@ -70,3 +70,4 @@ func UpdateAttendanceFormFields(existing *AttendanceForm, updated AttendanceForm
 	existing.TimeWorkType = updated.TimeWorkType
 	existing.WorkingDays = updated.WorkingDays
 }
+

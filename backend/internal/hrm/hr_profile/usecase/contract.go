@@ -8,7 +8,6 @@ import (
 	errpkg "erp/backend/pkg/errors"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"strconv"
 	"time"
 )
@@ -64,7 +63,7 @@ func (biz *contractBiz) CreateContract(ctx context.Context, data *hrmmodel.Contr
 			SignDate:       data.SignDate,
 			Note:           data.Note,
 			AttachedFile:   data.AttachedFile,
-			Condition:      data.Condition,
+			Condition:      determineCondition(data.CreatedDate, data.ExpiredDate),
 			ContractTypeId: data.ContractTypeId,
 			ApproveStatus:  data.ApproveStatus,
 			EmployeeID:     data.Manager,
@@ -75,6 +74,7 @@ func (biz *contractBiz) CreateContract(ctx context.Context, data *hrmmodel.Contr
 		if err := txRepo.CreateContract(ctx, contract); err != nil {
 			return fmt.Errorf("không thể tạo hợp đồng: %w", err)
 		}
+
 		unique := map[string]struct{}{}
 		for _, aid := range data.AllowanceIDs {
 			if _, exists := unique[aid]; exists {
@@ -82,7 +82,6 @@ func (biz *contractBiz) CreateContract(ctx context.Context, data *hrmmodel.Contr
 			}
 			unique[aid] = struct{}{}
 			ca := &hrmmodel.ContractAllowance{
-				ID:          uuid.NewString(),
 				ContractID:  contract.ContractId,
 				AllowanceID: aid,
 			}
@@ -90,6 +89,7 @@ func (biz *contractBiz) CreateContract(ctx context.Context, data *hrmmodel.Contr
 				return fmt.Errorf("không thể lưu phụ cấp cho hợp đồng: %w", err)
 			}
 		}
+
 		return nil
 	})
 }

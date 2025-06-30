@@ -44,13 +44,13 @@ interface DataTableProps<TData, TValue> {
 }
 
 export default function DataTable<TData, TValue>({
-                                                     columns,
-                                                     data,
-                                                     title,
-                                                     buttonCreate,
-                                                     navLink,
-                                                     keyFilter,
-                                                 }: DataTableProps<TData, TValue> & {
+        columns,
+        data,
+        title,
+        buttonCreate,
+        navLink,
+        keyFilter,
+    }: DataTableProps<TData, TValue> & {
     title?: string;
     buttonCreate?: React.ReactNode;
     navLink?: React.ReactNode;
@@ -67,7 +67,7 @@ export default function DataTable<TData, TValue>({
         pageIndex: 0,
         pageSize: 10,
     });
-
+    console.log("datdataa",data);
     const table = useReactTable({
         data,
         columns,

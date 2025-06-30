@@ -1,6 +1,5 @@
-import type { PayloadEmployee } from "@/types";
+import type { PayloadEmployee, Employee } from "@/types";
 import api from "./api";
-import type {Employee} from "@/types/employee.ts";
 
 export const createEmployeeApi = async (payload: PayloadEmployee) => {
   try {
@@ -19,11 +18,11 @@ export const createEmployeeApi = async (payload: PayloadEmployee) => {
   }
 };
 
-export const getAllEmployeesApi = async (page: number = 1, pageSize: number = 5) : Promise<Employee[]> => {
+export const getAllEmployeesApi = async (page: number = 2, pageSize: number = 5) => {
   try {
     const response = await api.get(`/employee?page=${page}&pageSize=${pageSize}`);
     if (response.data && response.data.data) {
-      return response.data.data;
+      return response.data.data.data;
     } else {
       throw new Error("No data found in the response.");
     }
@@ -39,7 +38,6 @@ export const getAllEmployeesApi = async (page: number = 1, pageSize: number = 5)
   }
 };
 
-// API lấy thông tin nhân viên theo ID
 export const getEmployeeByIdApi = async (employeeId: string): Promise<Employee> => {
   try {
     const response = await api.get(`/employee/${employeeId}`);
@@ -56,7 +54,6 @@ export const getEmployeeByIdApi = async (employeeId: string): Promise<Employee> 
   }
 };
 
-// API cập nhật nhân viên
 export const updateEmployeeApi = async (employeeId: string, payload: PayloadEmployee) => {
   try {
     const response = await api.put(`/employee/${employeeId}`, payload);
@@ -73,7 +70,6 @@ export const updateEmployeeApi = async (employeeId: string, payload: PayloadEmpl
   }
 };
 
-// API xóa nhân viên
 export const deleteEmployeeApi = async (employeeId: string) => {
   try {
     const response = await api.delete(`/employee/${employeeId}`);
@@ -90,16 +86,15 @@ export const deleteEmployeeApi = async (employeeId: string) => {
   }
 };
 
-// API xuất dữ liệu nhân viên sang Excel
-export const exportEmployeeExcelApi = async () => {
+export const exportEmployeeExcelApi = async (): Promise<File> => {
   try {
-    const response = await api.get("/employee/export", { responseType: "blob" });
-    const file = new Blob([response.data], { type: "application/vnd.ms-excel" });
-    const fileURL = URL.createObjectURL(file);
-    const link = document.createElement("a");
-    link.href = fileURL;
-    link.download = "employees.xlsx";
-    link.click();
+    const response = await api.get("employee/export?fields=employee_id,fullname,email,manager,birthday", {
+        responseType: "blob",
+    });
+
+    const fileName = "employee.xlsx";
+    const file = new File([response.data], fileName, { type: response.data.type });
+    return file;
   } catch (error: any) {
     console.error("Error exporting Employees to Excel:", error);
     if (error.response) {

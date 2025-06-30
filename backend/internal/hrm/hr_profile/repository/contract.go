@@ -45,7 +45,7 @@ func (r *ContractStore) GetContract(ctx context.Context, id string) (*hrmmodel.C
 }
 func (r *ContractStore) GetContractByEmployeeID(ctx context.Context, employeeId string) ([]hrmmodel.Contract, error) {
 	var contracts []hrmmodel.Contract
-	if err := r.db.WithContext(ctx).
+	if err := r.AddDefaultScope(r.db.WithContext(ctx)).
 		Preload("ContractType").
 		Where("employee_id = ?", employeeId).
 		Find(&contracts).Error; err != nil {
@@ -60,7 +60,7 @@ func (r *ContractStore) GetAllContractPagination(ctx context.Context, page, page
 
 	offset := (page - 1) * pageSize
 
-	db := r.db.Model(&hrmmodel.Contract{})
+	db := r.AddDefaultScope(r.db.Model(&hrmmodel.Contract{}))
 
 	for key, value := range filters {
 		switch key {
@@ -96,13 +96,18 @@ func (r *ContractStore) GetAllContractPagination(ctx context.Context, page, page
 	return contracts, totalRecords, nil
 }
 
+// AddDefaultScope only get contract with is_deleted = false
+func (r *ContractStore) AddDefaultScope(db *gorm.DB) *gorm.DB {
+	return db.Where("is_deleted = ?", false)
+}
+
 func (r *ContractStore) GetAllContract(ctx context.Context) ([]hrmmodel.Contract, error) {
 	var contracts []hrmmodel.Contract
 	if err := r.db.WithContext(ctx).
+		Preload("Allowances").
 		Preload("Employee").
 		Preload("Employee.Department").
 		Preload("Employee.Department.Office").
-		Preload("Allowances").
 		Find(&contracts).Error; err != nil {
 		return nil, err
 	}
@@ -110,6 +115,7 @@ func (r *ContractStore) GetAllContract(ctx context.Context) ([]hrmmodel.Contract
 }
 
 func (r *ContractStore) UpdateContract(ctx context.Context, id string, data *hrmmodel.ContractCreate) error {
+	fmt.Println(data)
 	tx := r.db.WithContext(ctx).Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -158,9 +164,12 @@ func (r *ContractStore) UpdateContract(ctx context.Context, id string, data *hrm
 }
 
 func (r *ContractStore) DeleteContract(ctx context.Context, id string) error {
-	return r.db.WithContext(ctx).Table("contract").
+	return r.db.WithContext(ctx).
+		Model(&hrmmodel.Contract{}).
 		Where("contract_id = ?", id).
-		Delete(nil).Error
+		UpdateColumns(map[string]interface{}{
+			"is_deleted": true,
+		}).Error
 }
 
 func (s *ContractStore) CheckExistName(name string) (bool, error) {
@@ -174,10 +183,15 @@ func (s *ContractStore) CheckExistName(name string) (bool, error) {
 	return false, nil
 }
 
-func (s *ContractStore) GetLastContractByCode(ctx context.Context, Contract *hrmmodel.Contract) error {
-	return s.db.WithContext(ctx).
+func (s *ContractStore) GetLastContractByCode(ctx context.Context, contract *hrmmodel.Contract) error {
+	err := s.db.WithContext(ctx).
 		Order("contract_id DESC").
-		First(Contract).Error
+		First(contract).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		contract.ContractId = ""
+		return nil
+	}
+	return err
 }
 
 func (s *ContractStore) CreateContractAllowance(ctx context.Context, contract *hrmmodel.ContractAllowance) error {

@@ -158,13 +158,18 @@ func AutoMigrate(db *gorm.DB) error {
 		//&hrmmodel.Decision{},
 		//&hrmmodel.DecisionEmployee{},
 		//&hrmmodel.Insurance{},
-		// &model.Holiday{},
-		// &model.AllowedWorkingSchedule{},
-		// &model.WorkShifts{},
-		// &hrmmodel.Allowance{}
+		//&model.Holiday{},
+		//&model.AllowedWorkingSchedule{},
+		//&model.WorkShifts{},
+		//&hrmmodel.Allowance{},
+		//&model.Contract{},
+		//&model.Allowance{},
+		//&model.ContractAllowance{},
 	)
+
 	if err != nil {
 		return fmt.Errorf("migrate thất bại: %w", err)
 	}
+
 	return nil
 }

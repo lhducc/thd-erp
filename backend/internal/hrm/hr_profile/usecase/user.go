@@ -11,7 +11,7 @@ import (
 
 type EmployeeRepo interface {
 	CreateEmployee(employee *model.Employee) error
-	UpdateEmployeeWithAccount(employee *model.Employee, accountID int) error
+	UpdateEmployeeWithAccount(employee *model.Employee, accountID int64) error
 	GetUserById(id string) (model.Employee, error)
 	GetAllEmployees() ([]model.Employee, error)
 	GetAllEmployeesPagination(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error)
@@ -23,7 +23,7 @@ type EmployeeRepo interface {
 
 type AccountRepo interface {
 	CreateAccount(employee *model.Employee, hashedPassword, roleID string) (*model.Account, error)
-	GetAccount(ctx context.Context, id string) (*model.Account, error)
+	GetAccount(ctx context.Context, id int64) (*model.Account, error)
 	GetAllAccount(ctx context.Context) ([]model.Account, error)
 	UpdateAccount(ctx context.Context, id string, data *model.Account) error
 	DeleteAccount(ctx context.Context, id string) error
@@ -31,19 +31,19 @@ type AccountRepo interface {
 	CheckFirstLogin(email string) (bool, error)
 }
 
-type employeeBiz struct {
+type EmployeeBiz struct {
 	repo    EmployeeRepo
 	account AccountRepo
 }
 
-func NewEmployeeBiz(store EmployeeRepo, account AccountRepo) *employeeBiz {
-	return &employeeBiz{
+func NewEmployeeBiz(store EmployeeRepo, account AccountRepo) *EmployeeBiz {
+	return &EmployeeBiz{
 		repo:    store,
 		account: account,
 	}
 }
 
-func (s *employeeBiz) CreateEmployeeWithAccount(employee model.Employee) error {
+func (s *EmployeeBiz) CreateEmployeeWithAccount(employee model.Employee) error {
 	id, err := utils.GenerateCode("THD", 3, func() (string, error) {
 		var lastEmployee model.Employee
 		err := s.repo.GetLastEmployeeByCode(&lastEmployee)
@@ -89,7 +89,7 @@ func (s *employeeBiz) CreateEmployeeWithAccount(employee model.Employee) error {
 	return nil
 }
 
-func (biz *employeeBiz) GetUserById(id string) (model.Employee, error) {
+func (biz *EmployeeBiz) GetUserById(id string) (model.Employee, error) {
 	if id == "" {
 		return model.Employee{}, errors.New("invalid employee ID")
 	}
@@ -102,7 +102,7 @@ func (biz *employeeBiz) GetUserById(id string) (model.Employee, error) {
 	return employee, nil
 }
 
-func (biz *employeeBiz) GetAllEmployees(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error) {
+func (biz *EmployeeBiz) GetAllEmployees(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error) {
 	employees, totalRecords, err := biz.repo.GetAllEmployeesPagination(page, pageSize, filters)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get all employees: %w", err)
@@ -111,7 +111,7 @@ func (biz *employeeBiz) GetAllEmployees(page, pageSize int, filters map[string]i
 	return employees, totalRecords, nil
 }
 
-func (biz *employeeBiz) GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error) {
+func (biz *EmployeeBiz) GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error) {
 	employees, err := biz.repo.GetAllEmployeesByStatus(status, page, pageSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get employees with status: %w", err)
@@ -120,7 +120,7 @@ func (biz *employeeBiz) GetAllEmployeesByStatus(status string, page, pageSize in
 	return employees, nil
 }
 
-func (biz *employeeBiz) UpdateEmployee(id string, updatedEmployee model.Employee) error {
+func (biz *EmployeeBiz) UpdateEmployee(id string, updatedEmployee model.Employee) error {
 	if id == "" {
 		return errors.New("invalid employee ID")
 	}
@@ -132,7 +132,7 @@ func (biz *employeeBiz) UpdateEmployee(id string, updatedEmployee model.Employee
 	return nil
 }
 
-func (biz *employeeBiz) DeleteEmployee(id string) error {
+func (biz *EmployeeBiz) DeleteEmployee(id string) error {
 	if id == "" {
 		return errors.New("invalid employee ID")
 	}
@@ -143,7 +143,16 @@ func (biz *employeeBiz) DeleteEmployee(id string) error {
 	return nil
 }
 
-func (e *employeeBiz) ExportEmployeeTest(selectedFields []string) ([]byte, string, error) {
+// get account by id
+func (biz *EmployeeBiz) GetAccount(ctx context.Context, accountId int64) (*model.Account, error) {
+	account, err := biz.account.GetAccount(ctx, accountId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get account: %w", err)
+	}
+	return account, err
+}
+
+func (e *EmployeeBiz) ExportEmployeeTest(selectedFields []string) ([]byte, string, error) {
 	exporter := utils.NewExcelExporter("Employees")
 
 	exporter.RegisterField("employee_id", "Mã Nhân Viên", "employee_id", func(item interface{}) any {

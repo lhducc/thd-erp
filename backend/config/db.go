@@ -136,6 +136,13 @@ func createEnums(db *gorm.DB) error {
 			 'Thủ tục tiếp nhận',
 			 'Thủ tục thôi việc'
 		  );
+		END IF;
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'work_day_enum') THEN
+		  CREATE TYPE document_group_enum AS ENUM (
+			 '1',
+			 '0.5',
+			 '0'
+		  );
 	   END IF;
 	END
 	$$;
@@ -149,22 +156,22 @@ func GetDB() *gorm.DB {
 
 func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
-		//&officemodel.Office{},
-		//&hrmmodel.EmployeeDocumentType{},
-		//&hrmmodel.Employee{},
-		//&hrmmodel.ContractType{},
-		//&hrmmodel.Contract{},
-		//&hrmmodel.DecisionType{},
-		//&hrmmodel.Decision{},
-		//&hrmmodel.DecisionEmployee{},
-		//&hrmmodel.Insurance{},
-		//&model.Holiday{},
-		//&model.AllowedWorkingSchedule{},
-		//&model.WorkShifts{},
-		//&hrmmodel.Allowance{},
-		//&model.Contract{},
-		//&model.Allowance{},
-		//&model.ContractAllowance{},
+	//&officemodel.Office{},
+	//&hrmmodel.EmployeeDocumentType{},
+	//&hrmmodel.Employee{},
+	//&hrmmodel.ContractType{},
+	//&hrmmodel.Contract{},
+	//&hrmmodel.DecisionType{},
+	//&hrmmodel.Decision{},
+	//&hrmmodel.DecisionEmployee{},
+	//&hrmmodel.Insurance{},
+	//&model.Holiday{},
+	//&model.AllowedWorkingSchedule{},
+	//&model.WorkShifts{},
+	//&hrmmodel.Allowance{},
+	//&model.Contract{},
+	//&model.Allowance{},
+	//&model.ContractAllowance{},
 	)
 
 	if err != nil {

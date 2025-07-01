@@ -58,7 +58,7 @@ func (s *accountStore) CreateAccount(employee *hrmmodel.Employee, hashedPassword
 	return &account, nil
 }
 
-func (r *accountStore) GetAccount(ctx context.Context, id string) (*hrmmodel.Account, error) {
+func (r *accountStore) GetAccount(ctx context.Context, id int64) (*hrmmodel.Account, error) {
 	var contract hrmmodel.Account
 	if err := r.db.WithContext(ctx).Table("account").
 		Where("id = ?", id).

@@ -8,36 +8,76 @@ import (
 	"fmt"
 )
 
+type WorkShiftRepo interface {
+	CreateWorkShift(data *model.WorkShifts) error
+	GetWorkShiftById(id string) (model.WorkShifts, error)
+	GetAllWorkShift() ([]model.WorkShifts, error)
+	UpdateWorkShift(id string, data *model.WorkShifts) error
+	DeleteWorkShift(id string) error
+	GetLastWorkShiftByCode(emp *model.WorkShifts, predix string) error
+	IsExactTimeRangeExists(timeOfDay model.TimeOfDayEnum, start, end string) (*model.WorkShifts, error)
+}
+
 type WorkShiftService struct {
-	repo *repository.WorkShiftStore
+	repo WorkShiftRepo
 }
 
 func NewWorkShiftService(repo *repository.WorkShiftStore) *WorkShiftService {
 	return &WorkShiftService{repo: repo}
 }
 
-func (ws *WorkShiftService) CreateWorkShift(w model.WorkShifts) error {
-	code, err := utils.GenerateCode("", 4, func() (string, error) {
+func (ws *WorkShiftService) CreateWorkShiftService(w *model.WorkShifts) error {
+	var (
+		code string
+		err  error
+	)
+
+	// TimeOfDayEnum -> predix
+	timeOfDayPrefixes := map[model.TimeOfDayEnum]string{
+		model.FullTime:  "CN",
+		model.Morning:   "CS",
+		model.Afternoon: "CC",
+		model.Night:     "CT",
+	}
+	predix, ok := timeOfDayPrefixes[w.TimeOfDay]
+	if !ok {
+		return errors.New("thời gian làm việc không hợp lệ: chỉ chấp nhận 'Cả ngày', 'Sáng', 'Chiều', 'Tối'")
+	}
+
+	// auto create ID
+	code, err = utils.GenerateCode(predix, 3, func() (string, error) {
 		var last model.WorkShifts
-		err := ws.repo.GetLastWorkShiftByCode(&last)
+		err := ws.repo.GetLastWorkShiftByCode(&last, predix)
 		if err != nil {
 			return "", err
 		}
-		return last.WorkShiftId, nil
+		return last.WorkShiftID, nil
 	})
 
 	if err != nil {
 		return fmt.Errorf("không thể tạo mã: %w", err)
 	}
 
-	w.WorkShiftId = code
-	if err := ws.repo.CreateWorkShift(&w); err != nil {
+	// check exit start,end time
+	wData, err := ws.repo.IsExactTimeRangeExists(w.TimeOfDay, w.StartTime, w.EndTime)
+	if err != nil {
+		return err
+	}
+	if wData != nil {
+		return fmt.Errorf("khung giờ %s-%s đã tồn tại trong ca buổi '%s' mã ca '%s'",
+			w.StartTime, w.EndTime, w.TimeOfDay, wData.WorkShiftID)
+	}
+
+	// call repo create new
+	w.WorkShiftID = code
+	if err := ws.repo.CreateWorkShift(w); err != nil {
 		return err
 	}
 
 	return nil
 }
-func (biz *WorkShiftService) GetWorkShiftById(id string) (model.WorkShifts, error) {
+
+func (biz *WorkShiftService) GetWorkShiftByIdService(id string) (model.WorkShifts, error) {
 	if id == "" {
 		return model.WorkShifts{}, errors.New("invalid workshift ID")
 	}
@@ -50,7 +90,7 @@ func (biz *WorkShiftService) GetWorkShiftById(id string) (model.WorkShifts, erro
 	return workshift, nil
 }
 
-func (biz *WorkShiftService) GetAllWorkShift() ([]model.WorkShifts, error) {
+func (biz *WorkShiftService) GetAllWorkShiftService() ([]model.WorkShifts, error) {
 	workshifts, err := biz.repo.GetAllWorkShift()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all workshifts: %w", err)
@@ -59,7 +99,7 @@ func (biz *WorkShiftService) GetAllWorkShift() ([]model.WorkShifts, error) {
 	return workshifts, nil
 }
 
-func (biz *WorkShiftService) UpdateWorkShift(id string, workshift model.WorkShifts) error {
+func (biz *WorkShiftService) UpdateWorkShiftService(id string, workshift *model.WorkShifts) error {
 	if id == "" {
 		return errors.New("invalid employee ID")
 	}
@@ -71,7 +111,7 @@ func (biz *WorkShiftService) UpdateWorkShift(id string, workshift model.WorkShif
 	return nil
 }
 
-func (biz *WorkShiftService) DeleteWorkShift(id string) error {
+func (biz *WorkShiftService) DeleteWorkShiftService(id string) error {
 	if id == "" {
 		return errors.New("invalid employee ID")
 	}

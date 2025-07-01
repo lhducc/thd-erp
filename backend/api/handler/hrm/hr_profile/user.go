@@ -86,21 +86,7 @@ func (h *EmployeeHandler) GetAllEmployees() gin.HandlerFunc {
 		// filter
 		filterFields := []string{"job_title_id", "department_id", "position_id", "office_id"}
 		filters := make(map[string]interface{})
-
-		for _, field := range filterFields {
-			values := ctx.QueryArray(field)
-			cleaned := make([]string, 0)
-			for _, v := range values {
-				for _, part := range strings.Split(v, ",") {
-					if trimmed := strings.TrimSpace(part); trimmed != "" {
-						cleaned = append(cleaned, trimmed)
-					}
-				}
-			}
-			if len(cleaned) > 0 {
-				filters[field] = cleaned
-			}
-		}
+		utils.ExtractFilterArrays(ctx, filterFields)
 
 		// get data
 		employees, totalRecords, err := h.employeeBiz.GetAllEmployees(page, pageSize, filters)
@@ -110,24 +96,13 @@ func (h *EmployeeHandler) GetAllEmployees() gin.HandlerFunc {
 		}
 
 		//Add department information
-		for i, emp := range employees {
-			deparmentID := emp.DepartmentID
-			if deparmentID == "" {
-				continue
-			}
-			dept, err := h.departmentBiz.GetDepartment(ctx.Request.Context(), emp.DepartmentID)
-			if err != nil {
-				utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi khi lấy department: %s", err.Error()), http.StatusNotFound, nil)
-				return
-			}
-			employees[i].Department = dept
-		}
+		newEmployees := h.getAllDepartmentByListEmployee(ctx, employees)
 
 		// caculator the total of page number
 		totalPages := (totalRecords + int64(pageSize) - 1) / int64(pageSize)
 
 		response := gin.H{
-			"data":         employees,
+			"data":         &newEmployees,
 			"totalRecords": totalRecords,
 			"page":         page,
 			"pageSize":     pageSize,
@@ -136,6 +111,23 @@ func (h *EmployeeHandler) GetAllEmployees() gin.HandlerFunc {
 
 		utils.ResponseMessage(ctx, "Danh sách dữ liệu", http.StatusOK, response)
 	}
+}
+
+// get department by list employeeAdd commentMore actions
+func (h *EmployeeHandler) getAllDepartmentByListEmployee(ctx *gin.Context, employees []model.Employee) *[]model.Employee {
+	for i, emp := range employees {
+		deparmentID := emp.DepartmentID
+		if deparmentID == "" {
+			continue
+		}
+		dept, err := h.departmentBiz.GetDepartment(ctx.Request.Context(), emp.DepartmentID)
+		if err != nil {
+			utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi khi lấy department: %s", err.Error()), http.StatusNotFound, nil)
+			return nil
+		}
+		employees[i].Department = dept
+	}
+	return &employees
 }
 
 func (biz *EmployeeHandler) GetAllEmployeeByStatus() gin.HandlerFunc {

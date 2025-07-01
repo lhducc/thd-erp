@@ -24,7 +24,7 @@ func (s *WorkShiftStore) recoverFromPanic(tx *gorm.DB) {
 	}
 }
 
-func (s *WorkShiftStore) CreateWorkShift(workshift *model.WorkShifts) error {
+func (s *WorkShiftStore) CreateWorkShift(data *model.WorkShifts) error {
 	tx := s.db.Begin()
 
 	if tx.Error != nil {
@@ -33,13 +33,7 @@ func (s *WorkShiftStore) CreateWorkShift(workshift *model.WorkShifts) error {
 
 	defer s.recoverFromPanic(tx)
 
-	// err := model.ValidateEmployeeReferences(tx, *employee)
-	// if err != nil {
-	// 	tx.Rollback()
-	// 	return fmt.Errorf("Lỗi tạo nhân viên: %w", err)
-	// }
-
-	if err := tx.Create(workshift).Error; err != nil {
+	if err := tx.Create(&data).Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to create workshift: %w", err)
 	}
@@ -53,7 +47,7 @@ func (s *WorkShiftStore) CreateWorkShift(workshift *model.WorkShifts) error {
 
 func (s *WorkShiftStore) GetWorkShiftById(id string) (model.WorkShifts, error) {
 	var workshift model.WorkShifts
-	if err := s.db.Where("work_shift_id = ?", id).First(&workshift).Error; err != nil {
+	if err := s.db.Where("workshift_id = ? AND is_deleted = ? ", id, false).First(&workshift).Error; err != nil {
 		return model.WorkShifts{}, fmt.Errorf("work shift not found with id %d", id)
 	}
 	return workshift, nil
@@ -61,14 +55,14 @@ func (s *WorkShiftStore) GetWorkShiftById(id string) (model.WorkShifts, error) {
 
 func (s *WorkShiftStore) GetAllWorkShift() ([]model.WorkShifts, error) {
 	var workShifts []model.WorkShifts
-	if err := s.db.Table("work_shifts").Where("is_deleted = ?", false).Find(&workShifts).Error; err != nil {
+	if err := s.db.Where("is_deleted = ?", false).Find(&workShifts).Error; err != nil {
 		return nil, err
 	}
 
 	return workShifts, nil
 }
 
-func (s *WorkShiftStore) UpdateWorkShift(id string, workshift model.WorkShifts) error {
+func (s *WorkShiftStore) UpdateWorkShift(id string, workshift *model.WorkShifts) error {
 	tx := s.db.Begin()
 
 	if tx.Error != nil {
@@ -81,7 +75,7 @@ func (s *WorkShiftStore) UpdateWorkShift(id string, workshift model.WorkShifts) 
 		return errors.New("failed to get work shift by id")
 	}
 
-	model.UpdateWorkShiftFields(&w, workshift)
+	//model.UpdateWorkShiftFields(&w, workshift)
 
 	if err := tx.Save(&w).Error; err != nil {
 		tx.Rollback()
@@ -102,11 +96,10 @@ func (s *WorkShiftStore) DeleteWorkShift(id string) error {
 	if tx.Error != nil {
 		return errors.New("failed to start transaction")
 	}
-
 	defer s.recoverFromPanic(tx)
 
 	var workshift model.WorkShifts
-	if err := tx.Where("work_shift_id = ?", id).First(&workshift).Error; err != nil {
+	if err := tx.Where("workshift_id = ?", id).First(&workshift).Error; err != nil {
 		tx.Rollback()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("workshift with ID %d not found", id)
@@ -127,8 +120,25 @@ func (s *WorkShiftStore) DeleteWorkShift(id string) error {
 	return nil
 }
 
-func (s *WorkShiftStore) GetLastWorkShiftByCode(emp *model.WorkShifts) error {
+func (s *WorkShiftStore) GetLastWorkShiftByCode(emp *model.WorkShifts, predix string) error {
 	return s.db.
-		Order("work_shift_id DESC").
-		First(emp).Error
+		Where("workshift_id LIKE ?", predix+"%").
+		Order("workshift_id DESC").
+		First(&emp).Error
+}
+
+func (s *WorkShiftStore) IsExactTimeRangeExists(timeOfDay model.TimeOfDayEnum, start, end string) (*model.WorkShifts, error) {
+	var w model.WorkShifts
+	err := s.db.Table(model.WorkShifts{}.TableName()).
+		Where("time_of_day = ?", timeOfDay).
+		Where("start_time = ? AND end_time = ?", start, end).
+		First(&w).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &w, nil
 }

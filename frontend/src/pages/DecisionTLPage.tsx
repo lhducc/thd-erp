@@ -2,7 +2,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { SquarePen } from "lucide-react";
-import { getAllDecisionsApi, deleteDecisionApi } from "@/apis/profile.api";
 import ConfirmDelete from "@/components/ConfirmDelete";
 import DataTable from "@/components/DataTableDesision";
 import Loading from "@/components/Loading";
@@ -11,6 +10,7 @@ import CreateDecisionForm from "@/components/CreateDecisionForm";
 import type { Decision } from "@/types";
 import type { ColumnDef } from "@tanstack/react-table";
 import { TableCell } from "@/components/ui/table";
+import {deleteDecisionApi, getAllDecisionsApi} from "@/apis/decision.api.ts";
 
 const DecisionPage = () => {
   const [open, setOpen] = useState(false);

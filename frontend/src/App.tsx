@@ -23,6 +23,7 @@ import ShiftDetailPage from "@/pages/ShiftDetailPage.tsx";
 import HomePage from "@/pages/HomePage.tsx";
 import DetailEmployeePage from "@/pages/detailProfilePage.tsx";
 import AttendancePage from "@/pages/checkin/AttendancePage.tsx";
+import WorkshiftPage from "@/pages/HR/checkin/WorkshiftPage.tsx";
 
 
 const App = () => {
@@ -66,6 +67,10 @@ const App = () => {
         {
             path: PATH.INSURANCE,
             element: <InsuranceInformationPage/>,
+        },
+        {
+            path: PATH.WORKSHIFT,
+            element: <WorkshiftPage/>,
         },
         {
             path: PATH.SHIFT_MANAGEMENT,

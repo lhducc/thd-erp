@@ -17,7 +17,6 @@ import {
   Users,
   ReceiptText,
   SquareCheckBig,
-  Calendar,
   Settings,
   ChevronRight,
 } from "lucide-react";
@@ -28,9 +27,11 @@ import {
   CollapsibleTrigger,
 } from "../../ui/collapsible.tsx";
 import { Link } from "react-router-dom";
+import checkinIcon from "@/assets/checkin-management.png";
+const CheckinIcon = () => <img className={`w-4 h-4`} src={checkinIcon} alt="checkin icon" />;
 
 const HRSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
-  const data = [
+  const setting = [
     {
       name: "Trang chủ",
       url: PATH.HOME,
@@ -40,6 +41,11 @@ const HRSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
       name: "Hồ sơ nhân viên",
       url: PATH.PROFILE,
       icon: Users,
+    },
+    {
+      name: "Quản lý ca làm việc",
+      url: PATH.WORKSHIFT,
+      icon: CheckinIcon,
     },
     {
       name: "Hợp đồng",
@@ -69,7 +75,7 @@ const HRSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {data.map((item) => (
+            {setting.map((item) => (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link to={item.url}>

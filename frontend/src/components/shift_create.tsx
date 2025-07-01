@@ -6,36 +6,13 @@ import {
     type ColumnFiltersState,
     type SortingState,
     type VisibilityState,
-    flexRender,
     getCoreRowModel,
     getFilteredRowModel,
     getPaginationRowModel,
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
-import {
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight,
-} from "lucide-react";
 
-import {Button} from "@/components/ui/button";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import {InputWithIcon} from "@/components/ui/input-with-icon.tsx";
 
 interface DataTableProps<TData, TValue> {

@@ -9,7 +9,7 @@ import (
 )
 
 type Account struct {
-	ID          int       `gorm:"primaryKey;column:id" json:"account_id"`
+	ID          int64     `gorm:"primaryKey;column:id" json:"account_id"`
 	LoginMail   string    `gorm:"column:login_mail" json:"login_mail"`
 	Password    string    `gorm:"column:password" json:"password"`
 	FirstLogin  bool      `gorm:"column:first_login" json:"first_login"`
@@ -31,7 +31,7 @@ type Employee struct {
 	PhoneNumber  string            `gorm:"column:phone_number;type:varchar(20)" json:"phone_number" validate:"omitempty,e164"`
 	Email        string            `gorm:"column:email;type:varchar(255)" json:"email" validate:"omitempty,email"`
 	Address      string            `gorm:"column:address;type:text" json:"address"`
-	AccountID    *int              `gorm:"column:account_id" json:"account_id"`
+	AccountID    *int64            `gorm:"column:account_id" json:"account_id"`
 	PositionID   string            `gorm:"column:position_id" json:"position_id"`
 	JobTitleID   string            `gorm:"column:job_title_id" json:"job_title_id"`
 	Status       string            `gorm:"column:status" json:"status" validate:"required,oneof=active inactive"`

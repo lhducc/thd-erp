@@ -1,54 +1,88 @@
 package checkin
 
 import (
+	handler "erp/backend/api/handler/hrm/hr_profile"
 	"erp/backend/internal/hrm/checkin/model"
-	"erp/backend/internal/hrm/checkin/repository"
-	"erp/backend/internal/hrm/checkin/service"
-	utils "erp/backend/pkg"
+	checkinrepo "erp/backend/internal/hrm/checkin/repository"
+	hrRepo "erp/backend/internal/hrm/hr_profile/repository"
 	"fmt"
-	"net/http"
 
+	checkinService "erp/backend/internal/hrm/checkin/service"
+	hrService "erp/backend/internal/hrm/hr_profile/usecase"
+	utils "erp/backend/pkg"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"net/http"
 )
 
 type WorkShiftBiz interface {
-	CreateWorkShift(data model.WorkShifts) error
-	GetWorkShiftById(id string) (model.WorkShifts, error)
-	GetAllWorkShift() ([]model.WorkShifts, error)
-	UpdateWorkShift(id string, data model.WorkShifts) error
-	DeleteWorkShift(id string) error
+	CreateWorkShiftService(data *model.WorkShifts) error
+	GetWorkShiftByIdService(id string) (model.WorkShifts, error)
+	GetAllWorkShiftService() ([]model.WorkShifts, error)
+	UpdateWorkShiftService(id string, data *model.WorkShifts) error
+	DeleteWorkShiftService(id string) error
 }
 
 type WorkShiftHandler struct {
-	biz WorkShiftBiz
+	biz    WorkShiftBiz
+	bizHrm handler.AccountService
 }
 
 func NewWorkShiftHandler(db *gorm.DB) *WorkShiftHandler {
-	repo := repository.NewWorkShiftStore(db)
-	biz := service.NewWorkShiftService(repo)
+	repo := checkinrepo.NewWorkShiftStore(db)
+	repoAccount := hrRepo.NewAccountStore(db)
+	repoEmployee := hrRepo.NewUserStore(db)
+	biz := checkinService.NewWorkShiftService(repo)
+	bizHrm := hrService.NewEmployeeBiz(repoEmployee, repoAccount)
 
-	return &WorkShiftHandler{biz: biz}
+	return &WorkShiftHandler{
+		biz:    biz,
+		bizHrm: bizHrm,
+	}
 }
 
 func (h *WorkShiftHandler) CreateWorkShift() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req model.WorkShifts
+		var req model.WorkShiftsRequest
+
+		// Parse incoming JSON body
 		if err := c.ShouldBindJSON(&req); err != nil {
-			utils.ResponseMessage(c, "Dữ liệu đầu vào không hợp lệ", http.StatusBadRequest, nil)
+			utils.ResponseMessage(c, "Invalid input data", http.StatusBadRequest, nil)
+			fmt.Printf("error: %s", err.Error())
 			return
 		}
 
-		if err := req.Validate(); err != nil {
-			fmt.Println("Dữ liệu đầu vào không hợp lệ: ", err)
-		}
+		// Convert request DTO to WorkShifts model
+		workShifts := model.ConvertToWorkShifts(req)
 
-		if err := h.biz.CreateWorkShift(req); err != nil {
-			utils.ResponseMessage(c, "Tạo ca làm việc thất bại"+err.Error(), http.StatusInternalServerError, nil)
+		// Extract accountId from context
+		accountID, err := utils.ExtractAccountIDFromContext(c)
+		if err != nil {
+			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
 			return
 		}
 
-		utils.ResponseMessage(c, "Tạo ca làm việc thành công", http.StatusOK, nil)
+		// Fetch employee info based on account ID
+		account, err := h.bizHrm.GetAccount(c, accountID)
+		if err != nil {
+			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
+			return
+		}
+		workShifts.CreatedBy = account.EmployeeId
+
+		// Validate workshift data before inserting
+		if err := workShifts.Validate(); err != nil {
+			utils.ResponseMessage(c, "Invalid input: "+err.Error(), http.StatusBadRequest, nil)
+			return
+		}
+
+		// Create the workshift
+		if err := h.biz.CreateWorkShiftService(&workShifts); err != nil {
+			utils.ResponseMessage(c, "Failed to create workshift: "+err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Workshift created successfully", http.StatusOK, nil)
 	}
 }
 
@@ -56,19 +90,18 @@ func (h *WorkShiftHandler) GetWorkShift() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
-		workshift, err := h.biz.GetWorkShiftById(id)
+		workshift, err := h.biz.GetWorkShiftByIdService(id)
 		if err != nil {
 			utils.ResponseMessage(c, "Không tìm thấy ca làm việc", http.StatusNotFound, nil)
 			return
 		}
-
 		utils.ResponseMessage(c, "Chi tiết ca làm việc", http.StatusOK, workshift)
 	}
 }
 
 func (h *WorkShiftHandler) GetAllWorkShift() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		result, err := h.biz.GetAllWorkShift()
+		result, err := h.biz.GetAllWorkShiftService()
 		if err != nil {
 			utils.ResponseMessage(c, "Lỗi khi lấy danh sách ca làm việc", http.StatusInternalServerError, nil)
 			return
@@ -81,14 +114,23 @@ func (h *WorkShiftHandler) GetAllWorkShift() gin.HandlerFunc {
 func (h *WorkShiftHandler) UpdateWorkShift() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		var req model.WorkShifts
+		var req model.WorkShiftsRequest
 
 		if err := c.ShouldBindJSON(&req); err != nil {
 			utils.ResponseMessage(c, "Dữ liệu cập nhật không hợp lệ", http.StatusBadRequest, nil)
+			fmt.Printf("error: %s", err.Error())
+			return
+		}
+		// Convert request DTO to WorkShifts model
+		workShiftUpdate := model.ConvertToWorkShifts(req)
+
+		// Validate workshift data before inserting
+		if err := workShiftUpdate.Validate(); err != nil {
+			utils.ResponseMessage(c, "Invalid input: "+err.Error(), http.StatusBadRequest, nil)
 			return
 		}
 
-		if err := h.biz.UpdateWorkShift(id, req); err != nil {
+		if err := h.biz.UpdateWorkShiftService(id, &workShiftUpdate); err != nil {
 			utils.ResponseMessage(c, "Cập nhật ca làm việc thất bại", http.StatusInternalServerError, nil)
 			return
 		}
@@ -101,7 +143,7 @@ func (h *WorkShiftHandler) DeleteWorkShift() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
-		if err := h.biz.DeleteWorkShift(id); err != nil {
+		if err := h.biz.DeleteWorkShiftService(id); err != nil {
 			utils.ResponseMessage(c, "Xóa ca làm việc thất bại", http.StatusInternalServerError, nil)
 			return
 		}

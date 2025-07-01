@@ -224,7 +224,7 @@ func (s *userStore) GetLastEmployeeByCode(emp *model.Employee) error {
 		First(emp).Error
 }
 
-func (s *userStore) UpdateEmployeeWithAccount(employee *model.Employee, accountID int) error {
+func (s *userStore) UpdateEmployeeWithAccount(employee *model.Employee, accountID int64) error {
 	tx := s.db.Begin()
 	if tx.Error != nil {
 		return errors.New("failed to start transaction")

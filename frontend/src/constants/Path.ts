@@ -3,7 +3,7 @@ const SETTING_BASE = "/setting";
 const PATH = {
   // Auth & General
   HOME: "/",
-  SIGN_IN: "/login",
+  SIGN_IN: "/sign-in",
   FIRST_CHANGE_PASSWORD: "/first-change-password",
 
   // User
@@ -13,13 +13,12 @@ const PATH = {
   CONTRACT: "/contract",
   DECISION: "/decision",
   INSURANCE: "/insurance",
-  // DETAIL_INFO: "/detail_infor",
   DOCUMENT_DETAIL: "/documentDetail",
   DETAIL_DECISION: "/detail_decision",
   SHIFT_MANAGEMENT: "/shift_management",
   CREATESHIFT: "/shift_create",
   SHIFTDETAILPAGE: "/ShiftDetailPage",
-  CHECKIN: "/checkin",
+  CHECKIN: "/attendant",
 
   SETTING: SETTING_BASE,
   SETTING_OFFICE: `${SETTING_BASE}/office`,
@@ -34,6 +33,7 @@ const PATH = {
 
   // Other Paths
   DETAIL_INFO: "/detail_infor",
+  REGISTER_ATTENDANCE: "/register-attendance",
   DOCUMENTDETAIL: "/documentDetail",
 };
 

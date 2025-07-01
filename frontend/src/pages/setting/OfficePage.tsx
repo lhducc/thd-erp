@@ -5,7 +5,7 @@ import DataTable from "@/components/DataTable.tsx";
 import Loading from "@/components/Loading.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import type { Office } from "@/types";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { SquarePen } from "lucide-react";
 import { toast } from "sonner";
@@ -22,11 +22,16 @@ const OfficePage = () => {
     staleTime: 0,
   });
 
+  const queryClient = useQueryClient();
+
   const { mutateAsync: deleteOffice } = useMutation({
     mutationFn: (id: string) => deleteOfficeApi(id),
     onSuccess: () => {
       toast.success("Xóa văn phòng thành công");
-      refetchOffices();
+      // refetchOffices();
+      queryClient.invalidateQueries({
+        queryKey: ["offices"],
+      });
     },
     onError: (error) => {
       toast.error(error.message);

@@ -27,7 +27,7 @@ type Employee struct {
 	Fullname     string            `gorm:"column:full_name;type:varchar(255);not null" json:"full_name" validate:"required"`
 	Birthday     string            `gorm:"column:birthday;type:date" json:"birthday"`
 	Gender       string            `gorm:"column:gender;type:varchar(10)" json:"gender" validate:"oneof=Nam Nữ Khác"`
-	WorkType     string            `gorm:"column:work_type;type:varchar(3)" json:"work_type" validate:"oneof=TTS THD CTV"`
+	WorkType     string            `gorm:"column:work_type;type:varchar(255)" json:"work_type" validate:"oneof=TTS THD CTV"`
 	PhoneNumber  string            `gorm:"column:phone_number;type:varchar(20)" json:"phone_number" validate:"omitempty,e164"`
 	Email        string            `gorm:"column:email;type:varchar(255)" json:"email" validate:"omitempty,email"`
 	Address      string            `gorm:"column:address;type:text" json:"address"`

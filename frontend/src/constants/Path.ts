@@ -9,7 +9,9 @@ const PATH = {
   // User
   PROFILE: "/profile",
 
-  // Pages
+  CHECKIN: "/attendant",
+
+  // HR
   CONTRACT: "/contract",
   DECISION: "/decision",
   INSURANCE: "/insurance",
@@ -18,8 +20,11 @@ const PATH = {
   SHIFT_MANAGEMENT: "/shift_management",
   CREATESHIFT: "/shift_create",
   SHIFTDETAILPAGE: "/ShiftDetailPage",
-  CHECKIN: "/attendant",
 
+  // HR Checkin
+  WORKSHIFT: "/workshift",
+
+  // HR Setting
   SETTING: SETTING_BASE,
   SETTING_OFFICE: `${SETTING_BASE}/office`,
   SETTING_DEPARTMENT: `${SETTING_BASE}/department`,

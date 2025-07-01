@@ -4,7 +4,7 @@ import api from "./api";
 export const createDecisionApi = async (payload: FormData) => {
   try {
     const response = await api.post("/decision", payload);
-    return response.data;
+    return response.data.data;
   } catch (error: any) {
     console.error("Error creating Decision API:", error);
     handleApiError(error);
@@ -15,7 +15,7 @@ export const getAllDecisionsApi = async (): Promise<Decision[]> => {
   try {
     const response = await api.get(`/decision`);
     console.log(response);
-    return response.data?.data || [];
+    return response.data?.data?.data || [];
   } catch (error: any) {
     console.error("Error fetching all Decisions API:", error);
     handleApiError(error);

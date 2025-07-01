@@ -1,5 +1,5 @@
-import type { JobTitle, PayloadJobTitle } from "@/types";
 import api from "./api";
+import type {JobTitle, PayloadJobTitle} from "@/types/job-title.ts";
 
 export const createJobTitleApi = async (payload: PayloadJobTitle) => {
   try {

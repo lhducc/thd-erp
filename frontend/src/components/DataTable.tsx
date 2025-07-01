@@ -109,7 +109,7 @@ export default function DataTable<TData, TValue>({
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
-                            // if remove hover:bg-[#DB3B21] when user hover bg will become white
+                            // if remove hover:bg-[#DB3B21] when user.ts hover bg will become white
                             <TableRow key={headerGroup.id} className="bg-[#DB3B21] hover:bg-[#DB3B21]">
                                 {headerGroup.headers.map((header) => {
                                     return (

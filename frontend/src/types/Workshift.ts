@@ -1,17 +1,16 @@
-// Enum giả định - bạn cần sửa theo định nghĩa thực tế bên phía frontend
 export enum WorkDayEnum {
-    Weekday = 0,
-    Weekend = 1,
-    Holiday = 2,
+    FullDay = "1",
+    HaftDay = "0.5",
+    NoWork = "0",
 }
 
 export enum TimeOfDayEnum {
-    Morning = "morning",
-    Afternoon = "afternoon",
-    Evening = "evening",
+    Morning = "Sáng",
+    Afternoon = "Trưa",
+    Evening = "Tối",
+    AllDay = "Cả ngày",
 }
 
-// Loại dữ liệu WorkShift
 export type WorkShift = {
     workshift_id: string;
     workshift_name: string;
@@ -24,7 +23,7 @@ export type WorkShift = {
     has_break: boolean;
     break_start?: string | null;
     break_end?: string | null;
-    work_hours: number;
+    work_hours: string;
     work_day: WorkDayEnum;
     coef_normal_day: number;
     coef_weekend: number;
@@ -37,12 +36,12 @@ export type WorkShift = {
     expiration_date?: string | null;
     creator?: {
         employee_id: string;
-        // bạn có thể thêm các trường khác nếu cần từ `model.Employee`
     };
 };
 
 // Dạng dữ liệu cho request
 export type WorkShiftRequest = {
+    workshift_id: string;
     workshift_name: string;
     start_time: string;
     end_time: string;
@@ -53,7 +52,7 @@ export type WorkShiftRequest = {
     has_break: boolean;
     break_start?: string | null;
     break_end?: string | null;
-    work_hours: number;
+    work_hours: string;
     work_day: WorkDayEnum;
     coef_normal_day: number;
     coef_weekend: number;

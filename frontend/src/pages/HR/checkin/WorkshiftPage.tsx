@@ -1,7 +1,7 @@
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import type {ColumnDef} from "@tanstack/react-table";
 import {Button} from "@/components/ui/button.tsx";
-import {SquarePen} from "lucide-react";
+import {EyeIcon, SquarePen} from "lucide-react";
 import ConfirmDelete from "@/components/ConfirmDelete.tsx";
 import type {WorkShift} from "@/types/Workshift.ts";
 import {deleteWorkshiftApi, getAllWorkshiftApi} from "@/apis/workshift.api.ts";
@@ -17,15 +17,11 @@ const WorkshiftPage = () => {
         queryFn: getAllWorkshiftApi,
     })
 
-    const queryClient = useQueryClient();
-
     const {mutateAsync: deleteWorkshift} = useMutation({
-        mutationFn: deleteWorkshiftApi,
-        onSuccess: () => {
-            toast.success("Xóa phân ca thành công!")
-            queryClient.invalidateQueries({
-                queryKey: ["workshift"],
-            });
+        mutationFn: (id: string) => deleteWorkshiftApi(id),
+        onSuccess: async () => {
+            await refetchWorkshifts();
+            toast.success("Xóa phân ca thành công!");
         },
         onError: () => {
             toast.error("Lỗi hệ thống!")
@@ -94,6 +90,16 @@ const WorkshiftPage = () => {
                         <WorkshiftForm
                             editBtn={
                                 <Button variant="outline">
+                                    <EyeIcon />
+                                </Button>
+                            }
+                            data={workshift}
+                            type="view"
+                            refetch={refetchWorkshifts}
+                        />
+                        <WorkshiftForm
+                            editBtn={
+                                <Button variant="outline">
                                     <SquarePen />
                                 </Button>
                             }
@@ -101,7 +107,7 @@ const WorkshiftPage = () => {
                             type="edit"
                             refetch={refetchWorkshifts}
                         />
-                        <ConfirmDelete deleteFn={() => deleteWorkshift(workshift.id)} />
+                        <ConfirmDelete deleteFn={() => deleteWorkshift(workshift.workshift_id)} />
                     </div>
                 );
             },

@@ -64,31 +64,30 @@ func (s *WorkShiftStore) GetAllWorkShift() ([]model.WorkShifts, error) {
 
 func (s *WorkShiftStore) UpdateWorkShift(id string, workshift *model.WorkShifts) error {
 	tx := s.db.Begin()
-
 	if tx.Error != nil {
-		return errors.New("failed to start transaction")
+		return errors.New("không thể bắt đầu transaction")
 	}
+	defer s.recoverFromPanic(tx)
 
-	s.recoverFromPanic(tx)
-	w, err := s.GetWorkShiftById(id)
-	if err != nil {
-		return errors.New("failed to get work shift by id")
-	}
-
-	//model.UpdateWorkShiftFields(&w, workshift)
-
-	if err := tx.Save(&w).Error; err != nil {
+	var existing model.WorkShifts
+	if err := tx.Where("workshift_id = ?", id).First(&existing).Error; err != nil {
 		tx.Rollback()
-		return fmt.Errorf("failed to update employee: %w", err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("không tìm thấy ca làm việc với ID: %s", id)
+		}
+		return fmt.Errorf("lỗi khi truy vấn ca làm việc: %w", err)
+	}
+
+	if err := tx.Model(&existing).Updates(workshift).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("lỗi khi cập nhật ca làm việc: %w", err)
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to commit transaction: %w", err)
+		return fmt.Errorf("commit transaction thất bại: %w", err)
 	}
 
 	return nil
-
 }
 
 func (s *WorkShiftStore) DeleteWorkShift(id string) error {

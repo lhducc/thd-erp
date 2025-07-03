@@ -23,6 +23,7 @@ const PATH = {
 
   // HR Checkin
   WORKSHIFT: "/workshift",
+  ATTENDANCE_MANAGEMENT: "/attendance-management",
 
   // HR Setting
   SETTING: SETTING_BASE,

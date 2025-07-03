@@ -26,7 +26,7 @@ export type Department = {
   department_id: string;
   department_name: string;
   manager: string;
-  created_date: Date;
+  created_date: string;
   office_id: string;
   office: null;
 };

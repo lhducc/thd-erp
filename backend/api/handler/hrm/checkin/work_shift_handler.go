@@ -1,14 +1,11 @@
 package checkin
 
 import (
-	handler "erp/backend/api/handler/hrm/hr_profile"
 	"erp/backend/internal/hrm/checkin/model"
 	checkinrepo "erp/backend/internal/hrm/checkin/repository"
-	hrRepo "erp/backend/internal/hrm/hr_profile/repository"
 	"fmt"
 
 	checkinService "erp/backend/internal/hrm/checkin/service"
-	hrService "erp/backend/internal/hrm/hr_profile/usecase"
 	utils "erp/backend/pkg"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -24,20 +21,15 @@ type WorkShiftBiz interface {
 }
 
 type WorkShiftHandler struct {
-	biz    WorkShiftBiz
-	bizHrm handler.AccountService
+	biz WorkShiftBiz
 }
 
 func NewWorkShiftHandler(db *gorm.DB) *WorkShiftHandler {
 	repo := checkinrepo.NewWorkShiftStore(db)
-	repoAccount := hrRepo.NewAccountStore(db)
-	repoEmployee := hrRepo.NewUserStore(db)
 	biz := checkinService.NewWorkShiftService(repo)
-	bizHrm := hrService.NewEmployeeBiz(repoEmployee, repoAccount)
 
 	return &WorkShiftHandler{
-		biz:    biz,
-		bizHrm: bizHrm,
+		biz: biz,
 	}
 }
 
@@ -56,19 +48,13 @@ func (h *WorkShiftHandler) CreateWorkShift() gin.HandlerFunc {
 		workShifts := model.ConvertToWorkShifts(req)
 
 		// Extract accountId from context
-		accountID, err := utils.ExtractAccountIDFromContext(c)
+		employeeID, err := utils.ExtractFromContext[string](c, "employeeId")
 		if err != nil {
 			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
 			return
 		}
 
-		// Fetch employee info based on account ID
-		account, err := h.bizHrm.GetAccount(c, accountID)
-		if err != nil {
-			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
-			return
-		}
-		workShifts.CreatedBy = account.EmployeeId
+		workShifts.CreatedBy = employeeID
 
 		// Validate workshift data before inserting
 		if err := workShifts.Validate(); err != nil {

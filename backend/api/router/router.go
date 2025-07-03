@@ -64,6 +64,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	allow := checkin.NewAllowedWorkingScheduleHandler(db)
 	holiday := checkin.NewHolidayHandler(db)
 	attandanceForm := checkin.NewAttendanceFormHandler(db)
+	attendanceCategoryHandler := checkin.NewAttendanceCategoryHandler(db)
 
 	// allowance
 	allowanceRepo := repository.NewAllowanceRepo(db)
@@ -97,6 +98,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupWorkShiftRoutes(hrmRouter, workShiftHandler)
 	setupHolidayRoutes(hrmRouter, holiday)
 	setupAttandanceFormRoutes(hrmRouter, attandanceForm)
+	setupAttendanceCategory(hrmRouter, attendanceCategoryHandler)
 
 }
 
@@ -293,5 +295,17 @@ func setupEmployeeDocumentRoutes(router *gin.RouterGroup, employeeDocumentHandle
 		employeeDoc.GET("/:id", employeeDocumentHandler.GetEmployeeDocumentById())
 		employeeDoc.DELETE("/:id", employeeDocumentHandler.DeleteEmployeeDocument())
 		employeeDoc.PUT("/:id", employeeDocumentHandler.UpdateEmployeeDocument())
+	}
+}
+
+func setupAttendanceCategory(router *gin.RouterGroup, attendanceCategoryHandler *checkin.AttendanceCategoryHandler) {
+	attendanceCategory := router.Group("/attendance-category")
+	{
+		attendanceCategory.POST("", attendanceCategoryHandler.CreateAttendanceCategory())
+		attendanceCategory.GET("/:id", attendanceCategoryHandler.GetAttendanceCategory())
+		attendanceCategory.GET("", attendanceCategoryHandler.GetAllAttendanceCategories())
+		attendanceCategory.PUT("/:id", attendanceCategoryHandler.UpdateAttendanceCategory())
+		attendanceCategory.DELETE("/:id", attendanceCategoryHandler.DeleteAttendanceCategory())
+		attendanceCategory.GET("/office/:officeId", attendanceCategoryHandler.GetAttendanceCategoryByOfficeID())
 	}
 }

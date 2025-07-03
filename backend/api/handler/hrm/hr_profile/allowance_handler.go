@@ -9,10 +9,10 @@ import (
 )
 
 type AllowanceHandler struct {
-	biz usecase.AllowanceUsecase
+	biz usecase.AllowanceRepo
 }
 
-func NewAllowanceHandler(biz usecase.AllowanceUsecase) *AllowanceHandler {
+func NewAllowanceHandler(biz usecase.AllowanceRepo) *AllowanceHandler {
 	return &AllowanceHandler{biz: biz}
 }
 

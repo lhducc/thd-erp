@@ -52,3 +52,16 @@ func (m *MockContractBiz) ExportContractTest(ctx context.Context, fields []strin
 	filename := args.String(1)
 	return data, filename, args.Error(2)
 }
+func (m *MockContractBiz) UpdateApproveStatus(ctx context.Context, id string, status string) error {
+	args := m.Called(ctx, id, status)
+	return args.Error(0)
+}
+
+func (m *MockContractBiz) GetContractByEmployeeID(ctx context.Context, employeeId string) ([]model.ContractBasicInfo, error) {
+	args := m.Called(ctx, employeeId)
+	result := args.Get(0)
+	if result == nil {
+		return nil, args.Error(1)
+	}
+	return result.([]model.ContractBasicInfo), args.Error(1)
+}

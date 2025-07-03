@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type AllowanceUsecase interface {
+type AllowanceRepo interface {
 	Create(ctx context.Context, data *model.AllowanceCreate) error
 	GetAll(ctx context.Context) ([]model.Allowance, error)
 	GetByID(ctx context.Context, id string) (*model.Allowance, error)
@@ -20,7 +20,7 @@ type allowanceBiz struct {
 	repo repository.AllowanceRepository
 }
 
-func NewAllowanceBiz(repo repository.AllowanceRepository) AllowanceUsecase {
+func NewAllowanceBiz(repo repository.AllowanceRepository) AllowanceRepo {
 	return &allowanceBiz{repo: repo}
 }
 

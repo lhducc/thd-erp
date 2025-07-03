@@ -3,6 +3,7 @@ package checkin
 import (
 	"erp/backend/internal/hrm/checkin/model"
 	checkinrepo "erp/backend/internal/hrm/checkin/repository"
+	"erp/backend/internal/hrm/checkin/service/service_interface"
 	"fmt"
 
 	checkinService "erp/backend/internal/hrm/checkin/service"
@@ -13,15 +14,15 @@ import (
 )
 
 type WorkShiftBiz interface {
-	CreateWorkShiftService(data *model.WorkShifts) error
-	GetWorkShiftByIdService(id string) (model.WorkShifts, error)
-	GetAllWorkShiftService() ([]model.WorkShifts, error)
-	UpdateWorkShiftService(id string, data *model.WorkShifts) error
-	DeleteWorkShiftService(id string) error
+	CreateWorkShift(data model.WorkShifts) error
+	GetWorkShiftById(id string) (model.WorkShifts, error)
+	GetAllWorkShift() ([]model.WorkShifts, error)
+	UpdateWorkShift(id string, data model.WorkShifts) error
+	DeleteWorkShift(id string) error
 }
 
 type WorkShiftHandler struct {
-	biz WorkShiftBiz
+	biz service_interface.WorkShiftService
 }
 
 func NewWorkShiftHandler(db *gorm.DB) *WorkShiftHandler {
@@ -81,6 +82,7 @@ func (h *WorkShiftHandler) GetWorkShift() gin.HandlerFunc {
 			utils.ResponseMessage(c, "Không tìm thấy ca làm việc", http.StatusNotFound, nil)
 			return
 		}
+
 		utils.ResponseMessage(c, "Chi tiết ca làm việc", http.StatusOK, workshift)
 	}
 }

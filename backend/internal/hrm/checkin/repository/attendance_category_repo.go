@@ -96,6 +96,7 @@ func (r *attendanceCategoryRepository) ListByOffice(ctx context.Context, officeI
 func (r *attendanceCategoryRepository) GetList(ctx context.Context) ([]model.AttendanceCategory, error) {
 	var list []model.AttendanceCategory
 	err := r.db.WithContext(ctx).
+		Preload("Office").
 		Where("is_deleted = false").
 		Find(&list).Error
 

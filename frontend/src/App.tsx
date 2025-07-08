@@ -25,6 +25,7 @@ import DetailEmployeePage from "@/pages/detailProfilePage.tsx";
 import AttendancePage from "@/pages/checkin/AttendancePage.tsx";
 import WorkshiftPage from "@/pages/HR/checkin/WorkshiftPage.tsx";
 import AttendanceManagementPage from "@/pages/HR/checkin/AttendanceManagementPage.tsx";
+import ApproveAttendancePage from "@/pages/HR/checkin/ApproveAttendancePage.tsx";
 
 
 const App = () => {
@@ -117,6 +118,10 @@ const App = () => {
                 {
                     path: PATH.DETAIL_INFO.slice(1),
                     element: <DetailEmployeePage/>,
+                },
+                {
+                    path: PATH.APPROVE_ATTENDANCE.slice(1),
+                    element: <ApproveAttendancePage />,
                 },
                 {
                     path: PATH.DOCUMENTDETAIL.slice(1),

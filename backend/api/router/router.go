@@ -63,7 +63,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	workShiftHandler := checkin.NewWorkShiftHandler(db)
 	allow := checkin.NewAllowedWorkingScheduleHandler(db)
 	holiday := checkin.NewHolidayHandler(db)
-	attandanceForm := checkin.NewAttendanceFormHandler(db)
+	attandanceRecord := checkin.NewAttendanceRecordHandler(db)
 	attendanceCategoryHandler := checkin.NewAttendanceCategoryHandler(db)
 
 	// allowance
@@ -97,7 +97,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupAllowedWorkingScheduleRoutes(hrmRouter, allow)
 	setupWorkShiftRoutes(hrmRouter, workShiftHandler)
 	setupHolidayRoutes(hrmRouter, holiday)
-	setupAttandanceFormRoutes(hrmRouter, attandanceForm)
+	setupAttandanceRecordRoutes(hrmRouter, attandanceRecord)
 	setupAttendanceCategory(hrmRouter, attendanceCategoryHandler)
 
 }
@@ -267,13 +267,15 @@ func setupAllowedWorkingScheduleRoutes(router *gin.RouterGroup, scheduleHandler 
 	}
 }
 
-func setupAttandanceFormRoutes(router *gin.RouterGroup, handler *checkin.AttendanceFormHandler) {
-	attandanceFormGroup := router.Group("/attandance-form")
-	attandanceFormGroup.POST("", handler.CreateAttendanceForm())
-	attandanceFormGroup.GET("/:id", handler.GetAttendanceForm())
-	attandanceFormGroup.GET("", handler.GetAllAttendanceForm())
-	attandanceFormGroup.PUT("/:id", handler.UpdateAttendanceForm())
-	attandanceFormGroup.DELETE("/:id", handler.DisableAttendanceForm())
+func setupAttandanceRecordRoutes(router *gin.RouterGroup, handler *checkin.AttendanceRecordHandler) {
+	attandanceRecordGroup := router.Group("/attendance-record")
+	attandanceRecordGroup.POST("", handler.CreateAttendanceRecord())
+	attandanceRecordGroup.GET("/:id", handler.GetAttendanceRecordByID())
+	attandanceRecordGroup.GET("/employee/:employeeId", handler.GetRecordsByEmployee())
+	attandanceRecordGroup.GET("/employee/:employeeId/date-range", handler.GetRecordsByDateRange())
+	attandanceRecordGroup.GET("/employee/:employeeId/total-request", handler.GetTotalReqOfOneEmployee())
+	//attandanceRecordGroup.PUT("/:id", handler.UpdateAttendanceRecord())
+	attandanceRecordGroup.DELETE("/:id", handler.DeleteAttendanceRecord())
 }
 
 func setupAllowanceRoutes(router *gin.RouterGroup, handler *handler.AllowanceHandler) {

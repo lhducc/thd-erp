@@ -4,15 +4,17 @@ import (
 	"erp/backend/api/middleware"
 	"erp/backend/api/router"
 	"erp/backend/config"
-	"log"
-
+	"erp/backend/pkg/job"
 	"github.com/gin-gonic/gin"
+	"log"
 )
 
 func main() {
 	config.LoadConfig()
 	config.LoadMailConfig()
 	config.ConnectPostgres()
+	config.LoadMinIOConfig()
+	job.InitWorkerPool(10)
 
 	db := config.GetDB()
 

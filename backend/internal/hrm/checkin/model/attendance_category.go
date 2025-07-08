@@ -31,18 +31,19 @@ type AttendanceCategory struct {
 	IsCamera               bool                 `gorm:"column:is_camera;not null;default:false" json:"is_camera"`
 	IsCheckLocation        bool                 `gorm:"column:is_check_location;not null;default:false" json:"is_check_location"`
 	Scope                  int                  `gorm:"column:scope;type:integer" json:"scope"` // Changed to integer for meters
-	Status                 StatusAttendanceEnum `gorm:"column:status;type:varchar(50);not null;default:'Hoạt động'" json:"status"`
+	Status                 StatusAttendanceEnum `gorm:"column:status;type:varchar(50);not null;default:'active" json:"status"`
 	IsDeleted              bool                 `gorm:"column:is_deleted;default:false" json:"is_deleted"`
 	OfficeID               string               `gorm:"column:office_id;type:varchar(50);not null" json:"office_id"`
 	CreatedBy              string               `gorm:"column:created_by;type:varchar(50)" json:"created_by"`
 	CreatedAt              time.Time            `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	AutoApprove            bool                 `gorm:"column:auto_approve;default:false" json:"auto_approve"`
 
 	Office   *model.Office   `gorm:"foreignKey:OfficeID;references:ID"`
 	Employee *model.Employee `gorm:"foreignKey:CreatedBy;references:EmployeeID"`
 }
 
 func (AttendanceCategory) TableName() string {
-	return "attendance_category"
+	return "attendance_categories"
 }
 
 // Validate struct AttendanceCategory
@@ -75,7 +76,7 @@ type AttendanceCategoryRequest struct {
 	IsCamera               bool                 `json:"is_camera"`
 	IsCheckLocation        bool                 `json:"is_check_location"`
 	Scope                  int                  `json:"scope"` // Changed to int
-	Status                 StatusAttendanceEnum `json:"status" validate:"required,oneof='Hoạt động' 'Không hoạt động'"`
+	Status                 StatusAttendanceEnum `json:"status" validate:"required"`
 	OfficeID               string               `json:"office_id" validate:"required"`
 }
 

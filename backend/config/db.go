@@ -173,6 +173,7 @@ func AutoMigrate(db *gorm.DB) error {
 	//&model.Allowance{},
 	//&model.ContractAllowance{},
 	//&model.AttendanceCategory{},
+	//&model.AttendanceRecord{},
 	)
 
 	if err != nil {

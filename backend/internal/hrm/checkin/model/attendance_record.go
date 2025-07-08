@@ -1,7 +1,6 @@
 package model
 
 import (
-	"erp/backend/internal/hrm/hr_profile/model"
 	"errors"
 	"fmt"
 	"strconv"
@@ -30,10 +29,10 @@ type AttendanceRecord struct {
 	AttendanceCategoryID string     `gorm:"column:category_id;type:uuid" json:"category_id"` // Onsite, WFH, AtOffice,..
 	NoteRequest          *string    `gorm:"column:note_request;type:text" json:"note_request"`
 	NoteReject           *string    `gorm:"column:note_reject;type:text" json:"note_reject"`
-	Status               StatusEnum `gorm:"column:status;default:Pending" json:"status"`
+	Status               StatusEnum `gorm:"column:status;default:pending" json:"status"`
 
-	Employee           model.Employee     `gorm:"foreignKey:EmployeeID;references:EmployeeID"`
-	Office             *model.Office      `gorm:"foreignKey:OfficeID;references:ID"`
+	//Employee           model.Employee     `gorm:"foreignKey:EmployeeID;references:EmployeeID"`
+	//Office             *model.Office      `gorm:"foreignKey:OfficeID;references:ID"`
 	AttendanceCategory AttendanceCategory `gorm:"foreignKey:AttendanceCategoryID;references:AttendanceCategoryID"`
 }
 

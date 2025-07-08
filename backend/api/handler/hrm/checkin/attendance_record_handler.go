@@ -212,3 +212,22 @@ func addPresignedURLs(c *gin.Context, records []model.AttendanceRecord) {
 		records[i].ImageURL = url
 	}
 }
+
+func (h *AttendanceRecordHandler) UpdateStatusRecord() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		var updateReq model.AttendanceRecordUpdate
+		err := c.ShouldBindJSON(&updateReq)
+		if err != nil {
+			utils.ResponseMessage(c, "Failed to parse request body", http.StatusBadRequest, nil)
+			return
+		}
+
+		err = h.biz.UpdateAttendanceRecord(c, &updateReq, id)
+		if err != nil {
+			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+		utils.ResponseMessage(c, "Update thành công", http.StatusOK, nil)
+	}
+}

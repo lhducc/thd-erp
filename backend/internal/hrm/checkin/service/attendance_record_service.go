@@ -84,14 +84,19 @@ func (s *attendanceRecordService) ValidateAttendanceRecordDistance(ctx context.C
 }
 
 func (s *attendanceRecordService) CreateAttendanceRecord(ctx context.Context, record *model.AttendanceRecord) error {
+	record.Status = model.Pending
 	return s.repo.Create(ctx, record)
 }
 
-func (s *attendanceRecordService) UpdateAttendanceRecord(ctx context.Context, record *model.AttendanceRecord) error {
-	if err := record.Validate(); err != nil {
-		return err
+func (s *attendanceRecordService) UpdateAttendanceRecord(ctx context.Context, updaterecord *model.AttendanceRecordUpdate, recordID string) error {
+	record, err := s.GetAttendanceRecordByID(ctx, recordID)
+	if err != nil {
+		return fmt.Errorf("Attendance record not found")
 	}
-	return s.repo.Update(ctx, record)
+	if record == nil {
+		return fmt.Errorf("Attendance record does not exist")
+	}
+	return s.repo.Update(ctx, updaterecord, recordID)
 }
 
 func (s *attendanceRecordService) DeleteAttendanceRecord(ctx context.Context, id string) error {

@@ -8,7 +8,7 @@ import (
 
 type AttendanceRecordRepository interface {
 	Create(ctx context.Context, record *model.AttendanceRecord) error
-	Update(ctx context.Context, record *model.AttendanceRecord) error
+	Update(ctx context.Context, record *model.AttendanceRecordUpdate, id string) error
 	Delete(ctx context.Context, id string) error
 	GetByID(ctx context.Context, id string) (*model.AttendanceRecord, error)
 	ListByEmployee(ctx context.Context, employeeID string) ([]model.AttendanceRecord, error)

@@ -274,7 +274,7 @@ func setupAttandanceRecordRoutes(router *gin.RouterGroup, handler *checkin.Atten
 	attandanceRecordGroup.GET("/employee/:employeeId", handler.GetRecordsByEmployee())
 	attandanceRecordGroup.GET("/employee/:employeeId/date-range", handler.GetRecordsByDateRange())
 	attandanceRecordGroup.GET("/employee/:employeeId/total-request", handler.GetTotalReqOfOneEmployee())
-	//attandanceRecordGroup.PUT("/:id", handler.UpdateAttendanceRecord())
+	attandanceRecordGroup.PUT("/status/:id", handler.UpdateStatusRecord())
 	attandanceRecordGroup.DELETE("/:id", handler.DeleteAttendanceRecord())
 }
 

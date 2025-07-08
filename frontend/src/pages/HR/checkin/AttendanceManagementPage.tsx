@@ -1,15 +1,14 @@
-import {useQuery} from "@tanstack/react-query";
-import {getAllAttendanceManagementAPI} from "@/apis/attendance.management.api.ts";
+import {useMutation, useQuery} from "@tanstack/react-query";
+import {deleteAttendanceSettingApi, getAllAttendanceManagementAPI} from "@/apis/attendance-management.api.ts";
 import DataTable from "@/components/DataTable.tsx";
-import CreateOfficeForm from "@/components/CreateOfficeForm.tsx";
 import Loading from "@/components/Loading.tsx";
 import type {ColumnDef} from "@tanstack/react-table";
-import type {Office} from "@/types";
 import {Button} from "@/components/ui/button.tsx";
 import {SquarePen} from "lucide-react";
 import ConfirmDelete from "@/components/ConfirmDelete.tsx";
 import type {AttendanceSetting} from "@/types/attendance.ts";
 import AttendanceSettingForm from "@/components/AttendanceSettingForm.tsx";
+import {toast} from "sonner";
 
 const AttendanceManagementPage = () => {
     const {data: attendanceSetting, isLoading: pendingAttendances, refetch: refetchAttendances} = useQuery({
@@ -17,33 +16,44 @@ const AttendanceManagementPage = () => {
         queryFn: getAllAttendanceManagementAPI
     });
 
+    const { mutateAsync: deleteAttendanceSetting } = useMutation({
+        mutationFn: (id: string) => deleteAttendanceSettingApi(id),
+        onSuccess: () => {
+            toast.success("Xóa phụ cấp thành công");
+            refetchAttendances();
+        },
+        onError: (error) => {
+            toast.error(error.message);
+        },
+    });
+
     const columns: ColumnDef<AttendanceSetting>[] = [
         {
-            accessorKey: "name",
+            accessorKey: "attendance_category_name",
             header: "Hình thức chấm công",
         },
         {
-            accessorKey: "department.department_name",
+            accessorKey: "Office.office_name",
             header: "Văn phòng",
         },
         {
-            accessorKey: "gpsEnabled",
+            accessorKey: "is_gps",
             header: "Định vị GPS",
             cell: ({ row }) => (
                 <input
                     type="checkbox"
-                    checked={row.original.gpsEnabled}
+                    checked={row.original.is_gps}
                     readOnly
                 />
             ),
         },
         {
-            accessorKey: "useCamera",
+            accessorKey: "is_camera",
             header: "Hình ảnh camera",
             cell: ({ row }) => (
                 <input
                     type="checkbox"
-                    checked={row.original.useCamera}
+                    checked={row.original.is_camera}
                     readOnly
                 />
             ),
@@ -73,8 +83,8 @@ const AttendanceManagementPage = () => {
                             </Button>}
                             data={attendanceSetting}
                             type="edit"
-                            refetch={refetchAttendances}                       />
-                        <ConfirmDelete deleteFn={() => deleteOffice(office.office_id)} />
+                            refetch={refetchAttendances}/>
+                        <ConfirmDelete deleteFn={() => deleteAttendanceSetting(attendanceSetting.attendance_category_id)} />
                     </div>
                 );
             },
@@ -92,7 +102,7 @@ const AttendanceManagementPage = () => {
                 data={attendanceSetting || []}
                 title="Thiết lập chấm công"
                 buttonCreate={<AttendanceSettingForm refetch={refetchAttendances} />}
-                keyFilter="name"
+                keyFilter="attendance_category_name"
             />
         </>
     );

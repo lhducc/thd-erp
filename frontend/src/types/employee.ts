@@ -1,3 +1,5 @@
+import type {Decision, Position} from "@/types/index.ts";
+
 type Office = {
     office_id: string;
     office_name: string;
@@ -28,11 +30,12 @@ export type Employee = {
     address: string;
     account_id: string | null;
     position_id: string;
+    position: Position;
     job_title_id: string;
-    status: 'active' | 'inactive'; // có thể mở rộng nếu có thêm trạng thái
+    status: 'active' | 'inactive';
     manager_id: string;
     department_id: string;
     created_date: string;
     department: Department;
-    Decisions: any; // có thể thay `any` bằng kiểu cụ thể nếu bạn có cấu trúc cho `Decisions`
+    Decisions: Decision[];
 };

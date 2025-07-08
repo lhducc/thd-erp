@@ -28,11 +28,13 @@ import {
 } from "../../ui/collapsible.tsx";
 import {Link} from "react-router-dom";
 import checkinIcon from "@/assets/checkin-management.png";
+import type {MenuItem} from "@/types";
+import ItemMenu from "@/components/ui/item-menu.tsx";
 
 const CheckinIcon = () => <img className={`w-4 h-4`} src={checkinIcon} alt="checkin icon"/>;
 
 const HRSidebar = ({...props}: ComponentProps<typeof Sidebar>) => {
-    const setting = [
+    const setting: MenuItem[] = [
         {
             name: "Trang chủ",
             url: PATH.HOME,
@@ -57,6 +59,18 @@ const HRSidebar = ({...props}: ComponentProps<typeof Sidebar>) => {
                     icon: null,
                     url: PATH.ATTENDANCE_MANAGEMENT,
                 },
+                {
+                    name: "Quản lý chấm công",
+                    icon: null,
+                    url: PATH.ATTENDANCE_MANAGEMENT,
+                    child: [
+                        {
+                            name: "Phê duyệt chấm công",
+                            icon: null,
+                            url: PATH.APPROVE_ATTENDANCE,
+                        },
+                    ]
+                },
             ]
         },
         {
@@ -69,11 +83,6 @@ const HRSidebar = ({...props}: ComponentProps<typeof Sidebar>) => {
             url: PATH.DECISION,
             icon: SquareCheckBig,
         },
-        // {
-        //   name: "Quản lý ca làm việc",
-        //   url: "#",
-        //   icon: Calendar,
-        // },
     ];
 
     return (
@@ -87,44 +96,7 @@ const HRSidebar = ({...props}: ComponentProps<typeof Sidebar>) => {
             <SidebarContent>
                 <SidebarGroup>
                     <SidebarMenu>
-                        {setting.map((item) => (
-                            <SidebarMenuItem key={item.name}>
-                                {item.child ? (
-                                    <Collapsible asChild className="group/collapsible">
-                                        <div>
-                                            <CollapsibleTrigger asChild>
-                                                <SidebarMenuButton>
-                                                    {item.icon && <item.icon />}
-                                                    <span>{item.name}</span>
-                                                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                                                </SidebarMenuButton>
-                                            </CollapsibleTrigger>
-                                            <CollapsibleContent>
-                                                <SidebarMenuSub>
-                                                    {item.child.map((subItem) => (
-                                                        <SidebarMenuSubItem key={subItem.name}>
-                                                            <SidebarMenuSubButton asChild>
-                                                                <Link to={subItem.url}>
-                                                                    {subItem.icon && <subItem.icon />}
-                                                                    <span>{subItem.name}</span>
-                                                                </Link>
-                                                            </SidebarMenuSubButton>
-                                                        </SidebarMenuSubItem>
-                                                    ))}
-                                                </SidebarMenuSub>
-                                            </CollapsibleContent>
-                                        </div>
-                                    </Collapsible>
-                                ) : (
-                                    <SidebarMenuButton asChild>
-                                        <Link to={item.url || "#"}>
-                                            {item.icon && <item.icon />}
-                                            <span>{item.name}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                )}
-                            </SidebarMenuItem>
-                        ))}
+                        <ItemMenu items={setting} />
                         <Collapsible asChild className="group/collapsible">
                             <SidebarMenuItem>
                                 <CollapsibleTrigger asChild>

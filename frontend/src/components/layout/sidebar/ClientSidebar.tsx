@@ -37,8 +37,8 @@ const ClientSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
             icon: ReceiptText,
         },
         {
-            name: "Lịch thực tập",
-            url: "register-attendance",
+            name: "Lịch làm việc",
+            url: "register-workshift",
             icon: Calendar,
         },
     ];

@@ -28,11 +28,11 @@ func (r *attendanceRecordRepository) Create(ctx context.Context, record *model.A
 	})
 }
 
-func (r *attendanceRecordRepository) Update(ctx context.Context, record *model.AttendanceRecord) error {
+func (r *attendanceRecordRepository) Update(ctx context.Context, record *model.AttendanceRecordUpdate, id string) error {
 	return utils.WithTransaction(r.db, ctx, func(ctx context.Context) error {
 		result := r.db.WithContext(ctx).
 			Model(&model.AttendanceRecord{}).
-			Where("attendance_record_id = ?", record.AttendanceRecordID).
+			Where("attendance_record_id = ?", id).
 			Updates(record)
 
 		if result.Error != nil {
@@ -64,8 +64,6 @@ func (r *attendanceRecordRepository) Delete(ctx context.Context, id string) erro
 func (r *attendanceRecordRepository) GetByID(ctx context.Context, id string) (*model.AttendanceRecord, error) {
 	var record model.AttendanceRecord
 	err := r.db.WithContext(ctx).
-		Preload("Employee").
-		Preload("Office").
 		Preload("AttendanceCategory").
 		Joins("JOIN attendance_categories ON attendance_records.category_id = attendance_categories.attendance_category_id").
 		Where("attendance_records.attendance_record_id = ? AND attendance_categories.auto_approve = ?",
@@ -84,6 +82,7 @@ func (r *attendanceRecordRepository) GetByID(ctx context.Context, id string) (*m
 func (r *attendanceRecordRepository) ListByEmployee(ctx context.Context, employeeID string) ([]model.AttendanceRecord, error) {
 	var records []model.AttendanceRecord
 	err := r.db.WithContext(ctx).
+		Preload("AttendanceCategory").
 		Joins("JOIN attendance_categories ON attendance_records.category_id = attendance_categories.attendance_category_id").
 		Where("attendance_records.employee_id = ? AND attendance_categories.auto_approve = ?",
 			employeeID, false).
@@ -113,6 +112,7 @@ func (r *attendanceRecordRepository) CountRequestsByEmployee(ctx context.Context
 func (r *attendanceRecordRepository) ListByDateRange(ctx context.Context, employeeID string, from, to time.Time) ([]model.AttendanceRecord, error) {
 	var records []model.AttendanceRecord
 	err := r.db.WithContext(ctx).
+		Preload("AttendanceCategory").
 		Joins("JOIN attendance_categories ON attendance_records.category_id = attendance_categories.attendance_category_id").
 		Where("attendance_records.employee_id = ? AND attendance_records.timestamp >= ? AND attendance_records.timestamp <= ? AND attendance_categories.auto_approve = ?",
 			employeeID, from, to, false).

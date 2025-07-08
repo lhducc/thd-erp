@@ -7,7 +7,7 @@ import (
 
 type AttendanceRecordService interface {
 	CreateAttendanceRecord(ctx context.Context, record *model.AttendanceRecord) error
-	UpdateAttendanceRecord(ctx context.Context, record *model.AttendanceRecord) error
+	UpdateAttendanceRecord(ctx context.Context, record *model.AttendanceRecordUpdate, recordID string) error
 	DeleteAttendanceRecord(ctx context.Context, id string) error
 	GetAttendanceRecordByID(ctx context.Context, id string) (*model.AttendanceRecord, error)
 	ListAttendanceRecordsByEmployee(ctx context.Context, employeeID string) ([]model.AttendanceRecord, error)

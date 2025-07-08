@@ -27,7 +27,7 @@ func (s *attendanceCategoryService) CreateAttendanceCategory(ctx context.Context
 	} else if exists {
 		return errors.New("tên loại chấm công đã tồn tại")
 	}
-
+	category.AutoApprove = category.IsCheckLocation && category.IsGPS
 	return s.repo.Create(ctx, category)
 }
 

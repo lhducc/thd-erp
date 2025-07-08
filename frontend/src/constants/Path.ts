@@ -40,7 +40,7 @@ const PATH = {
 
   // Other Paths
   DETAIL_INFO: "/detail_infor",
-  REGISTER_ATTENDANCE: "/register-attendance",
+  REGISTER_WORKSHIFT: "/register-workshift",
   DOCUMENTDETAIL: "/documentDetail",
 };
 

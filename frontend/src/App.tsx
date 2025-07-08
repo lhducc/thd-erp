@@ -26,6 +26,7 @@ import AttendancePage from "@/pages/checkin/AttendancePage.tsx";
 import WorkshiftPage from "@/pages/HR/checkin/WorkshiftPage.tsx";
 import AttendanceManagementPage from "@/pages/HR/checkin/AttendanceManagementPage.tsx";
 import ApproveAttendancePage from "@/pages/HR/checkin/ApproveAttendancePage.tsx";
+import RegisterWorkshift from "@/pages/Client/RegisterWorkshift.tsx";
 
 
 const App = () => {
@@ -149,6 +150,10 @@ const App = () => {
                 {
                     path: PATH.CHECKIN,
                     element: <AttendancePage/>,
+                },
+                {
+                    path: PATH.REGISTER_WORKSHIFT,
+                    element: <RegisterWorkshift/>,
                 },
                 ...settingRoutes.map((route) => ({
                     path: route.path.replace(`${PATH.SETTING}/`, "setting/"),

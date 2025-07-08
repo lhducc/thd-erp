@@ -25,7 +25,7 @@ func (s *officeStore) CreateOffice(context context.Context, data *model.OfficeCr
 	return nil
 }
 
-func (r *officeStore) GetOffice(ctx context.Context, id string) (*model.Office, error) {
+func (r *officeStore) GetOffice(ctx context.Context, id *string) (*model.Office, error) {
 	var office model.Office
 	if err := r.db.WithContext(ctx).Table("office").
 		Where("office_id = ?", id).

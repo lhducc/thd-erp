@@ -9,7 +9,7 @@ import (
 
 type OfficeRepo interface {
 	CreateOffice(context context.Context, data *model.OfficeCreate) error
-	GetOffice(ctx context.Context, id string) (*model.Office, error)
+	GetOffice(ctx context.Context, id *string) (*model.Office, error)
 	GetAllOffice(ctx context.Context) ([]model.Office, error)
 	UpdateOffice(ctx context.Context, id string, data *model.OfficeCreate) error
 	DeleteOffice(ctx context.Context, id string) error
@@ -54,7 +54,7 @@ func (biz *officeBiz) CreateOffice(context context.Context, data *model.OfficeCr
 	return nil
 }
 
-func (biz *officeBiz) GetOffice(ctx context.Context, id string) (*model.Office, error) {
+func (biz *officeBiz) GetOffice(ctx context.Context, id *string) (*model.Office, error) {
 	office, err := biz.repo.GetOffice(ctx, id)
 	if err != nil {
 		return nil, err

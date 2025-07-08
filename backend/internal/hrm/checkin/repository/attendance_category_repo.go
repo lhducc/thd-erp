@@ -124,13 +124,19 @@ func (r *attendanceCategoryRepository) ExistsByNameAndNotID(ctx context.Context,
 	return count > 0, err
 }
 
-//func (r *attendanceCategoryRepository) IsInUse(ctx context.Context, id string) (bool, error) {
-//	// Ví dụ: Kiểm tra xem có nhân viên nào đang sử dụng loại chấm công này không
-//	// Thực tế cần thay đổi theo nghiệp vụ cụ thể
-//	var count int64
-//	err := r.db.WithContext(ctx).
-//		Model(&hrmmodel.Employee{}). // Thay bằng model phù hợp
-//		Where("attendance_category_id = ?", id).
-//		Count(&count).Error
-//	return count > 0, err
-//}
+func (r *attendanceCategoryRepository) GetIfExists(ctx context.Context, id string) (*model.AttendanceCategory, bool, error) {
+	var category model.AttendanceCategory
+	err := r.db.WithContext(ctx).
+		Model(&model.AttendanceCategory{}).
+		Where("attendance_category_id = ? AND is_deleted = false", id).
+		First(&category).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+
+	return &category, true, nil
+}

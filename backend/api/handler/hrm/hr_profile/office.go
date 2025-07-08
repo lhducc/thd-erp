@@ -14,7 +14,7 @@ import (
 
 type OficeBiz interface {
 	CreateOffice(context context.Context, data *model.OfficeCreate) error
-	GetOffice(ctx context.Context, id string) (*model.Office, error)
+	GetOffice(ctx context.Context, id *string) (*model.Office, error)
 	GetAllOffice(ctx context.Context) ([]model.Office, error)
 	UpdateOffice(ctx context.Context, id string, data *model.OfficeCreate) error
 	DeleteOffice(ctx context.Context, id string) error
@@ -57,7 +57,7 @@ func (h *OfficeHandler) GetOffice() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idParam := c.Param("id")
 
-		result, err := h.officeBiz.GetOffice(c.Request.Context(), idParam)
+		result, err := h.officeBiz.GetOffice(c.Request.Context(), &idParam)
 		if err != nil {
 			utils.ResponseMessage(c, "Lấy thông tin thất bại", http.StatusInternalServerError, nil)
 			return

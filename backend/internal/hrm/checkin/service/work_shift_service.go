@@ -2,8 +2,8 @@ package service
 
 import (
 	"erp/backend/internal/hrm/checkin/model"
-	"erp/backend/internal/hrm/checkin/repository"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
+	"erp/backend/internal/hrm/checkin/service/service_interface"
 	utils "erp/backend/pkg"
 	"errors"
 	"fmt"
@@ -13,7 +13,7 @@ type WorkShiftService struct {
 	repo repo_interface.WorkShiftRepo
 }
 
-func NewWorkShiftService(repo *repository.WorkShiftStore) *WorkShiftService {
+func NewWorkShiftService(repo repo_interface.WorkShiftRepo) service_interface.WorkShiftService {
 	return &WorkShiftService{repo: repo}
 }
 

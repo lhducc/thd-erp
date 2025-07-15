@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type TransactionFunc func(ctx context.Context) error
+type TransactionFunc func(ctx context.Context, tx *gorm.DB) error
 
 func WithTransaction(db *gorm.DB, ctx context.Context, fn TransactionFunc) error {
 	tx := db.Begin().WithContext(ctx)
@@ -22,7 +22,7 @@ func WithTransaction(db *gorm.DB, ctx context.Context, fn TransactionFunc) error
 		}
 	}()
 
-	if err := fn(ctx); err != nil {
+	if err := fn(ctx, tx); err != nil {
 		if rollbackErr := tx.Rollback().Error; rollbackErr != nil {
 			return fmt.Errorf("rollback error: %v (original error: %w)", rollbackErr, err)
 		}

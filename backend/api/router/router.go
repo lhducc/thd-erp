@@ -97,21 +97,21 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	attendanceRecordRepo := checkinRepo.NewAttendanceRecordRepository(db)
 	categoryRepo := checkinRepo.NewAttendanceCategoryRepository(db)
 	employeeWorkShiftRepo := checkinRepo.NewEmployeeWorkShiftRepo(db)
-	workShiftRuleRepo := checkinRepo.NewWorkshiftRuleRepository(db)
+	workScheduleRepo := checkinRepo.NewWorkScheduleRepo(db)
 
 	//checkin service
 	attendanceRecordService := checkinService.NewAttendanceRecordService(attendanceRecordRepo, categoryRepo, officeRepo)
 	attendanceCategoryService := checkinService.NewAttendanceCategoryService(categoryRepo)
 	workShiftService := checkinService.NewWorkShiftService(workShiftRepo)
 	employeeWorkShiftService := checkinService.NewEmployeeWorkshiftService(employeeWorkShiftRepo, userRepo, workShiftRepo)
-	workShiftRuleService := checkinService.NewWorkShiftRuleService(workShiftRuleRepo, userRepo, workShiftRepo, departmentRepo, jobTitleRepo, positionRepo, officeRepo)
+	workScheduleService := checkinService.NewWorkScheduleService(workScheduleRepo)
 
 	//CheckIn handler
 	workShiftHandler := checkin.NewWorkShiftHandler(workShiftService)
 	attandanceRecord := checkin.NewAttendanceRecordHandler(attendanceRecordService)
 	attendanceCategoryHandler := checkin.NewAttendanceCategoryHandler(attendanceCategoryService)
 	employeeWorkShiftHandler := checkin.NewEmployeeWorkshift(employeeWorkShiftService)
-	workShiftRuleHandler := checkin.NewWorkshiftRuleHandler(workShiftRuleService)
+	workScheduleHandler := checkin.NewWorkScheduleHandler(workScheduleService)
 
 	//setup routes
 	public := router.Group("/auth")
@@ -135,34 +135,14 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupContractTypeRoutes(hrmRouter, contractTypeHandler)
 	setupAllowanceRoutes(hrmRouter, allowanceHandler)
 	setupEmployeeDocumentRoutes(hrmRouter, employeeDocumentHandler)
+
 	//CheckIn
 	setupWorkShiftRoutes(hrmRouter, workShiftHandler)
 	setupAttandanceRecordRoutes(hrmRouter, attandanceRecord)
 	setupAttendanceCategory(hrmRouter, attendanceCategoryHandler)
 	setupEmployeeWorkshiftRoutes(hrmRouter, employeeWorkShiftHandler)
-	setupWorkShiftRuleRoutes(hrmRouter, workShiftRuleHandler)
-}
+	setupWorkSchedule(hrmRouter, workScheduleHandler)
 
-func setupEmployeeWorkshiftRoutes(router *gin.RouterGroup, handler *checking_handler.EmployeeWorkshiftHandler) {
-	employeeWorkshift := router.Group("/employee-workshifts")
-	{
-		employeeWorkshift.GET("/:employeeID", handler.GetAllByEmployeeID())
-		employeeWorkshift.GET("", handler.GetAll())
-		employeeWorkshift.POST("", handler.Register())
-		employeeWorkshift.PUT("/:id", handler.Update())
-		employeeWorkshift.DELETE("/:id", handler.Delete())
-	}
-}
-
-func setupWorkShiftRuleRoutes(router *gin.RouterGroup, handler *checking_handler.WorkshiftRuleHandler) {
-	workShiftRule := router.Group("/work-shift-rules")
-	{
-		workShiftRule.GET("/:employeeID", handler.GetByUserID)
-		workShiftRule.GET("/", handler.GetAll)
-		workShiftRule.POST("/", handler.Create)
-		workShiftRule.PUT("/:id", handler.Update)
-		workShiftRule.DELETE("/:id", handler.Delete)
-	}
 }
 
 func setupEmployeeWorkshiftRoutes(router *gin.RouterGroup, handler *checking_handler.EmployeeWorkshiftHandler) {
@@ -362,4 +342,18 @@ func setupAttendanceCategory(router *gin.RouterGroup, attendanceCategoryHandler 
 		attendanceCategory.DELETE("/:id", attendanceCategoryHandler.DeleteAttendanceCategory())
 		attendanceCategory.GET("/office/:officeId", attendanceCategoryHandler.GetAttendanceCategoryByOfficeID())
 	}
+}
+
+func setupWorkSchedule(router *gin.RouterGroup, workScheduleHandler *checkin.WorkScheduleHandler) {
+	workSchedule := router.Group("/work-schedule")
+	{
+		workSchedule.POST("", workScheduleHandler.CreateWorkSchedule())
+		workSchedule.PUT("/:id", workScheduleHandler.UpdateWorkSchedule())
+		workSchedule.DELETE("/:id", workScheduleHandler.DeleteWorkSchedule())
+		workSchedule.POST("/assign/:work-schedule-id", workScheduleHandler.AddEmployeeToWorkSchedule())
+		workSchedule.GET("", workScheduleHandler.FetchListWorkSchedule())
+		workSchedule.GET("/:id", workScheduleHandler.FetchWorkScheduleByID())
+		workSchedule.GET("/export", workScheduleHandler.ExportWorkSchedule())
+	}
+
 }

@@ -20,8 +20,8 @@ func NewAttendanceRecordRepository(db *gorm.DB) repo_interface.AttendanceRecordR
 }
 
 func (r *attendanceRecordRepository) Create(ctx context.Context, record *model.AttendanceRecord) error {
-	return utils.WithTransaction(r.db, ctx, func(ctx context.Context) error {
-		if err := r.db.WithContext(ctx).Create(record).Error; err != nil {
+	return utils.WithTransaction(r.db, ctx, func(ctx context.Context, tx *gorm.DB) error {
+		if err := tx.WithContext(ctx).Create(record).Error; err != nil {
 			return fmt.Errorf("failed to create attendance record: %w", err)
 		}
 		return nil
@@ -29,8 +29,8 @@ func (r *attendanceRecordRepository) Create(ctx context.Context, record *model.A
 }
 
 func (r *attendanceRecordRepository) Update(ctx context.Context, record *model.AttendanceRecordUpdate, id string) error {
-	return utils.WithTransaction(r.db, ctx, func(ctx context.Context) error {
-		result := r.db.WithContext(ctx).
+	return utils.WithTransaction(r.db, ctx, func(ctx context.Context, tx *gorm.DB) error {
+		result := tx.WithContext(ctx).
 			Model(&model.AttendanceRecord{}).
 			Where("attendance_record_id = ?", id).
 			Updates(record)
@@ -46,8 +46,8 @@ func (r *attendanceRecordRepository) Update(ctx context.Context, record *model.A
 }
 
 func (r *attendanceRecordRepository) Delete(ctx context.Context, id string) error {
-	return utils.WithTransaction(r.db, ctx, func(ctx context.Context) error {
-		result := r.db.WithContext(ctx).
+	return utils.WithTransaction(r.db, ctx, func(ctx context.Context, tx *gorm.DB) error {
+		result := tx.WithContext(ctx).
 			Where("attendance_record_id = ?", id).
 			Delete(&model.AttendanceRecord{})
 

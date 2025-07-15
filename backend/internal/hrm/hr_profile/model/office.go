@@ -16,6 +16,11 @@ func (Office) TableName() string {
 	return "office"
 }
 
+type OfficeResponse struct {
+	ID   string `gorm:"type:varchar(8);primaryKey;column:office_id" json:"office_id"`
+	Name string `gorm:"type:varchar(100);column:office_name" json:"office_name"`
+}
+
 type OfficeCreate struct {
 	ID          string    `gorm:"primaryKey;column:office_id" json:"office_id"`
 	Name        string    `gorm:"column:office_name" json:"office_name"`
@@ -27,5 +32,9 @@ type OfficeCreate struct {
 }
 
 func (OfficeCreate) TableName() string {
+	return "office"
+}
+
+func (OfficeResponse) TableName() string {
 	return "office"
 }

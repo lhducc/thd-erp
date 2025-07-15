@@ -2,8 +2,6 @@ package handler
 
 import (
 	"erp/backend/internal/hrm/hr_profile/model"
-	"erp/backend/internal/hrm/hr_profile/repository"
-	"erp/backend/internal/hrm/hr_profile/usecase"
 	utils "erp/backend/pkg"
 	"fmt"
 	"net/http"
@@ -11,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type EmployeeBiz interface {
@@ -29,18 +26,10 @@ type EmployeeHandler struct {
 	departmentBiz DepartmentBiz
 }
 
-func NewEmployeeHandler(db *gorm.DB) *EmployeeHandler {
-	store := repository.NewUserStore(db)
-	account := repository.NewAccountStore(db)
-	biz := usecase.NewEmployeeBiz(store, account)
-
-	// Khởi tạo Department Usecase
-	departmentStore := repository.NewDepartmentStore(db)
-	departmentBiz := usecase.NewDepartmentBiz(departmentStore)
-
+func NewEmployeeHandler(biz EmployeeBiz, bizDepartment DepartmentBiz) *EmployeeHandler {
 	return &EmployeeHandler{
 		employeeBiz:   biz,
-		departmentBiz: departmentBiz,
+		departmentBiz: bizDepartment,
 	}
 }
 

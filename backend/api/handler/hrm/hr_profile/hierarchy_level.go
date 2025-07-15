@@ -3,13 +3,10 @@ package handler
 import (
 	"context"
 	"erp/backend/internal/hrm/hr_profile/model"
-	"erp/backend/internal/hrm/hr_profile/repository"
-	"erp/backend/internal/hrm/hr_profile/usecase"
 	utils "erp/backend/pkg"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 // Interface
@@ -26,10 +23,7 @@ type HierarchyLevelHandler struct {
 	hierarchyLevelBiz HierarchyLevelBiz
 }
 
-func NewHierarchyLevelHandler(db *gorm.DB) *HierarchyLevelHandler {
-	store := repository.NewhierarchyLevelStore(db)
-	biz := usecase.NewHierarchyLevelBiz(store)
-
+func NewHierarchyLevelHandler(biz HierarchyLevelBiz) *HierarchyLevelHandler {
 	return &HierarchyLevelHandler{
 		hierarchyLevelBiz: biz,
 	}

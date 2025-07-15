@@ -2,14 +2,11 @@ package checkin
 
 import (
 	"erp/backend/internal/hrm/checkin/model"
-	checkinrepo "erp/backend/internal/hrm/checkin/repository"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	"fmt"
 
-	checkinService "erp/backend/internal/hrm/checkin/service"
 	utils "erp/backend/pkg"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -25,10 +22,7 @@ type WorkShiftHandler struct {
 	biz service_interface.WorkShiftService
 }
 
-func NewWorkShiftHandler(db *gorm.DB) *WorkShiftHandler {
-	repo := checkinrepo.NewWorkShiftStore(db)
-	biz := checkinService.NewWorkShiftService(repo)
-
+func NewWorkShiftHandler(biz service_interface.WorkShiftService) *WorkShiftHandler {
 	return &WorkShiftHandler{
 		biz: biz,
 	}

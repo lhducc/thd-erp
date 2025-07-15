@@ -2,10 +2,7 @@ package checkin
 
 import (
 	"erp/backend/internal/hrm/checkin/model"
-	checkinrepo "erp/backend/internal/hrm/checkin/repository"
-	"erp/backend/internal/hrm/checkin/service"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
-	"erp/backend/internal/hrm/hr_profile/repository"
 	"erp/backend/pkg"
 	"erp/backend/pkg/job"
 	"erp/backend/pkg/minIO"
@@ -13,7 +10,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"time"
@@ -23,12 +19,7 @@ type AttendanceRecordHandler struct {
 	biz service_interface.AttendanceRecordService
 }
 
-func NewAttendanceRecordHandler(db *gorm.DB) *AttendanceRecordHandler {
-	repo := checkinrepo.NewAttendanceRecordRepository(db)
-	officeRepo := repository.NewOfficeStore(db)
-	categoryRepo := checkinrepo.NewAttendanceCategoryRepository(db)
-	biz := service.NewAttendanceRecordService(repo, categoryRepo, officeRepo)
-
+func NewAttendanceRecordHandler(biz service_interface.AttendanceRecordService) *AttendanceRecordHandler {
 	return &AttendanceRecordHandler{biz: biz}
 }
 

@@ -3,13 +3,10 @@ package handler
 import (
 	"context"
 	"erp/backend/internal/hrm/hr_profile/model"
-	"erp/backend/internal/hrm/hr_profile/repository"
-	"erp/backend/internal/hrm/hr_profile/usecase"
 	utils "erp/backend/pkg"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type JobTitleBiz interface {
@@ -24,11 +21,7 @@ type JobTitleHandler struct {
 	jobTitleBiz JobTitleBiz
 }
 
-func NewJobTitleHandler(db *gorm.DB) *JobTitleHandler {
-	storeJob := repository.NewJobTitleStore(db)
-	storeHie := repository.NewhierarchyLevelStore(db)
-	biz := usecase.NewJobTitleBiz(storeJob, storeHie)
-
+func NewJobTitleHandler(biz JobTitleBiz) *JobTitleHandler {
 	return &JobTitleHandler{
 		jobTitleBiz: biz,
 	}

@@ -3,13 +3,10 @@ package handler
 import (
 	"context"
 	"erp/backend/internal/hrm/hr_profile/model"
-	"erp/backend/internal/hrm/hr_profile/repository"
-	"erp/backend/internal/hrm/hr_profile/usecase"
 	utils "erp/backend/pkg"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type DepartmentBiz interface {
@@ -24,10 +21,7 @@ type DepartmentHandler struct {
 	departmentBiz DepartmentBiz
 }
 
-func NewDepartmentHandler(db *gorm.DB) *DepartmentHandler {
-	storeJob := repository.NewDepartmentStore(db)
-	biz := usecase.NewDepartmentBiz(storeJob)
-
+func NewDepartmentHandler(biz DepartmentBiz) *DepartmentHandler {
 	return &DepartmentHandler{
 		departmentBiz: biz,
 	}

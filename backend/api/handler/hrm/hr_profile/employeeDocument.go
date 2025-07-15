@@ -3,11 +3,8 @@ package handler
 import (
 	"context"
 	"erp/backend/internal/hrm/hr_profile/model"
-	hrmrepository "erp/backend/internal/hrm/hr_profile/repository"
-	hrmbiz "erp/backend/internal/hrm/hr_profile/usecase"
 	"erp/backend/pkg"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"strconv"
@@ -26,10 +23,7 @@ type EmployeeDocumentHandler struct {
 	employeeDocumentBiz EmployeeDocumentBiz
 }
 
-func NewEmployeeDocumentHandler(db *gorm.DB) *EmployeeDocumentHandler {
-	repo := hrmrepository.NewEmployeeDocument(db)
-	biz := hrmbiz.NewEmployeeDocumentBiz(repo)
-
+func NewEmployeeDocumentHandler(biz EmployeeDocumentBiz) *EmployeeDocumentHandler {
 	return &EmployeeDocumentHandler{
 		employeeDocumentBiz: biz,
 	}

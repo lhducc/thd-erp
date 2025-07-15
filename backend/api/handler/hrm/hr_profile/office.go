@@ -3,13 +3,10 @@ package handler
 import (
 	"context"
 	"erp/backend/internal/hrm/hr_profile/model"
-	"erp/backend/internal/hrm/hr_profile/repository"
-	"erp/backend/internal/hrm/hr_profile/usecase"
 	utils "erp/backend/pkg"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type OficeBiz interface {
@@ -24,9 +21,7 @@ type OfficeHandler struct {
 	officeBiz OficeBiz
 }
 
-func NewOficeHandler(db *gorm.DB) *OfficeHandler {
-	storeJob := repository.NewOfficeStore(db)
-	biz := usecase.NewOfficeBiz(storeJob)
+func NewOficeHandler(biz OficeBiz) *OfficeHandler {
 
 	return &OfficeHandler{
 		officeBiz: biz,

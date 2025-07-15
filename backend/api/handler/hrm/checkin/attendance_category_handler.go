@@ -2,13 +2,10 @@ package checkin
 
 import (
 	"erp/backend/internal/hrm/checkin/model"
-	checkinrepo "erp/backend/internal/hrm/checkin/repository"
-	"erp/backend/internal/hrm/checkin/service"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	utils "erp/backend/pkg"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -16,10 +13,7 @@ type AttendanceCategoryHandler struct {
 	biz service_interface.AttendanceCategoryService
 }
 
-func NewAttendanceCategoryHandler(db *gorm.DB) *AttendanceCategoryHandler {
-	repo := checkinrepo.NewAttendanceCategoryRepository(db)
-	biz := service.NewAttendanceCategoryService(repo)
-
+func NewAttendanceCategoryHandler(biz service_interface.AttendanceCategoryService) *AttendanceCategoryHandler {
 	return &AttendanceCategoryHandler{
 		biz: biz,
 	}

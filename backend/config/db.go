@@ -156,6 +156,7 @@ func GetDB() *gorm.DB {
 
 func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
+	//model.EmployeeWorkshift{},
 	//&officemodel.Office{},
 	//&hrmmodel.EmployeeDocumentType{},
 	//&hrmmodel.Employee{},

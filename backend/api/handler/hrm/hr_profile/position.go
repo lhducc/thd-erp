@@ -3,13 +3,10 @@ package handler
 import (
 	"context"
 	"erp/backend/internal/hrm/hr_profile/model"
-	"erp/backend/internal/hrm/hr_profile/repository"
-	"erp/backend/internal/hrm/hr_profile/usecase"
 	utils "erp/backend/pkg"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 // Interface cho biz layer
@@ -25,10 +22,7 @@ type PositionHandler struct {
 	positionBiz PositionBiz
 }
 
-func NewPositionHandler(db *gorm.DB) *PositionHandler {
-	store := repository.NewPositionStore(db)
-	biz := usecase.NewPositionBiz(store)
-
+func NewPositionHandler(biz PositionBiz) *PositionHandler {
 	return &PositionHandler{
 		positionBiz: biz,
 	}

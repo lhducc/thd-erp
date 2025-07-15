@@ -3,11 +3,8 @@ package handler
 import (
 	"context"
 	documentTypemodel "erp/backend/internal/hrm/hr_profile/model"
-	documentTyperepository "erp/backend/internal/hrm/hr_profile/repository"
-	documentTypeusecase "erp/backend/internal/hrm/hr_profile/usecase"
 	"erp/backend/pkg"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -24,9 +21,7 @@ type DocumentTypeHandler struct {
 	documentTypeBiz DocumentTypeBiz
 }
 
-func NewDocumentTypeHandler(db *gorm.DB) *DocumentTypeHandler {
-	repo := documentTyperepository.NewDocumentType(db)
-	biz := documentTypeusecase.NewDocumentTypeBiz(repo)
+func NewDocumentTypeHandler(biz DocumentTypeBiz) *DocumentTypeHandler {
 
 	return &DocumentTypeHandler{
 		documentTypeBiz: biz,

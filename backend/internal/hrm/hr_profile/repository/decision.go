@@ -12,7 +12,7 @@ type decisionStore struct {
 	db *gorm.DB
 }
 
-func NewDicisionStore(db *gorm.DB) *decisionStore {
+func DecisionStore(db *gorm.DB) *decisionStore {
 	return &decisionStore{db: db}
 }
 

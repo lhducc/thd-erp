@@ -3,12 +3,16 @@ package router
 import (
 	authHandler "erp/backend/api/handler/hrm/auth"
 	"erp/backend/api/handler/hrm/checkin"
+	checking_handler "erp/backend/api/handler/hrm/checkin"
 	handler "erp/backend/api/handler/hrm/hr_profile"
 	"erp/backend/api/middleware"
 	"erp/backend/config"
 	authRepo "erp/backend/internal/auth/repository"
 	"erp/backend/internal/auth/token"
 	authUsecase "erp/backend/internal/auth/usecase"
+	checkinRepo "erp/backend/internal/hrm/checkin/repository"
+	checkinService "erp/backend/internal/hrm/checkin/service"
+
 	"erp/backend/internal/hrm/hr_profile/repository"
 	"erp/backend/internal/hrm/hr_profile/usecase"
 	"log"
@@ -36,41 +40,77 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 		log.Fatal("Error creating JWT maker:", err)
 	}
 
-	officeHandler := handler.NewOficeHandler(db)
-	departmentHandler := handler.NewDepartmentHandler(db)
-	jobtitleHandler := handler.NewJobTitleHandler(db)
-	hierarchyLevel := handler.NewHierarchyLevelHandler(db)
-	positionHandler := handler.NewPositionHandler(db)
-	employeeHandler := handler.NewEmployeeHandler(db)
-	contractHandler := handler.NewContractHandler(db)
-	decisionHandler := handler.NewDecisionHandler(db)
-	accountRepo := authRepo.NewAccountRepository(db)
-	accountUsecase := authUsecase.NewAuthentication(accountRepo, jwtMaker)
-	accountHandler := authHandler.NewAuthenticationHandler(accountUsecase)
-	documentTypeHandler := handler.NewDocumentTypeHandler(db)
+	// hrm_repo
+	accountAuthRepo := authRepo.NewAccountRepository(db)
 	contractTypeRepo := repository.NewContractTypeRepository(db)
-	contractTypeUsecase := usecase.NewContractTypeUsecase(contractTypeRepo)
-	contractTypeHandler := handler.NewContractTypeHandler(contractTypeUsecase)
 	decisionTypeRepo := repository.NewDecisionTypeRepository(db)
-	decisionTypeUsecase := usecase.NewDecisionTypeUsecase(decisionTypeRepo)
-	decisionTypeHandler := handler.NewDecisionTypeHandler(decisionTypeUsecase)
 	insuranceRepo := repository.NewInsuranceRepository(db)
-	insuranceUsecase := usecase.NewInsuranceUsecase(insuranceRepo)
-	insuranceHandler := handler.NewInsuranceHandler(insuranceUsecase)
-	employeeDocumentHandler := handler.NewEmployeeDocumentHandler(db)
-
-	//CheckIn
-	workShiftHandler := checkin.NewWorkShiftHandler(db)
-	allow := checkin.NewAllowedWorkingScheduleHandler(db)
-	holiday := checkin.NewHolidayHandler(db)
-	attandanceRecord := checkin.NewAttendanceRecordHandler(db)
-	attendanceCategoryHandler := checkin.NewAttendanceCategoryHandler(db)
-
-	// allowance
+	officeRepo := repository.NewOfficeStore(db)
+	departmentRepo := repository.NewDepartmentStore(db)
+	jobTitleRepo := repository.NewJobTitleStore(db)
+	positionRepo := repository.NewPositionStore(db)
+	userRepo := repository.NewUserStore(db)
+	accountManagementRepo := repository.NewAccountStore(db)
+	contractRepo := repository.NewContractStore(db)
+	decisionRepo := repository.DecisionStore(db)
+	documentTypeRepo := repository.NewDocumentType(db)
+	employeeDocumentRepo := repository.NewEmployeeDocument(db)
+	hierarchyLevelRepo := repository.NewhierarchyLevelStore(db)
 	allowanceRepo := repository.NewAllowanceRepo(db)
+
+	//usecase hrm
+	accountUsecase := authUsecase.NewAuthentication(accountAuthRepo, jwtMaker)
+	contractTypeUsecase := usecase.NewContractTypeUsecase(contractTypeRepo)
+	decisionTypeUsecase := usecase.NewDecisionTypeUsecase(decisionTypeRepo)
+	insuranceUsecase := usecase.NewInsuranceUsecase(insuranceRepo)
+	departmentUsecase := usecase.NewDepartmentBiz(departmentRepo)
+	officeUsecase := usecase.NewOfficeBiz(officeRepo)
+	jobTitleUsecase := usecase.NewJobTitleBiz(jobTitleRepo, hierarchyLevelRepo)
+	employeeUsecase := usecase.NewEmployeeBiz(userRepo, accountManagementRepo)
+	contractUsecase := usecase.NewContractBiz(contractRepo, userRepo)
+	employeeDocumentUsecase := usecase.NewEmployeeDocumentBiz(employeeDocumentRepo)
+	positionUsecase := usecase.NewPositionBiz(positionRepo)
+	decisionUsecase := usecase.NewDecisionBiz(decisionRepo, userRepo)
+	documentTypUsecase := usecase.NewDocumentTypeBiz(documentTypeRepo)
+	hierarchyLevelUsecase := usecase.NewHierarchyLevelBiz(hierarchyLevelRepo)
 	allowanceUsecase := usecase.NewAllowanceBiz(allowanceRepo)
+
+	//hanlder hrm
+	officeHandler := handler.NewOficeHandler(officeUsecase)
+	departmentHandler := handler.NewDepartmentHandler(departmentUsecase)
+	jobtitleHandler := handler.NewJobTitleHandler(jobTitleUsecase)
+	hierarchyLevel := handler.NewHierarchyLevelHandler(hierarchyLevelUsecase)
+	positionHandler := handler.NewPositionHandler(positionUsecase)
+	employeeHandler := handler.NewEmployeeHandler(employeeUsecase, departmentUsecase)
+	contractHandler := handler.NewContractHandler(contractUsecase)
+	decisionHandler := handler.NewDecisionHandler(decisionUsecase)
+	accountHandler := authHandler.NewAuthenticationHandler(accountUsecase)
+	documentTypeHandler := handler.NewDocumentTypeHandler(documentTypUsecase)
+	contractTypeHandler := handler.NewContractTypeHandler(contractTypeUsecase)
+	decisionTypeHandler := handler.NewDecisionTypeHandler(decisionTypeUsecase)
+	insuranceHandler := handler.NewInsuranceHandler(insuranceUsecase)
+	employeeDocumentHandler := handler.NewEmployeeDocumentHandler(employeeDocumentUsecase)
 	allowanceHandler := handler.NewAllowanceHandler(allowanceUsecase)
 
+	//checkin Repo
+	workShiftRepo := checkinRepo.NewWorkShiftStore(db)
+	attendanceRecordRepo := checkinRepo.NewAttendanceRecordRepository(db)
+	categoryRepo := checkinRepo.NewAttendanceCategoryRepository(db)
+	employeeWorkShiftRepo := checkinRepo.NewEmployeeWorkShiftRepo(db)
+
+	//checkin service
+	attendanceRecordService := checkinService.NewAttendanceRecordService(attendanceRecordRepo, categoryRepo, officeRepo)
+	attendanceCategoryService := checkinService.NewAttendanceCategoryService(categoryRepo)
+	workShiftService := checkinService.NewWorkShiftService(workShiftRepo)
+	employeeWorkShiftService := checkinService.NewEmployeeWorkshiftService(employeeWorkShiftRepo, userRepo, workShiftRepo)
+
+	//CheckIn handler
+	workShiftHandler := checkin.NewWorkShiftHandler(workShiftService)
+	attandanceRecord := checkin.NewAttendanceRecordHandler(attendanceRecordService)
+	attendanceCategoryHandler := checkin.NewAttendanceCategoryHandler(attendanceCategoryService)
+	employeeWorkShiftHandler := checkin.NewEmployeeWorkshift(employeeWorkShiftService)
+
+	//setup routes
 	public := router.Group("/auth")
 	public.POST("/login", accountHandler.SignIn)
 
@@ -94,12 +134,21 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupEmployeeDocumentRoutes(hrmRouter, employeeDocumentHandler)
 
 	//CheckIn
-	setupAllowedWorkingScheduleRoutes(hrmRouter, allow)
 	setupWorkShiftRoutes(hrmRouter, workShiftHandler)
-	setupHolidayRoutes(hrmRouter, holiday)
 	setupAttandanceRecordRoutes(hrmRouter, attandanceRecord)
 	setupAttendanceCategory(hrmRouter, attendanceCategoryHandler)
+	setupEmployeeWorkshiftRoutes(hrmRouter, employeeWorkShiftHandler)
 
+}
+
+func setupEmployeeWorkshiftRoutes(router *gin.RouterGroup, handler *checking_handler.EmployeeWorkshiftHandler) {
+	employeeWorkshift := router.Group("/employee-workshifts")
+	{
+		employeeWorkshift.GET("/:employeeID", handler.GetAllByEmployeeID())
+		employeeWorkshift.GET("", handler.GetAll())
+		employeeWorkshift.POST("", handler.Register())
+		employeeWorkshift.PUT("/:id", handler.Update())
+	}
 }
 
 func setupOfficeRoutes(router *gin.RouterGroup, handler *handler.OfficeHandler) {
@@ -243,27 +292,6 @@ func setupWorkShiftRoutes(router *gin.RouterGroup, workShiftHandler *checkin.Wor
 		workshift.GET("", workShiftHandler.GetAllWorkShift())
 		workshift.PUT("/:id", workShiftHandler.UpdateWorkShift())
 		workshift.DELETE("/:id", workShiftHandler.DeleteWorkShift())
-	}
-}
-func setupHolidayRoutes(router *gin.RouterGroup, holidayHandler *checkin.HolidayHandler) {
-	holidays := router.Group("/holiday")
-	{
-		holidays.POST("", holidayHandler.CreateHoliday())
-		holidays.GET("/:id", holidayHandler.GetHoliday())
-		holidays.GET("", holidayHandler.GetAllHoliday())
-		holidays.PUT("/:id", holidayHandler.UpdateHoliday())
-		holidays.DELETE("/:id", holidayHandler.DeleteHoliday())
-	}
-}
-
-func setupAllowedWorkingScheduleRoutes(router *gin.RouterGroup, scheduleHandler *checkin.AllowedWorkingScheduleHandler) {
-	schedule := router.Group("/allowed-working-schedule")
-	{
-		schedule.POST("", scheduleHandler.CreateAllowedWorkingSchedule())
-		schedule.GET("/:id", scheduleHandler.GetAllowedWorkingSchedule())
-		schedule.GET("", scheduleHandler.GetAllAllowedWorkingSchedule())
-		schedule.PUT("/:id", scheduleHandler.UpdateAllowedWorkingSchedule())
-		schedule.DELETE("/:id", scheduleHandler.DeleteAllowedWorkingSchedule())
 	}
 }
 

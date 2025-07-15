@@ -2,18 +2,15 @@ package handler
 
 import (
 	"context"
-	"erp/backend/internal/hrm/hr_profile/repository"
 	"strconv"
 	"strings"
 
 	"erp/backend/internal/hrm/hr_profile/model"
-	"erp/backend/internal/hrm/hr_profile/usecase"
 	utils "erp/backend/pkg"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type DecisionBiz interface {
@@ -27,17 +24,11 @@ type DecisionBiz interface {
 
 type DecisionHandler struct {
 	decisionBiz DecisionBiz
-	employeeBiz usecase.EmployeeRepo
 }
 
-func NewDecisionHandler(db *gorm.DB) *DecisionHandler {
-	storeJob := repository.NewDicisionStore(db)
-	storeUser := repository.NewUserStore(db)
-	biz := usecase.NewDecisionBiz(storeJob, storeUser)
-
+func NewDecisionHandler(biz DecisionBiz) *DecisionHandler {
 	return &DecisionHandler{
 		decisionBiz: biz,
-		employeeBiz: storeUser,
 	}
 }
 

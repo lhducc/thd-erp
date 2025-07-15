@@ -3,8 +3,6 @@ package handler
 import (
 	"context"
 	"erp/backend/internal/hrm/hr_profile/model"
-	"erp/backend/internal/hrm/hr_profile/repository"
-	"erp/backend/internal/hrm/hr_profile/usecase"
 	utils "erp/backend/pkg"
 	"erp/backend/pkg/errors"
 	errpkg "erp/backend/pkg/errors"
@@ -15,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type ContractBiz interface {
@@ -31,17 +28,11 @@ type ContractBiz interface {
 
 type ContractHandler struct {
 	ContractBiz ContractBiz
-	employeeBiz usecase.EmployeeRepo
 }
 
-func NewContractHandler(db *gorm.DB) *ContractHandler {
-	storeJob := repository.NewContractStore(db)
-	storeUser := repository.NewUserStore(db)
-	biz := usecase.NewContractBiz(storeJob, storeUser)
-
+func NewContractHandler(biz ContractBiz) *ContractHandler {
 	return &ContractHandler{
 		ContractBiz: biz,
-		employeeBiz: storeUser,
 	}
 }
 

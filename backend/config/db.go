@@ -157,7 +157,12 @@ func GetDB() *gorm.DB {
 func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
 	//model.EmployeeWorkshift{},
-	//&officemodel.Office{},
+	//&model.WorkshiftRule{},
+	//&hrmmodel.Position{},
+	//&hrmmodel.Department{},
+	//&hrmmodel.Office{},
+	//&hrmmodel.JobTitle{},
+	//&model.WorkShifts{},
 	//&hrmmodel.EmployeeDocumentType{},
 	//&hrmmodel.Employee{},
 	//&hrmmodel.ContractType{},
@@ -176,6 +181,7 @@ func AutoMigrate(db *gorm.DB) error {
 	//&model.AttendanceCategory{},
 	//&model.AttendanceRecord{},
 	)
+	fmt.Println("Migration complete")
 
 	if err != nil {
 		return fmt.Errorf("migrate thất bại: %w", err)

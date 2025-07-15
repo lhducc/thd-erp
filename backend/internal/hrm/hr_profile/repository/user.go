@@ -9,22 +9,22 @@ import (
 	"gorm.io/gorm"
 )
 
-type userStore struct {
+type UserStore struct {
 	db *gorm.DB
 }
 
-func NewUserStore(db *gorm.DB) *userStore {
-	return &userStore{db: db}
+func NewUserStore(db *gorm.DB) *UserStore {
+	return &UserStore{db: db}
 }
 
-func (s *userStore) recoverFromPanic(tx *gorm.DB) {
+func (s *UserStore) recoverFromPanic(tx *gorm.DB) {
 	if r := recover(); r != nil {
 		tx.Rollback()
 		log.Printf("Panic occurred, transaction rolled back: %v", r)
 	}
 }
 
-func (s *userStore) CreateEmployee(employee *model.Employee) error {
+func (s *UserStore) CreateEmployee(employee *model.Employee) error {
 	tx := s.db.Begin()
 	if tx.Error != nil {
 		return errors.New("failed to start transaction")
@@ -50,7 +50,7 @@ func (s *userStore) CreateEmployee(employee *model.Employee) error {
 	return nil
 }
 
-func (s *userStore) GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error) {
+func (s *UserStore) GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error) {
 	var employees []model.Employee
 	offset := (page - 1) * pageSize
 
@@ -71,7 +71,7 @@ func (s *userStore) GetAllEmployeesByStatus(status string, page, pageSize int) (
 	return employees, nil
 }
 
-func (s *userStore) GetUserById(id string) (model.Employee, error) {
+func (s *UserStore) GetUserById(id string) (model.Employee, error) {
 	var employee model.Employee
 	if err := s.db.Where("employee_id = ?", id).
 		Preload("Account").
@@ -84,7 +84,7 @@ func (s *userStore) GetUserById(id string) (model.Employee, error) {
 	return employee, nil
 }
 
-func (s *userStore) GetAllEmployees() ([]model.Employee, error) {
+func (s *UserStore) GetAllEmployees() ([]model.Employee, error) {
 	var employees []model.Employee
 	if err := s.db.
 		Order("employee_id ASC").
@@ -98,7 +98,7 @@ func (s *userStore) GetAllEmployees() ([]model.Employee, error) {
 	return employees, nil
 }
 
-func (s *userStore) GetAllEmployeesPagination(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error) {
+func (s *UserStore) GetAllEmployeesPagination(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error) {
 	var employees []model.Employee
 	var totalRecords int64
 
@@ -151,7 +151,7 @@ func (s *userStore) GetAllEmployeesPagination(page, pageSize int, filters map[st
 	return employees, totalRecords, nil
 }
 
-func (s *userStore) UpdateEmployee(id string, updatedEmployee model.Employee) error {
+func (s *UserStore) UpdateEmployee(id string, updatedEmployee model.Employee) error {
 	tx := s.db.Begin()
 	if tx.Error != nil {
 		return errors.New("failed to start transaction")
@@ -180,7 +180,7 @@ func (s *userStore) UpdateEmployee(id string, updatedEmployee model.Employee) er
 	return nil
 }
 
-func (s *userStore) DeleteEmployee(id string) error {
+func (s *UserStore) DeleteEmployee(id string) error {
 	tx := s.db.Begin()
 	if tx.Error != nil {
 		return errors.New("failed to start transaction")
@@ -218,13 +218,13 @@ func (s *userStore) DeleteEmployee(id string) error {
 	return nil
 }
 
-func (s *userStore) GetLastEmployeeByCode(emp *model.Employee) error {
+func (s *UserStore) GetLastEmployeeByCode(emp *model.Employee) error {
 	return s.db.
 		Order("employee_id DESC").
 		First(emp).Error
 }
 
-func (s *userStore) UpdateEmployeeWithAccount(employee *model.Employee, accountID int64) error {
+func (s *UserStore) UpdateEmployeeWithAccount(employee *model.Employee, accountID int64) error {
 	tx := s.db.Begin()
 	if tx.Error != nil {
 		return errors.New("failed to start transaction")

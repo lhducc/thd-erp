@@ -3,7 +3,7 @@ package model
 import "time"
 
 type Office struct {
-	ID          string    `gorm:"type:varchar(8);primaryKey;column:office_id" json:"office_id"`
+	ID          string    `gorm:"type:varchar(8);primaryKey;column:office_id;unique;" json:"office_id"`
 	Name        string    `gorm:"type:varchar(100);column:office_name" json:"office_name"`
 	PhoneNumber string    `gorm:"type:varchar(12);column:phone_number" json:"phone_number"`
 	Address     string    `gorm:"type:text;column:address" json:"address"`

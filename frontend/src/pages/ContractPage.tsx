@@ -5,7 +5,7 @@ import {useMutation, useQuery} from "@tanstack/react-query";
 import type {ColumnDef} from "@tanstack/react-table";
 import {toast} from "sonner";
 import type {Contract} from "@/types/contract.ts";
-import {CreateContract} from "@/components/CreateContract.tsx";
+import {ContractForm} from "@/components/CreateContract.tsx";
 import {deleteContractById, getAllContractsApi} from "@/apis/contract.api.ts";
 import {useState} from "react";
 import {ContractFilter} from "@/components/ContractFilter.tsx";
@@ -85,7 +85,7 @@ const ContractPage = () => {
 
                 return (
                     <div className="flex gap-4">
-                        <CreateContract
+                        <ContractForm
                             editBtn={
                                 <Button variant="outline">
                                     <SquarePen />
@@ -218,7 +218,7 @@ const ContractPage = () => {
                 data={filteredContracts}
                 navLink={navLink}
                 title="Hợp đồng"
-                buttonCreate={<CreateContract refetch={refetchContracts}/>}
+                buttonCreate={<ContractForm refetch={refetchContracts}/>}
                 keyFilter="contract_type"
             />
         </>

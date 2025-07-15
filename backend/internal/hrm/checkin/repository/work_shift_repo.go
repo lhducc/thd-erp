@@ -24,6 +24,12 @@ func (s *WorkShiftStore) recoverFromPanic(tx *gorm.DB) {
 	}
 }
 
+func (s *WorkShiftStore) FindByID(id string) (model.WorkShifts, error) {
+	var workShifts model.WorkShifts
+	err := s.db.Where("workshift_id = ?", id).First(&workShifts).Error
+	return workShifts, err
+}
+
 func (s *WorkShiftStore) CreateWorkShift(data *model.WorkShifts) error {
 	tx := s.db.Begin()
 

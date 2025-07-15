@@ -49,7 +49,7 @@ type Props = {
     refetch?: () => void;
 };
 
-const CreateAllowance = ({editBtn, data, type, refetch}: Props) => {
+const AllowanceForm = ({editBtn, data, type, refetch}: Props) => {
     const [open, setOpen] = useState(false);
 
     const {mutateAsync: createAllowance, isPending: pendingCreate} = useMutation({
@@ -262,4 +262,4 @@ const CreateAllowance = ({editBtn, data, type, refetch}: Props) => {
     );
 };
 
-export default CreateAllowance;
+export default AllowanceForm;

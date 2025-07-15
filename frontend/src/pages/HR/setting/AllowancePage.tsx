@@ -10,7 +10,7 @@ import {Link, useLocation} from "react-router-dom";
 import {deleteAllowanceApi, getAllAllowancesApi} from "@/apis/allowance.api.ts";
 import type {Allowance} from "@/types/allowance.ts";
 import {useState} from "react";
-import CreateAllowance from "@/components/CreateAllowance.tsx";
+import AllowanceForm from "@/components/AllowanceForm.tsx";
 
 const AllowancePage = () => {
     const location = useLocation().pathname;
@@ -36,7 +36,7 @@ const AllowancePage = () => {
         },
     });
 
-    const [columns, setColumns] = useState<ColumnDef<Allowance>[]>([
+    const [columns] = useState<ColumnDef<Allowance>[]>([
         {
             accessorKey: "id",
             header: "Mã",
@@ -71,7 +71,7 @@ const AllowancePage = () => {
 
                 return (
                     <div className="flex gap-4">
-                        <CreateAllowance
+                        <AllowanceForm
                             editBtn={
                                 <Button variant="outline">
                                     <SquarePen/>
@@ -130,7 +130,7 @@ const AllowancePage = () => {
                 data={allowance || []}
                 title="Loại hợp đồng"
                 navLink={navLink}
-                buttonCreate={<CreateAllowance refetch={refetchAllowances} />}
+                buttonCreate={<AllowanceForm refetch={refetchAllowances} />}
                 keyFilter="allowance_name"
             />
         </>

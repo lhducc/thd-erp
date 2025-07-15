@@ -37,7 +37,7 @@ type Props = {
     refetch?: () => void;
 };
 
-export function CreateContract({editBtn, data, type, refetch}: Props) {
+export function ContractForm({editBtn, data, type, refetch}: Props) {
     const [open, setOpen] = useState(false);
     const form = useForm<ContractFormValues>({
         resolver: zodResolver(contractFormSchema),

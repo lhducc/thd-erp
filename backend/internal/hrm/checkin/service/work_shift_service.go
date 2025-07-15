@@ -92,11 +92,11 @@ func (biz *WorkShiftService) GetAllWorkShiftService() ([]model.WorkShifts, error
 
 func (biz *WorkShiftService) UpdateWorkShiftService(id string, workshift *model.WorkShifts) error {
 	if id == "" {
-		return errors.New("invalid employee ID")
+		return errors.New("invalid employeeRepo ID")
 	}
 
 	if err := biz.repo.UpdateWorkShift(id, workshift); err != nil {
-		return fmt.Errorf("failed to update employee: %w", err)
+		return fmt.Errorf("failed to update employeeRepo: %w", err)
 	}
 
 	return nil
@@ -104,10 +104,10 @@ func (biz *WorkShiftService) UpdateWorkShiftService(id string, workshift *model.
 
 func (biz *WorkShiftService) DeleteWorkShiftService(id string) error {
 	if id == "" {
-		return errors.New("invalid employee ID")
+		return errors.New("invalid employeeRepo ID")
 	}
 	if err := biz.repo.DeleteWorkShift(id); err != nil {
-		return fmt.Errorf("failed to delete employee: %w", err)
+		return fmt.Errorf("failed to delete employeeRepo: %w", err)
 	}
 
 	return nil

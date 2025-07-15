@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getEmployeeByIdApi } from "@/apis/profile.api";
 import { useAuth } from "@/context/AuthContext";
+import { InfoRow } from "@/components/ui/info-row";
 
 const formatDate = (dateStr?: string) => {
     if (!dateStr) return "-";
@@ -54,12 +55,5 @@ const ClientProfilePage = () => {
         </div>
     );
 };
-
-const InfoRow = ({ label, value }: { label: string; value: string }) => (
-    <div className="flex justify-between border-b py-2">
-        <span className="font-semibold">{label}</span>
-        <span>{value}</span>
-    </div>
-);
 
 export default ClientProfilePage;

@@ -62,6 +62,3 @@ export type WorkShiftRequest = {
     effective_date: string;        // ISO date string
     expiration_date?: string | null;
 };
-
-export class Workshift {
-}

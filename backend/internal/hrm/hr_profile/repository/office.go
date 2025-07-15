@@ -9,15 +9,15 @@ import (
 	"gorm.io/gorm"
 )
 
-type officeStore struct {
+type OfficeStore struct {
 	db *gorm.DB
 }
 
-func NewOfficeStore(db *gorm.DB) *officeStore {
-	return &officeStore{db: db}
+func NewOfficeStore(db *gorm.DB) *OfficeStore {
+	return &OfficeStore{db: db}
 }
 
-func (s *officeStore) CreateOffice(context context.Context, data *model.OfficeCreate) error {
+func (s *OfficeStore) CreateOffice(context context.Context, data *model.OfficeCreate) error {
 	if err := s.db.Create(&data).Error; err != nil {
 		return err
 	}
@@ -25,9 +25,9 @@ func (s *officeStore) CreateOffice(context context.Context, data *model.OfficeCr
 	return nil
 }
 
-func (r *officeStore) GetOffice(ctx context.Context, id *string) (*model.Office, error) {
+func (s *OfficeStore) GetOffice(ctx context.Context, id *string) (*model.Office, error) {
 	var office model.Office
-	if err := r.db.WithContext(ctx).Table("office").
+	if err := s.db.WithContext(ctx).Table("office").
 		Where("office_id = ?", id).
 		First(&office).Error; err != nil {
 		return nil, err
@@ -35,29 +35,29 @@ func (r *officeStore) GetOffice(ctx context.Context, id *string) (*model.Office,
 	return &office, nil
 }
 
-func (r *officeStore) GetAllOffice(ctx context.Context) ([]model.Office, error) {
+func (s *OfficeStore) GetAllOffice(ctx context.Context) ([]model.Office, error) {
 
 	var positions []model.Office
-	if err := r.db.WithContext(ctx).Table("office").Find(&positions).Error; err != nil {
+	if err := s.db.WithContext(ctx).Table("office").Find(&positions).Error; err != nil {
 		return nil, err
 	}
 
 	return positions, nil
 }
 
-func (r *officeStore) UpdateOffice(ctx context.Context, id string, data *model.OfficeCreate) error {
-	return r.db.WithContext(ctx).Table("office").
+func (s *OfficeStore) UpdateOffice(ctx context.Context, id string, data *model.OfficeCreate) error {
+	return s.db.WithContext(ctx).Table("office").
 		Where("office_id = ?", id).
 		Updates(data).Error
 }
 
-func (r *officeStore) DeleteOffice(ctx context.Context, id string) error {
-	return r.db.WithContext(ctx).Table("office").
+func (s *OfficeStore) DeleteOffice(ctx context.Context, id string) error {
+	return s.db.WithContext(ctx).Table("office").
 		Where("office_id = ?", id).
 		Delete(nil).Error
 }
 
-func (s *officeStore) CheckExistName(name string) (bool, error) {
+func (s *OfficeStore) CheckExistName(name string) (bool, error) {
 	var count int64
 	if err := s.db.Model(&model.Office{}).Where("office_name = ?", name).Count(&count).Error; err != nil {
 		return true, err
@@ -68,8 +68,14 @@ func (s *officeStore) CheckExistName(name string) (bool, error) {
 	return false, nil
 }
 
-func (s *officeStore) GetLastOfficeByCode(ctx context.Context, office *model.Office) error {
+func (s *OfficeStore) GetLastOfficeByCode(ctx context.Context, office *model.Office) error {
 	return s.db.WithContext(ctx).
 		Order("office_id DESC").
 		First(office).Error
+}
+
+func (s *OfficeStore) FindByID(id string) (model.Office, error) {
+	var office model.Office
+	err := s.db.Where("office_id = ?", id).First(&office).Error
+	return office, err
 }

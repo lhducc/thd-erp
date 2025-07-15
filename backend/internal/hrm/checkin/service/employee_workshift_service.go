@@ -37,7 +37,7 @@ func (s *employeeWorkshiftService) GetAll() ([]model.EmployeeWorkshift, error) {
 func (s *employeeWorkshiftService) Register(employeeID string, workshiftID string, date time.Time) error {
 	existing := s.repo.IsExisting(employeeID, workshiftID, date)
 	if existing {
-		return fmt.Errorf("employee workshift %s already exists", employeeID)
+		return fmt.Errorf("employeeRepo workshift %s already exists", employeeID)
 	}
 	existingUser, err := s.employeeRepo.GetUserById(employeeID)
 	if err != nil {
@@ -59,7 +59,7 @@ func (s *employeeWorkshiftService) Register(employeeID string, workshiftID strin
 	return nil
 }
 
-func (s *employeeWorkshiftService) Delete(id uint) error {
+func (s *employeeWorkshiftService) Delete(id string) error {
 	return s.repo.Delete(id)
 }
 

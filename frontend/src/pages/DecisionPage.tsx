@@ -47,7 +47,6 @@ const DecisionPage = () => {
     queryFn: getAllDecisionsApi,
   });
 
-  console.log("data", decisions);
 
   const { mutate: deleteDecision } = useMutation({
     mutationFn: deleteDecisionApi,

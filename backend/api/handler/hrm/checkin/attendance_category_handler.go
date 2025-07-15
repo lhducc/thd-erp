@@ -21,6 +21,7 @@ func NewAttendanceCategoryHandler(biz service_interface.AttendanceCategoryServic
 
 func (h *AttendanceCategoryHandler) CreateAttendanceCategory() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx := c.Request.Context()
 		var req model.AttendanceCategoryRequest
 
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -44,7 +45,7 @@ func (h *AttendanceCategoryHandler) CreateAttendanceCategory() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.biz.CreateAttendanceCategory(c, &attendanceCategory); err != nil {
+		if err := h.biz.CreateAttendanceCategory(ctx, &attendanceCategory); err != nil {
 			utils.ResponseMessage(c, "Failed to create attendance category: "+err.Error(), http.StatusInternalServerError, nil)
 			return
 		}
@@ -56,8 +57,9 @@ func (h *AttendanceCategoryHandler) CreateAttendanceCategory() gin.HandlerFunc {
 func (h *AttendanceCategoryHandler) GetAttendanceCategory() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
+		ctx := c.Request.Context()
 
-		category, err := h.biz.GetAttendanceCategoryByID(c, id)
+		category, err := h.biz.GetAttendanceCategoryByID(ctx, id)
 		if err != nil {
 			utils.ResponseMessage(c, "Attendance category not found", http.StatusNotFound, nil)
 			return
@@ -69,8 +71,9 @@ func (h *AttendanceCategoryHandler) GetAttendanceCategory() gin.HandlerFunc {
 func (h *AttendanceCategoryHandler) GetAttendanceCategoryByOfficeID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("officeId")
+		ctx := c.Request.Context()
 
-		categories, err := h.biz.ListAttendanceCategoriesByOffice(c, id)
+		categories, err := h.biz.ListAttendanceCategoriesByOffice(ctx, id)
 		if err != nil {
 			utils.ResponseMessage(c, "Attendance category not found", http.StatusNotFound, nil)
 			return
@@ -81,7 +84,8 @@ func (h *AttendanceCategoryHandler) GetAttendanceCategoryByOfficeID() gin.Handle
 
 func (h *AttendanceCategoryHandler) GetAllAttendanceCategories() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		result, err := h.biz.ListAllAttendanceCategories(c)
+		ctx := c.Request.Context()
+		result, err := h.biz.ListAllAttendanceCategories(ctx)
 		if err != nil {
 			utils.ResponseMessage(c, "Error getting attendance categories", http.StatusInternalServerError, nil)
 			return
@@ -94,6 +98,7 @@ func (h *AttendanceCategoryHandler) GetAllAttendanceCategories() gin.HandlerFunc
 func (h *AttendanceCategoryHandler) UpdateAttendanceCategory() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
+		ctx := c.Request.Context()
 		var req model.AttendanceCategoryRequest
 
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -110,7 +115,7 @@ func (h *AttendanceCategoryHandler) UpdateAttendanceCategory() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.biz.UpdateAttendanceCategory(c, &categoryUpdate); err != nil {
+		if err := h.biz.UpdateAttendanceCategory(ctx, &categoryUpdate); err != nil {
 			utils.ResponseMessage(c, "Failed to update attendance category", http.StatusInternalServerError, nil)
 			return
 		}
@@ -122,8 +127,9 @@ func (h *AttendanceCategoryHandler) UpdateAttendanceCategory() gin.HandlerFunc {
 func (h *AttendanceCategoryHandler) DeleteAttendanceCategory() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
+		ctx := c.Request.Context()
 
-		if err := h.biz.DeleteAttendanceCategory(c, id); err != nil {
+		if err := h.biz.DeleteAttendanceCategory(ctx, id); err != nil {
 			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
 			return
 		}

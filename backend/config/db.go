@@ -143,7 +143,31 @@ func createEnums(db *gorm.DB) error {
 			 '0.5',
 			 '0'
 		  );
-	   END IF;
+		END IF;
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'repeat_type_enum') THEN
+			CREATE TYPE repeat_type_enum AS ENUM (
+				'weekly',
+				'monthly'
+			);
+    	END IF;
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'status_work_schedule_enum') THEN
+			CREATE TYPE status_work_schedule_enum AS ENUM (
+				'expired',
+				'inactive',
+				'active'
+			);
+		END IF;
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'weekday_enum') THEN
+			CREATE TYPE weekday_enum AS ENUM (
+				'sunday',
+				'monday',
+				'tuesday',
+				'wednesday',
+				'thursday',
+				'friday',
+				'saturday'
+			);
+		END IF;
 	END
 	$$;
 	`
@@ -156,6 +180,8 @@ func GetDB() *gorm.DB {
 
 func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
+	//model.EmployeeWorkshift{},
+	//&officemodel.Office{},
 	//model.EmployeeWorkshift{},
 	//&model.WorkshiftRule{},
 	//&hrmmodel.Position{},
@@ -180,6 +206,10 @@ func AutoMigrate(db *gorm.DB) error {
 	//&model.ContractAllowance{},
 	//&model.AttendanceCategory{},
 	//&model.AttendanceRecord{},
+	//&model.WorkSchedule{},
+	//&model.WorkScheduleEmployee{},
+	//&model.WorkScheduleShift{},
+	//&model.WorkScheduleManager{},
 	)
 	fmt.Println("Migration complete")
 

@@ -25,6 +25,7 @@ func NewAttendanceRecordHandler(biz service_interface.AttendanceRecordService) *
 
 func (h *AttendanceRecordHandler) CreateAttendanceRecord() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx := c.Request.Context()
 		req, err := bindAndValidateAttendanceRequest(c)
 		if err != nil {
 			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
@@ -46,7 +47,7 @@ func (h *AttendanceRecordHandler) CreateAttendanceRecord() gin.HandlerFunc {
 		}
 
 		//check exist category
-		category, err := h.biz.CheckCatrgoryExists(c, &record)
+		category, err := h.biz.CheckCatrgoryExists(ctx, &record)
 		if err != nil {
 			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
 			return
@@ -70,7 +71,7 @@ func (h *AttendanceRecordHandler) CreateAttendanceRecord() gin.HandlerFunc {
 			}
 		}
 
-		if err := h.biz.CreateAttendanceRecord(c, &record); err != nil {
+		if err := h.biz.CreateAttendanceRecord(ctx, &record); err != nil {
 			utils.ResponseMessage(c, "Failed to create attendance record: "+err.Error(), http.StatusInternalServerError, nil)
 			return
 		}
@@ -115,8 +116,9 @@ func extractEmployeeIDFromContext(c *gin.Context) (string, error) {
 
 func (h *AttendanceRecordHandler) GetAttendanceRecordByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx := c.Request.Context()
 		id := c.Param("id")
-		record, err := h.biz.GetAttendanceRecordByID(c, id)
+		record, err := h.biz.GetAttendanceRecordByID(ctx, id)
 		if err != nil {
 			utils.ResponseMessage(c, "Attendance record not found", http.StatusNotFound, nil)
 			return
@@ -132,7 +134,8 @@ func (h *AttendanceRecordHandler) GetAttendanceRecordByID() gin.HandlerFunc {
 func (h *AttendanceRecordHandler) DeleteAttendanceRecord() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		if err := h.biz.DeleteAttendanceRecord(c, id); err != nil {
+		ctx := c.Request.Context()
+		if err := h.biz.DeleteAttendanceRecord(ctx, id); err != nil {
 			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
 			return
 		}
@@ -143,8 +146,9 @@ func (h *AttendanceRecordHandler) DeleteAttendanceRecord() gin.HandlerFunc {
 func (h *AttendanceRecordHandler) GetRecordsByEmployee() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		employeeID := c.Param("employeeId")
+		ctx := c.Request.Context()
 
-		records, err := h.biz.ListAttendanceRecordsByEmployee(c, employeeID)
+		records, err := h.biz.ListAttendanceRecordsByEmployee(ctx, employeeID)
 		if err != nil {
 			utils.ResponseMessage(c, "Failed to get records: "+err.Error(), http.StatusInternalServerError, nil)
 			return
@@ -160,8 +164,9 @@ func (h *AttendanceRecordHandler) GetRecordsByDateRange() gin.HandlerFunc {
 		employeeID := c.Param("employeeId")
 		from := c.Query("from")
 		to := c.Query("to")
+		ctx := c.Request.Context()
 
-		records, err := h.biz.ListAttendanceRecordsByDateRange(c, employeeID, from, to)
+		records, err := h.biz.ListAttendanceRecordsByDateRange(ctx, employeeID, from, to)
 		if err != nil {
 			utils.ResponseMessage(c, "Failed to get records by date range: "+err.Error(), http.StatusBadRequest, nil)
 			return
@@ -174,8 +179,9 @@ func (h *AttendanceRecordHandler) GetRecordsByDateRange() gin.HandlerFunc {
 
 func (h *AttendanceRecordHandler) GetTotalReqOfOneEmployee() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx := c.Request.Context()
 		employeeID := c.Param("employeeId")
-		total, err := h.biz.GetTotalReqOfEmployee(c, employeeID)
+		total, err := h.biz.GetTotalReqOfEmployee(ctx, employeeID)
 		if err != nil {
 			utils.ResponseMessage(c, "Failed: "+err.Error(), http.StatusInternalServerError, nil)
 			return
@@ -206,6 +212,7 @@ func addPresignedURLs(c *gin.Context, records []model.AttendanceRecord) {
 
 func (h *AttendanceRecordHandler) UpdateStatusRecord() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx := c.Request.Context()
 		id := c.Param("id")
 		var updateReq model.AttendanceRecordUpdate
 		err := c.ShouldBindJSON(&updateReq)
@@ -214,7 +221,7 @@ func (h *AttendanceRecordHandler) UpdateStatusRecord() gin.HandlerFunc {
 			return
 		}
 
-		err = h.biz.UpdateAttendanceRecord(c, &updateReq, id)
+		err = h.biz.UpdateAttendanceRecord(ctx, &updateReq, id)
 		if err != nil {
 			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
 			return

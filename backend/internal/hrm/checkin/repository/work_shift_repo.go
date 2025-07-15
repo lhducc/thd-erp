@@ -2,6 +2,7 @@ package repository
 
 import (
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"errors"
 	"fmt"
 	"log"
@@ -13,7 +14,7 @@ type WorkShiftStore struct {
 	db *gorm.DB
 }
 
-func NewWorkShiftStore(db *gorm.DB) *WorkShiftStore {
+func NewWorkShiftStore(db *gorm.DB) repo_interface.WorkShiftRepo {
 	return &WorkShiftStore{db: db}
 }
 

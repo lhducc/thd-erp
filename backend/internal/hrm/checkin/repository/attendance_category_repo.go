@@ -19,8 +19,8 @@ func NewAttendanceCategoryRepository(db *gorm.DB) repo_interface.AttendanceCateg
 }
 
 func (r *attendanceCategoryRepository) Create(ctx context.Context, ac *model.AttendanceCategory) error {
-	return utils.WithTransaction(r.db, ctx, func(ctx context.Context) error {
-		if err := r.db.WithContext(ctx).Create(ac).Error; err != nil {
+	return utils.WithTransaction(r.db, ctx, func(ctx context.Context, tx *gorm.DB) error {
+		if err := tx.WithContext(ctx).Create(ac).Error; err != nil {
 			return fmt.Errorf("failed to create attendance category: %w", err)
 		}
 		return nil
@@ -28,8 +28,8 @@ func (r *attendanceCategoryRepository) Create(ctx context.Context, ac *model.Att
 }
 
 func (r *attendanceCategoryRepository) Update(ctx context.Context, ac *model.AttendanceCategory) error {
-	return utils.WithTransaction(r.db, ctx, func(ctx context.Context) error {
-		result := r.db.WithContext(ctx).
+	return utils.WithTransaction(r.db, ctx, func(ctx context.Context, tx *gorm.DB) error {
+		result := tx.WithContext(ctx).
 			Model(&model.AttendanceCategory{}).
 			Where("attendance_category_id = ?", ac.AttendanceCategoryID).
 			Updates(ac)
@@ -47,8 +47,8 @@ func (r *attendanceCategoryRepository) Update(ctx context.Context, ac *model.Att
 }
 
 func (r *attendanceCategoryRepository) Delete(ctx context.Context, id string) error {
-	return utils.WithTransaction(r.db, ctx, func(ctx context.Context) error {
-		result := r.db.WithContext(ctx).
+	return utils.WithTransaction(r.db, ctx, func(ctx context.Context, tx *gorm.DB) error {
+		result := tx.WithContext(ctx).
 			Model(&model.AttendanceCategory{}).
 			Where("attendance_category_id = ?", id).
 			Update("is_deleted", true)

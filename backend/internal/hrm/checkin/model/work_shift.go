@@ -25,8 +25,8 @@ const (
 )
 
 type WorkShifts struct {
-	WorkShiftID   string        `gorm:"column:workshift_id;type:varchar(5);primaryKey;" json:"workshift_id"`
-	WorkShiftName string        `gorm:"column:workshift_name;type:varchar(255);not null" json:"workshift_name" validate:"required,max=255"`
+	WorkShiftID   string        `gorm:"column:workshift_id;type:varchar(250);primaryKey;" json:"workshift_id"`
+	WorkShiftName string        `gorm:"column:workshift_name;type:varchar(255);unique;not null" json:"workshift_name" validate:"required,max=255"`
 	StartTime     string        `gorm:"column:start_time;type:time;not null" json:"start_time" validate:"required"`
 	EndTime       string        `gorm:"column:end_time;type:time;not null" json:"end_time" validate:"required"`
 	CheckinFrom   *string       `gorm:"column:checkin_from;type:time" json:"checkin_from"`

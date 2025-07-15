@@ -35,7 +35,7 @@ type Employee struct {
 	PositionID   string            `gorm:"column:position_id" json:"position_id"`
 	JobTitleID   string            `gorm:"column:job_title_id" json:"job_title_id"`
 	Status       string            `gorm:"column:status" json:"status" validate:"required,oneof=active inactive"`
-	ManagerID    string            `gorm:"column:manager" json:"manager_id"`
+	ManagerID    string            `gorm:"column:manager;foreignKey:EmployeeID;references:employee_id" json:"manager_id"`
 	DepartmentID string            `gorm:"column:department_id" json:"department_id"`
 	CreatedDate  time.Time         `gorm:"column:created_date;autoCreateTime" json:"created_date"`
 	Account      *Account          `gorm:"foreignKey:AccountID;references:id" json:"-"`

@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { SquarePen, Shield, Filter } from "lucide-react";
+import { SquarePen, Shield } from "lucide-react";
 import { useState, useRef } from "react";
 import {
   getAllShiftsApi,
@@ -16,8 +16,8 @@ import DataTable from "@/components/DataTable";
 import Loading from "@/components/Loading";
 import CreateShiftForm from "@/components/CreateShiftForm";
 import UpdateShiftForm from "@/components/UpdateShiftForm";
-import type { Shift } from "@/types";
 import type { ColumnDef } from "@tanstack/react-table";
+import type {Shift} from "@/types/shift.ts";
 
 const ShiftScheduleManagement = () => {
   const [openCreate, setOpenCreate] = useState(false);

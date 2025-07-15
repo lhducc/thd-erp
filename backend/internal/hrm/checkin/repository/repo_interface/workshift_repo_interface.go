@@ -10,4 +10,5 @@ type WorkShiftRepo interface {
 	DeleteWorkShift(id string) error
 	GetLastWorkShiftByCode(emp *model.WorkShifts, predix string) error
 	IsExactTimeRangeExists(timeOfDay model.TimeOfDayEnum, start, end string) (*model.WorkShifts, error)
+	FindByID(id string) (model.WorkShifts, error)
 }

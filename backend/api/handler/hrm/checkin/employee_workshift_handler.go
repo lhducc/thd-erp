@@ -47,19 +47,11 @@ func (h *EmployeeWorkshiftHandler) Register() gin.HandlerFunc {
 	}
 }
 
-func (h *EmployeeWorkshiftHandler) Delete(c *gin.Context) gin.HandlerFunc {
+func (h *EmployeeWorkshiftHandler) Delete() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req model.EmployeeWorkshift
+		id := c.Param("id")
 
-		// Parse incoming JSON body
-		if err := c.ShouldBindJSON(&req); err != nil {
-			utils.ResponseMessage(c, "Invalid input data", http.StatusBadRequest, nil)
-			fmt.Printf("error: %s", err.Error())
-			return
-		}
-
-		// Create the workshift
-		if err := h.biz.Register(req.EmployeeID, req.WorkShiftID, req.Date); err != nil {
+		if err := h.biz.Delete(id); err != nil {
 			utils.ResponseMessage(c, "Failed to register workshift: "+err.Error(), http.StatusBadRequest, nil)
 			return
 		}
@@ -94,10 +86,21 @@ func (h *EmployeeWorkshiftHandler) GetAll() gin.HandlerFunc {
 
 func (h *EmployeeWorkshiftHandler) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Get ID from URL parameter
 		id := c.Param("id")
-		var req model.EmployeeWorkshift
-		err := h.biz.Update(id, req.EmployeeID)
-		if err != nil {
+
+		// Bind request body
+		var req struct {
+			WorkShiftID string `json:"work_shift_id"`
+		}
+
+		if err := c.ShouldBindJSON(&req); err != nil {
+			utils.ResponseMessage(c, "Invalid input data", http.StatusBadRequest, nil)
+			return
+		}
+
+		// Call service
+		if err := h.biz.Update(id, req.WorkShiftID); err != nil {
 			utils.ResponseMessage(c, "Failed to update workshift: "+err.Error(), http.StatusBadRequest, nil)
 			return
 		}

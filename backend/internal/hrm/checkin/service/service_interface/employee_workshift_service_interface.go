@@ -9,6 +9,6 @@ type EmployeeWorkshiftService interface {
 	GetByUserId(userId string) ([]model.EmployeeWorkshift, error)
 	Register(employeeID string, workshiftID string, date time.Time) error
 	GetAll() ([]model.EmployeeWorkshift, error)
-	Delete(id uint) error
+	Delete(id string) error
 	Update(employee_workshift_id string, new_workshift_id string) error
 }

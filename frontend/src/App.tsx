@@ -27,6 +27,9 @@ import WorkshiftPage from "@/pages/HR/checkin/WorkshiftPage.tsx";
 import AttendanceManagementPage from "@/pages/HR/checkin/AttendanceManagementPage.tsx";
 import ApproveAttendancePage from "@/pages/HR/checkin/ApproveAttendancePage.tsx";
 import RegisterWorkshift from "@/pages/Client/RegisterWorkshift.tsx";
+import SetupWorkshift from "@/pages/HR/checkin/SetupWorkshift.tsx";
+import WorkshiftSchedule from "@/pages/HR/checkin/wokshift-schedule/WorkshiftSchedule.tsx";
+import SettingWorkshiftSchedule from "@/pages/HR/checkin/wokshift-schedule/SettingWorkshiftSchedule.tsx";
 
 
 const App = () => {
@@ -46,6 +49,14 @@ const App = () => {
         {
             path: PATH.SETTING_JOB_TITLE,
             element: <JobTitlePage/>,
+        },
+        {
+            path: "/schedule",
+            element: <WorkshiftSchedule />
+        },
+        {
+            path: "/schedule-setting",
+            element: <SettingWorkshiftSchedule />
         },
         {
             path: PATH.SETTING_HIERARCHY_LEVEL,
@@ -146,6 +157,10 @@ const App = () => {
                 {
                     path: PATH.DETAIL_DECISION.slice(1),
                     element: <DecisionDetail/>,
+                },
+                {
+                    path: PATH.SETUP_WORKSHIFT.slice(1),
+                    element: <SetupWorkshift />,
                 },
                 {
                     path: PATH.CHECKIN,

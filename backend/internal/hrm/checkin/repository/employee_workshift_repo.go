@@ -28,11 +28,11 @@ func (r *employeeWorkShiftRepo) GetAll() ([]model.EmployeeWorkshift, error) {
 }
 
 func (r *employeeWorkShiftRepo) Save(assign *model.EmployeeWorkshift) error {
-	result := r.db.Create(assign)
+	result := r.db.Save(assign)
 	return result.Error
 }
 
-func (r *employeeWorkShiftRepo) Delete(id uint) error {
+func (r *employeeWorkShiftRepo) Delete(id string) error {
 	result := r.db.Delete(&model.EmployeeWorkshift{}, id)
 	return result.Error
 }

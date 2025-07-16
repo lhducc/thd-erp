@@ -10,18 +10,18 @@ import (
 )
 
 type WorkSchedule struct {
-	WorkScheduleID   int                         `gorm:"column:work_schedule_id;primary_key;auto_increment;" json:"work_schedule_id"`
+	WorkScheduleID   int                         `gorm:"column:work_schedule_id;primaryKey;autoIncrement" json:"work_schedule_id"`
 	WorkScheduleName string                      `gorm:"column:work_schedule_name;type:varchar;index" json:"work_schedule_name"`
 	OfficeID         string                      `gorm:"column:office_id;type:varchar" json:"office_id"`
 	RepeatType       variable.RepeatTypeEnum     `gorm:"column:repeat_type;type:repeat_type_enum" json:"repeat_type"`
-	RepeatCycle      string                      `gorm:"column:repeat_cycle;type:varchar" json:"repeat_cycle"`
+	RepeatCycle      int                         `gorm:"column:repeat_cycle;type:integer" json:"repeat_cycle"`
 	EffectiveDate    time.Time                   `gorm:"column:effective_date;type:timestamp" json:"effective_date"`
 	ExpirationDate   time.Time                   `gorm:"column:expiration_date;type:timestamp" json:"expiration_date"`
 	Status           variable.StatusWorkSchedule `gorm:"column:status;type:status_work_schedule_enum" json:"status"`
 	CreatedAt        time.Time                   `gorm:"column:created_at;default:CURRENT_TIMESTAMP" json:"created_at"`
 	IsDeleted        bool                        `gorm:"column:is_deleted;default:false" json:"is_deleted"`
 
-	Managers  []WorkScheduleManager  `gorm:"foreignKey:WorkScheduleID;references:WorkScheduleID" json:"managers,omitempty"`
+	Managers  []WorkScheduleManager  `gorm:"foreignKey:WorkScheduleID;references:WorkScheduleID" json:"managers"`
 	Employees []WorkScheduleEmployee `gorm:"foreignKey:WorkScheduleID;references:WorkScheduleID" json:"employees,omitempty"`
 	Weekdays  []WorkScheduleShift    `gorm:"foreignKey:WorkScheduleID;references:WorkScheduleID" json:"weekdays,omitempty"`
 
@@ -32,7 +32,7 @@ type WorkScheduleRequest struct {
 	WorkScheduleName string                      ` json:"work_schedule_name"`
 	OfficeID         string                      `json:"office_id"`
 	RepeatType       variable.RepeatTypeEnum     `json:"repeat_type"`
-	RepeatCycle      string                      `json:"repeat_cycle"`
+	RepeatCycle      int                         `json:"repeat_cycle"`
 	EffectiveDate    time.Time                   `json:"effective_date"`
 	ExpirationDate   time.Time                   `json:"expiration_date"`
 	Status           variable.StatusWorkSchedule `json:"status"`
@@ -49,8 +49,6 @@ type WorkScheduleManager struct {
 	EmployeeID     string     `gorm:"column:employee_id;primaryKey;type:varchar" json:"employee_id"`
 	WorkScheduleID int        `gorm:"column:work_schedule_id;type:integer" json:"work_schedule_id"`
 	AssignedAt     *time.Time `gorm:"column:assigned_at;default:CURRENT_TIMESTAMP" json:"assigned_at"`
-
-	//WorkSchedule WorkSchedule `gorm:"foreignKey:WorkScheduleID;references:WorkScheduleID" json:"work_schedule,omitempty"`
 }
 type AssignEmployeeRequest struct {
 	EmployeeIDs []string `json:"employee_ids"`

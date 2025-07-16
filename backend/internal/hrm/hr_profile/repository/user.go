@@ -63,6 +63,8 @@ func (s *UserStore) GetAllEmployeesByStatus(status string, page, pageSize int) (
 		Preload("Manager").
 		Preload("JobTitle").
 		Preload("Position").
+		Preload("Department").
+		Preload("Department.Office").
 		Find(&employees)
 
 	if result.Error != nil {
@@ -78,6 +80,8 @@ func (s *UserStore) GetUserById(id string) (model.Employee, error) {
 		Preload("Manager").
 		Preload("JobTitle").
 		Preload("Position").
+		Preload("Department").
+		Preload("Department.Office").
 		First(&employee).Error; err != nil {
 		return model.Employee{}, fmt.Errorf("employee not found with id %s", id)
 	}
@@ -92,6 +96,8 @@ func (s *UserStore) GetAllEmployees() ([]model.Employee, error) {
 		Preload("Manager").
 		Preload("JobTitle").
 		Preload("Position").
+		Preload("Department").
+		Preload("Department.Office").
 		Find(&employees).Error; err != nil {
 		return nil, fmt.Errorf("failed to get employees: %w", err)
 	}
@@ -104,24 +110,16 @@ func (s *UserStore) GetAllEmployeesPagination(page, pageSize int, filters map[st
 
 	db := s.db.Model(&model.Employee{})
 
-	joinedDepartment := false
-
 	for key, value := range filters {
 		switch key {
 		case "office_id":
 			if arr, ok := value.([]string); ok && len(arr) > 0 {
 				db = db.Joins("JOIN department d ON employee.department_id = d.department_id").
 					Where("d.office_id IN (?)", arr)
-				joinedDepartment = true
 			}
 		case "department_id":
 			if arr, ok := value.([]string); ok && len(arr) > 0 {
-				// Luôn chỉ rõ bảng/alias để tránh ambiguous!
-				if joinedDepartment {
-					db = db.Where("employee.department_id IN (?)", arr)
-				} else {
-					db = db.Where("employee.department_id IN (?)", arr)
-				}
+				db = db.Where("employee.department_id IN (?)", arr)
 			}
 		default:
 			if arr, ok := value.([]string); ok && len(arr) > 0 {
@@ -145,6 +143,8 @@ func (s *UserStore) GetAllEmployeesPagination(page, pageSize int, filters map[st
 		Preload("Manager").
 		Preload("JobTitle").
 		Preload("Position").
+		Preload("Department").
+		Preload("Department.Office").
 		Find(&employees).Error; err != nil {
 		return nil, 0, fmt.Errorf("failed to get employees: %w", err)
 	}

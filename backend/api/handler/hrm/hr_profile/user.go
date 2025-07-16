@@ -73,9 +73,8 @@ func (h *EmployeeHandler) GetAllEmployees() gin.HandlerFunc {
 		}
 
 		// filter
-		filterFields := []string{"job_title_id", "department_id", "position_id", "office_id"}
-		filters := make(map[string]interface{})
-		utils.ExtractFilterArrays(ctx, filterFields)
+		filterFields := []string{"job_title_id", "department_id", "position_id", "office_id", "work_type"}
+		filters := utils.ExtractFilterArrays(ctx, filterFields)
 
 		// get data
 		employees, totalRecords, err := h.employeeBiz.GetAllEmployees(page, pageSize, filters)
@@ -84,14 +83,10 @@ func (h *EmployeeHandler) GetAllEmployees() gin.HandlerFunc {
 			return
 		}
 
-		//Add department information
-		newEmployees := h.getAllDepartmentByListEmployee(ctx, employees)
-
-		// caculator the total of page number
 		totalPages := (totalRecords + int64(pageSize) - 1) / int64(pageSize)
 
 		response := gin.H{
-			"data":         &newEmployees,
+			"data":         &employees,
 			"totalRecords": totalRecords,
 			"page":         page,
 			"pageSize":     pageSize,
@@ -100,23 +95,6 @@ func (h *EmployeeHandler) GetAllEmployees() gin.HandlerFunc {
 
 		utils.ResponseMessage(ctx, "Danh sách dữ liệu", http.StatusOK, response)
 	}
-}
-
-// get department by list employeeAdd commentMore actions
-func (h *EmployeeHandler) getAllDepartmentByListEmployee(ctx *gin.Context, employees []model.Employee) *[]model.Employee {
-	for i, emp := range employees {
-		deparmentID := emp.DepartmentID
-		if deparmentID == "" {
-			continue
-		}
-		dept, err := h.departmentBiz.GetDepartment(ctx.Request.Context(), emp.DepartmentID)
-		if err != nil {
-			utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi khi lấy department: %s", err.Error()), http.StatusNotFound, nil)
-			return nil
-		}
-		employees[i].Department = dept
-	}
-	return &employees
 }
 
 func (biz *EmployeeHandler) GetAllEmployeeByStatus() gin.HandlerFunc {
@@ -138,20 +116,6 @@ func (biz *EmployeeHandler) GetAllEmployeeByStatus() gin.HandlerFunc {
 			return
 		}
 
-		//Add department information
-		for i, emp := range employees {
-			if emp.DepartmentID == "" {
-				// Bỏ qua, không cần load department
-				continue
-			}
-			dept, err := biz.departmentBiz.GetDepartment(ctx.Request.Context(), emp.DepartmentID)
-			if err != nil {
-				utils.ResponseMessage(ctx, fmt.Sprintf("Lỗi khi lấy department: %s", err.Error()), http.StatusNotFound, nil)
-				return
-			}
-			employees[i].Department = dept
-		}
-
 		utils.ResponseMessage(ctx, "Danh sách dữ liệu", http.StatusOK, employees)
 	}
 }
@@ -164,16 +128,6 @@ func (biz *EmployeeHandler) GetUserById() gin.HandlerFunc {
 		if err != nil {
 			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusNotFound, nil)
 			return
-		}
-
-		if result.DepartmentID != "" {
-			var Department *model.Department
-			Department, err = biz.departmentBiz.GetDepartment(c.Request.Context(), result.DepartmentID)
-			if err != nil {
-				utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusNotFound, nil)
-				return
-			}
-			result.Department = Department
 		}
 
 		utils.ResponseMessage(c, "Danh sách dữ liệu", http.StatusOK, result)

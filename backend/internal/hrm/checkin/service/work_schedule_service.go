@@ -75,7 +75,7 @@ func (s *WorkScheduleService) AssignEmployeeToWorkSchedule(c context.Context, re
 			return err
 		}
 		if exist {
-			return errors.New("Mã nhân viên đã tồn tại")
+			return fmt.Errorf("Mã nhân viên `%s` đã tồn tại", empIDCheck)
 		}
 	}
 	for _, empID := range req.EmployeeIDs {
@@ -93,7 +93,15 @@ func (s *WorkScheduleService) AssignEmployeeToWorkSchedule(c context.Context, re
 		})
 	}
 
-	err := s.repo.AssignEmployeesToWorkSchedule(c, employeeRecords, managerRecords)
+	exists, err := s.repo.IsExistsByID(c, id)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errors.New("Lịch làm việc không tồn tại")
+	}
+
+	err = s.repo.AssignEmployeesToWorkSchedule(c, employeeRecords, managerRecords)
 	if err != nil {
 		return err
 	}

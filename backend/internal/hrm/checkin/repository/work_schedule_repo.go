@@ -213,6 +213,7 @@ func (r *workScheduleRepoImpl) GetAll(ctx context.Context) ([]model.WorkSchedule
 	if err := r.db.WithContext(ctx).
 		Where("is_deleted = false").
 		Preload("Office").
+		Preload("Managers").
 		Find(&schedules).Error; err != nil {
 		return nil, err
 	}

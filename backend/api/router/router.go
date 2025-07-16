@@ -98,6 +98,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	categoryRepo := checkinRepo.NewAttendanceCategoryRepository(db)
 	employeeWorkShiftRepo := checkinRepo.NewEmployeeWorkShiftRepo(db)
 	workScheduleRepo := checkinRepo.NewWorkScheduleRepo(db)
+	workShiftRuleRepo := checkinRepo.NewWorkshiftRuleRepository(db)
 
 	//checkin service
 	attendanceRecordService := checkinService.NewAttendanceRecordService(attendanceRecordRepo, categoryRepo, officeRepo)
@@ -105,6 +106,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	workShiftService := checkinService.NewWorkShiftService(workShiftRepo)
 	employeeWorkShiftService := checkinService.NewEmployeeWorkshiftService(employeeWorkShiftRepo, userRepo, workShiftRepo)
 	workScheduleService := checkinService.NewWorkScheduleService(workScheduleRepo)
+	workShiftRuleService := checkinService.NewWorkShiftRuleService(workShiftRuleRepo, userRepo, workShiftRepo, departmentRepo, jobTitleRepo, positionRepo, officeRepo)
 
 	//CheckIn handler
 	workShiftHandler := checkin.NewWorkShiftHandler(workShiftService)
@@ -112,6 +114,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	attendanceCategoryHandler := checkin.NewAttendanceCategoryHandler(attendanceCategoryService)
 	employeeWorkShiftHandler := checkin.NewEmployeeWorkshift(employeeWorkShiftService)
 	workScheduleHandler := checkin.NewWorkScheduleHandler(workScheduleService)
+	workShiftRuleHandler := checkin.NewWorkshiftRuleHandler(workShiftRuleService)
 
 	//setup routes
 	public := router.Group("/auth")
@@ -142,6 +145,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupAttendanceCategory(hrmRouter, attendanceCategoryHandler)
 	setupEmployeeWorkshiftRoutes(hrmRouter, employeeWorkShiftHandler)
 	setupWorkSchedule(hrmRouter, workScheduleHandler)
+	setupWorkShiftRule(hrmRouter, workShiftRuleHandler)
 
 }
 
@@ -355,5 +359,15 @@ func setupWorkSchedule(router *gin.RouterGroup, workScheduleHandler *checkin.Wor
 		workSchedule.GET("/:id", workScheduleHandler.FetchWorkScheduleByID())
 		workSchedule.GET("/export", workScheduleHandler.ExportWorkSchedule())
 	}
+}
 
+func setupWorkShiftRule(router *gin.RouterGroup, workShiftRuleHandler *checkin.WorkshiftRuleHandler) {
+	workShiftRule := router.Group("/workshift-rules")
+	{
+		workShiftRule.POST("", workShiftRuleHandler.Create)
+		workShiftRule.PUT("/:id", workShiftRuleHandler.Update)
+		workShiftRule.DELETE("/:id", workShiftRuleHandler.Delete)
+		workShiftRule.GET("", workShiftRuleHandler.GetAll)
+		workShiftRule.GET("/:id", workShiftRuleHandler.GetByUserID)
+	}
 }

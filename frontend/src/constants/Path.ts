@@ -26,7 +26,7 @@ const PATH = {
   ATTENDANCE_MANAGEMENT: "/attendance-management",
   SETUP_WORKSHIFT: "/setup-workshift",
   APPROVE_ATTENDANCE: "/approve-attendant",
-
+  WORK_SCHEDULE: "/setup-work-schedule",
   // HR Setting
   SETTING: SETTING_BASE,
   SETTING_OFFICE: `${SETTING_BASE}/office`,

@@ -55,6 +55,11 @@ const HRSidebar = ({...props}: ComponentProps<typeof Sidebar>) => {
                     url: PATH.WORKSHIFT,
                 },
                 {
+                    name: "Lịch làm việc",
+                    icon: null,
+                    url: PATH.WORK_SCHEDULE,
+                },
+                {
                     name: "Thiết lập chấm công",
                     icon: null,
                     url: PATH.ATTENDANCE_MANAGEMENT,

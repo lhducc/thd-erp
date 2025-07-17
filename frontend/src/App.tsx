@@ -30,6 +30,8 @@ import RegisterWorkshift from "@/pages/Client/RegisterWorkshift.tsx";
 import SetupWorkshift from "@/pages/HR/checkin/SetupWorkshift.tsx";
 import WorkshiftSchedule from "@/pages/HR/checkin/wokshift-schedule/WorkshiftSchedule.tsx";
 import SettingWorkshiftSchedule from "@/pages/HR/checkin/wokshift-schedule/SettingWorkshiftSchedule.tsx";
+import SetupWorkScheduleIndex from "@/pages/HR/checkin/auto-work-calendar/SetupWorkScheduleIndex.tsx";
+import SetupWorkScheduleInfor from "@/pages/HR/checkin/auto-work-calendar/SetupWorkScheduleInfor.tsx";
 
 
 const App = () => {
@@ -130,6 +132,18 @@ const App = () => {
                 {
                     path: PATH.DETAIL_INFO.slice(1),
                     element: <DetailEmployeePage/>,
+                },
+                {
+                    path: PATH.WORK_SCHEDULE,
+                    element: <SetupWorkScheduleIndex />,
+                },
+                {
+                    path: `${PATH.WORK_SCHEDULE}/:id`,
+                    element: <SetupWorkScheduleInfor />,
+                },
+                {
+                    path: `${PATH.WORK_SCHEDULE}/:id/setting`,
+                    element: <SettingWorkshiftSchedule />,
                 },
                 {
                     path: PATH.APPROVE_ATTENDANCE.slice(1),

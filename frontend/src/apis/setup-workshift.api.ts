@@ -14,6 +14,7 @@ export const getAllSetupWorkshiftAPI = async () => {
 export const getAllSetupWorkshiftCalendar = async () : Promise<WorkSchedule[]> => {
     try {
         const response = await api.get("/work-schedule");
+        console.log(response.data.data)
         return response.data.data;
     } catch (error) {
         console.error("Error getting contract calendar:", error.message);

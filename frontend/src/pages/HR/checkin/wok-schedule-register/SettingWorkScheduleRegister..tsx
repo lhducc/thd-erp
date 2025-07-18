@@ -34,7 +34,7 @@ const formSchema = z.object({
     employee_ids: z.array(z.string()).min(1, "Chọn ít nhất 1 nhân viên"),
 });
 
-const SettingWorkshiftSchedule = () => {
+const SettingWorkScheduleRegister = () => {
     const {id} = useParams<{ id: string }>();
     const workScheduleId = id ? parseInt(id) : 0;
     const {data: employees, isLoading: pendingGetEmployees, refetch: refetchEmployee} = useQuery({
@@ -470,4 +470,4 @@ const SettingWorkshiftSchedule = () => {
     );
 };
 
-export default SettingWorkshiftSchedule;
+export default SettingWorkScheduleRegister;

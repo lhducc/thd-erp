@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { getAllOfficesApi } from "@/apis/office.api";
 import { getAllWorkshiftApi } from "@/apis/workshift.api";
 import WeekScheduleSelector from "@/components/WeekScheduleSelector";
@@ -12,6 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Building2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { registerWorkScheduleRegisterApi } from "@/apis/work-schedule.api";
+import type {WeekdaySelection} from "@/types/work-schedule.ts";
 
 const formSchema = z.object({
     name: z.string().min(1, "Tên lịch không được để trống"),
@@ -20,7 +24,8 @@ const formSchema = z.object({
     end_date: z.string().min(1, "Ngày kết thúc không được để trống"),
 });
 
-const WorkshiftSchedule = () => {
+const WorkScheduleRegister = () => {
+    const [weekdays, setWeekdays] = useState<WeekdaySelection[]>([]);
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -41,10 +46,42 @@ const WorkshiftSchedule = () => {
         queryFn: getAllWorkshiftApi,
     });
 
+    const registerMutation = useMutation({
+        mutationFn: registerWorkScheduleRegisterApi,
+        onSuccess: () => {
+            toast.success("Đăng ký lịch làm việc thành công");
+            form.reset();
+            setWeekdays([]);
+        },
+        onError: (error) => {
+            toast.error("Đăng ký lịch làm việc thất bại");
+            console.error("Error registering work schedule:", error);
+        },
+    });
+
     const onSubmit = (values: z.infer<typeof formSchema>) => {
-        console.log("Form submitted", values);
-        // Add your form submission logic here
-    }
+        if (weekdays.length === 0) {
+            toast.error("Vui lòng chọn ít nhất một ca làm việc");
+            return;
+        }
+
+        const payload = {
+            work_schedule_register_name: values.name,
+            office_id: values.office,
+            effective_date: new Date(values.start_date).toISOString(),
+            expiration_date: new Date(values.end_date).toISOString(),
+            weekdays: weekdays.map(day => ({
+                week_day: day.week_day,
+                workshift_id: day.workshift_id
+            })),
+        };
+
+        registerMutation.mutate(payload);
+    };
+
+    const handleWeekdaySelectionChange = (selections: WeekdaySelection[]) => {
+        setWeekdays(selections);
+    };
 
     return (
         <div className="container mx-auto py-6">
@@ -169,7 +206,6 @@ const WorkshiftSchedule = () => {
                             <div className="space-y-2">
                                 <Card className="border-0 shadow-none">
                                     <CardHeader className="pb-4">
-                                        {/*<h3 className="font-semibold text-lg">Thiết lập lịch làm việc</h3>*/}
                                         <CardDescription>
                                             Chọn ngày và ca làm việc sẽ áp dụng
                                         </CardDescription>
@@ -180,7 +216,10 @@ const WorkshiftSchedule = () => {
                                                 <Skeleton className="h-[300px] w-full rounded-lg" />
                                             </div>
                                         ) : (
-                                            <WeekScheduleSelector workshifts={workshifts} />
+                                            <WeekScheduleSelector
+                                                workshifts={workshifts || []}
+                                                onSelectionChange={handleWeekdaySelectionChange}
+                                            />
                                         )}
                                     </CardContent>
                                 </Card>
@@ -188,11 +227,21 @@ const WorkshiftSchedule = () => {
                         </CardContent>
 
                         <div className="flex justify-end gap-3 pt-6">
-                            <Button variant="outline" type="button">
+                            <Button
+                                variant="outline"
+                                type="button"
+                                onClick={() => {
+                                    form.reset();
+                                    setWeekdays([]);
+                                }}
+                            >
                                 Hủy bỏ
                             </Button>
-                            <Button type="submit">
-                                Tạo lịch làm việc
+                            <Button
+                                type="submit"
+                                disabled={registerMutation.isPending}
+                            >
+                                {registerMutation.isPending ? "Đang xử lý..." : "Tạo lịch làm việc"}
                             </Button>
                         </div>
                     </form>
@@ -202,4 +251,4 @@ const WorkshiftSchedule = () => {
     );
 };
 
-export default WorkshiftSchedule;
+export default WorkScheduleRegister;

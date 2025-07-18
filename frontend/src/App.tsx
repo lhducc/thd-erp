@@ -28,10 +28,11 @@ import AttendanceManagementPage from "@/pages/HR/checkin/AttendanceManagementPag
 import ApproveAttendancePage from "@/pages/HR/checkin/ApproveAttendancePage.tsx";
 import RegisterWorkshift from "@/pages/Client/RegisterWorkshift.tsx";
 import SetupWorkshift from "@/pages/HR/checkin/SetupWorkshift.tsx";
-import WorkshiftSchedule from "@/pages/HR/checkin/wokshift-schedule/WorkshiftSchedule.tsx";
-import SettingWorkshiftSchedule from "@/pages/HR/checkin/wokshift-schedule/SettingWorkshiftSchedule.tsx";
-import SetupWorkScheduleIndex from "@/pages/HR/checkin/auto-work-calendar/SetupWorkScheduleIndex.tsx";
-import SetupWorkScheduleInfor from "@/pages/HR/checkin/auto-work-calendar/SetupWorkScheduleInfor.tsx";
+import WorkScheduleRegister from "@/pages/HR/checkin/wok-schedule-register/WorkScheduleRegister.tsx";
+import SettingWorkScheduleRegister from "@/pages/HR/checkin/wok-schedule-register/SettingWorkScheduleRegister..tsx";
+import WorkScheduleAuto from "@/pages/HR/checkin/work-schedule-auto/WorkScheduleAuto.tsx";
+import SetupWorkScheduleAuto from "@/pages/HR/checkin/work-schedule-auto/SetupWorkScheduleAuto.tsx";
+import SettingWorkScheduleAuto from "@/pages/HR/checkin/work-schedule-auto/SettingWorkScheduleAuto.tsx";
 
 
 const App = () => {
@@ -54,11 +55,11 @@ const App = () => {
         },
         {
             path: "/schedule",
-            element: <WorkshiftSchedule />
+            element: <WorkScheduleRegister />
         },
         {
             path: "/schedule-setting",
-            element: <SettingWorkshiftSchedule />
+            element: <SettingWorkScheduleRegister />
         },
         {
             path: PATH.SETTING_HIERARCHY_LEVEL,
@@ -135,15 +136,19 @@ const App = () => {
                 },
                 {
                     path: PATH.WORK_SCHEDULE,
-                    element: <SetupWorkScheduleIndex />,
+                    element: <WorkScheduleAuto />,
+                },
+                {
+                    path: PATH.WORK_SCHEDULE_REGISTER,
+                    element: <WorkScheduleRegister />,
                 },
                 {
                     path: `${PATH.WORK_SCHEDULE}/:id`,
-                    element: <SetupWorkScheduleInfor />,
+                    element: <SetupWorkScheduleAuto />,
                 },
                 {
                     path: `${PATH.WORK_SCHEDULE}/:id/setting`,
-                    element: <SettingWorkshiftSchedule />,
+                    element: <SettingWorkScheduleAuto />,
                 },
                 {
                     path: PATH.APPROVE_ATTENDANCE.slice(1),

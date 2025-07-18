@@ -1,6 +1,7 @@
 package config
 
 import (
+	"erp/backend/internal/hrm/checkin/model"
 	"fmt"
 	"log"
 
@@ -180,36 +181,40 @@ func GetDB() *gorm.DB {
 
 func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
-	//model.EmployeeWorkshift{},
-	//&officemodel.Office{},
-	//model.EmployeeWorkshift{},
-	//&model.WorkshiftRule{},
-	//&hrmmodel.Position{},
-	//&hrmmodel.Department{},
-	//&hrmmodel.Office{},
-	//&hrmmodel.JobTitle{},
-	//&model.WorkShifts{},
-	//&hrmmodel.EmployeeDocumentType{},
-	//&hrmmodel.Employee{},
-	//&hrmmodel.ContractType{},
-	//&hrmmodel.Contract{},
-	//&hrmmodel.DecisionType{},
-	//&hrmmodel.Decision{},
-	//&hrmmodel.DecisionEmployee{},
-	//&hrmmodel.Insurance{},
-	//&model.Holiday{},
-	//&model.AllowedWorkingSchedule{},
-	//&model.WorkShifts{},
-	//&hrmmodel.Allowance{},
-	//&model.Contract{},
-	//&model.Allowance{},
-	//&model.ContractAllowance{},
-	//&model.AttendanceCategory{},
-	//&model.AttendanceRecord{},
-	//&model.WorkSchedule{},
-	//&model.WorkScheduleEmployee{},
-	//&model.WorkScheduleShift{},
-	//&model.WorkScheduleManager{},
+		//model.EmployeeWorkshift{},
+		//&officemodel.Office{},
+		//model.EmployeeWorkshift{},
+		//&model.WorkshiftRule{},
+		//&hrmmodel.Position{},
+		//&hrmmodel.Department{},
+		//&hrmmodel.Office{},
+		//&hrmmodel.JobTitle{},
+		//&model.WorkShifts{},
+		//&hrmmodel.EmployeeDocumentType{},
+		//&hrmmodel.Employee{},
+		//&hrmmodel.ContractType{},
+		//&hrmmodel.Contract{},
+		//&hrmmodel.DecisionType{},
+		//&hrmmodel.Decision{},
+		//&hrmmodel.DecisionEmployee{},
+		//&hrmmodel.Insurance{},
+		//&model.Holiday{},
+		//&model.AllowedWorkingSchedule{},
+		//&model.WorkShifts{},
+		//&hrmmodel.Allowance{},
+		//&model.Contract{},
+		//&model.Allowance{},
+		//&model.ContractAllowance{},
+		//&model.AttendanceCategory{},
+		//&model.AttendanceRecord{},
+		//&model.WorkSchedule{},
+		//&model.WorkScheduleShift{},
+		//&model.WorkScheduleEmployee{},
+		//&model.WorkScheduleManager{},
+		//&model.WorkScheduleRegister{},
+		//&model.WorkScheduleRegisterShift{},
+		//&model.WorkScheduleRegisterEmployee{},
+		&model.WorkScheduleRegisterManager{},
 	)
 	fmt.Println("Migration complete")
 

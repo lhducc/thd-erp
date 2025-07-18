@@ -99,14 +99,16 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	employeeWorkShiftRepo := checkinRepo.NewEmployeeWorkShiftRepo(db)
 	workScheduleRepo := checkinRepo.NewWorkScheduleRepo(db)
 	workShiftRuleRepo := checkinRepo.NewWorkshiftRuleRepository(db)
+	workScheduleRegisterRepo := checkinRepo.NewWorkScheduleRegisterRepo(db)
 
 	//checkin service
 	attendanceRecordService := checkinService.NewAttendanceRecordService(attendanceRecordRepo, categoryRepo, officeRepo)
 	attendanceCategoryService := checkinService.NewAttendanceCategoryService(categoryRepo)
 	workShiftService := checkinService.NewWorkShiftService(workShiftRepo)
 	employeeWorkShiftService := checkinService.NewEmployeeWorkshiftService(employeeWorkShiftRepo, userRepo, workShiftRepo)
-	workScheduleService := checkinService.NewWorkScheduleService(workScheduleRepo)
+	workScheduleService := checkinService.NewWorkScheduleService(workScheduleRepo, workScheduleRegisterRepo, userRepo)
 	workShiftRuleService := checkinService.NewWorkShiftRuleService(workShiftRuleRepo, userRepo, workShiftRepo, departmentRepo, jobTitleRepo, positionRepo, officeRepo)
+	workScheduleRegisterService := checkinService.NewWorkScheduleSRegisterervice(workScheduleRegisterRepo, workScheduleRepo, userRepo)
 
 	//CheckIn handler
 	workShiftHandler := checkin.NewWorkShiftHandler(workShiftService)
@@ -115,6 +117,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	employeeWorkShiftHandler := checkin.NewEmployeeWorkshift(employeeWorkShiftService)
 	workScheduleHandler := checkin.NewWorkScheduleHandler(workScheduleService)
 	workShiftRuleHandler := checkin.NewWorkshiftRuleHandler(workShiftRuleService)
+	workScheduleRegisterHandler := checkin.NewWorkScheduleRegisterHandler(workScheduleRegisterService)
 
 	//setup routes
 	public := router.Group("/auth")
@@ -146,6 +149,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupEmployeeWorkshiftRoutes(hrmRouter, employeeWorkShiftHandler)
 	setupWorkSchedule(hrmRouter, workScheduleHandler)
 	setupWorkShiftRule(hrmRouter, workShiftRuleHandler)
+	setupWorkScheduleRegister(hrmRouter, workScheduleRegisterHandler)
 
 }
 
@@ -357,7 +361,8 @@ func setupWorkSchedule(router *gin.RouterGroup, workScheduleHandler *checkin.Wor
 		workSchedule.POST("/assign/:work-schedule-id", workScheduleHandler.AddEmployeeToWorkSchedule())
 		workSchedule.GET("", workScheduleHandler.FetchListWorkSchedule())
 		workSchedule.GET("/:id", workScheduleHandler.FetchWorkScheduleByID())
-		workSchedule.GET("/export", workScheduleHandler.ExportWorkSchedule())
+		workSchedule.DELETE("/employee/:schedule-id", workScheduleHandler.DeleteEmployeeFromWorkSchedule())
+		workSchedule.DELETE("/manager/:schedule-id", workScheduleHandler.DeleteManagerFromWorkSchedule())
 	}
 }
 
@@ -369,5 +374,19 @@ func setupWorkShiftRule(router *gin.RouterGroup, workShiftRuleHandler *checkin.W
 		workShiftRule.DELETE("/:id", workShiftRuleHandler.Delete)
 		workShiftRule.GET("", workShiftRuleHandler.GetAll)
 		workShiftRule.GET("/:id", workShiftRuleHandler.GetByUserID)
+	}
+}
+
+func setupWorkScheduleRegister(router *gin.RouterGroup, workScheduleRegisterHandler *checkin.WorkScheduleRegisterHandler) {
+	workScheduleRegister := router.Group("/work-schedule-register")
+	{
+		workScheduleRegister.POST("", workScheduleRegisterHandler.CreateWorkScheduleRegister())
+		workScheduleRegister.PUT("/:id", workScheduleRegisterHandler.UpdateWorkScheduleRegister())
+		workScheduleRegister.DELETE("/:id", workScheduleRegisterHandler.DeleteWorkScheduleRegister())
+		workScheduleRegister.POST("/assign/:id", workScheduleRegisterHandler.AddEmployeeToWorkScheduleRegister())
+		workScheduleRegister.GET("", workScheduleRegisterHandler.FetchListWorkScheduleRegister())
+		workScheduleRegister.GET("/:id", workScheduleRegisterHandler.FetchWorkScheduleRegisterByID())
+		workScheduleRegister.DELETE("/employee/:schedule-id", workScheduleRegisterHandler.DeleteEmployeeFromWorkScheduleRegister())
+		workScheduleRegister.DELETE("/manager/:schedule-id", workScheduleRegisterHandler.DeleteManagerFromWorkScheduleRegister())
 	}
 }

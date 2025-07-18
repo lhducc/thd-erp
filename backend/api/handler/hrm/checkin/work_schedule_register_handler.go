@@ -9,25 +9,25 @@ import (
 	"strconv"
 )
 
-type WorkScheduleHandler struct {
-	service service_interface.WorkScheduleServiceInterface
+type WorkScheduleRegisterHandler struct {
+	service service_interface.WorkScheduleRegisterServiceInterface
 }
 
-func NewWorkScheduleHandler(service service_interface.WorkScheduleServiceInterface) *WorkScheduleHandler {
-	return &WorkScheduleHandler{service: service}
+func NewWorkScheduleRegisterHandler(service service_interface.WorkScheduleRegisterServiceInterface) *WorkScheduleRegisterHandler {
+	return &WorkScheduleRegisterHandler{service: service}
 }
 
-func (h *WorkScheduleHandler) CreateWorkSchedule() gin.HandlerFunc {
+func (h *WorkScheduleRegisterHandler) CreateWorkScheduleRegister() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
-		var req model.WorkScheduleRequest
+		var req model.WorkScheduleRegisterRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
 			return
 		}
 
-		workSchedule := model.ConvertToWorkSchedule(&req)
+		workSchedule := model.ConvertToWorkScheduleRegister(&req)
 		if err := workSchedule.Validate(); err != nil {
 			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
 			return
@@ -38,37 +38,35 @@ func (h *WorkScheduleHandler) CreateWorkSchedule() gin.HandlerFunc {
 			return
 		}
 
-		utils.ResponseMessage(c, "Tạo mới lịch làm việc thành công", http.StatusCreated, nil)
+		utils.ResponseMessage(c, "Tạo mới lịch làm việc đăng ký thành công", http.StatusCreated, nil)
 	}
 }
 
-func (h *WorkScheduleHandler) AddEmployeeToWorkSchedule() gin.HandlerFunc {
+func (h *WorkScheduleRegisterHandler) AddEmployeeToWorkScheduleRegister() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		var req model.AssignEmployeeRequest
-
-		idSchedule := c.Param("work-schedule-id")
+		idSchedule := c.Param("id")
 		idConvert, err := strconv.Atoi(idSchedule)
 		if err != nil {
-			utils.ResponseMessage(c, "ID lịch không hợp lệ", http.StatusBadRequest, nil)
+			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
 			return
 		}
-
 		if err := c.ShouldBindJSON(&req); err != nil {
 			utils.ResponseMessage(c, "Dữ liệu đầu vào không hợp lệ", http.StatusBadRequest, nil)
 			return
 		}
 
-		if err := h.service.AssignEmployeeToWorkSchedule(ctx, &req, idConvert); err != nil {
+		err = h.service.AssignEmployeeToWorkSchedule(ctx, &req, idConvert)
+		if err != nil {
 			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
 			return
 		}
-
-		utils.ResponseMessage(c, "Gán nhân viên và quản lý thành công", http.StatusOK, nil)
+		utils.ResponseMessage(c, "Gán nhân viên thành công", http.StatusOK, nil)
 	}
 }
 
-func (h *WorkScheduleHandler) UpdateWorkSchedule() gin.HandlerFunc {
+func (h *WorkScheduleRegisterHandler) UpdateWorkScheduleRegister() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
@@ -79,7 +77,7 @@ func (h *WorkScheduleHandler) UpdateWorkSchedule() gin.HandlerFunc {
 			return
 		}
 
-		var req model.WorkSchedule
+		var req model.WorkScheduleRegister
 		if err := c.ShouldBindJSON(&req); err != nil {
 			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
 			return
@@ -94,7 +92,7 @@ func (h *WorkScheduleHandler) UpdateWorkSchedule() gin.HandlerFunc {
 	}
 }
 
-func (h *WorkScheduleHandler) DeleteWorkSchedule() gin.HandlerFunc {
+func (h *WorkScheduleRegisterHandler) DeleteWorkScheduleRegister() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
@@ -114,7 +112,7 @@ func (h *WorkScheduleHandler) DeleteWorkSchedule() gin.HandlerFunc {
 	}
 }
 
-func (h *WorkScheduleHandler) FetchListWorkSchedule() gin.HandlerFunc {
+func (h *WorkScheduleRegisterHandler) FetchListWorkScheduleRegister() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		result, err := h.service.GetAllWorkSchedule(ctx)
@@ -126,7 +124,7 @@ func (h *WorkScheduleHandler) FetchListWorkSchedule() gin.HandlerFunc {
 	}
 }
 
-func (h *WorkScheduleHandler) FetchWorkScheduleByID() gin.HandlerFunc {
+func (h *WorkScheduleRegisterHandler) FetchWorkScheduleRegisterByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		idParam := c.Param("id")
@@ -144,7 +142,7 @@ func (h *WorkScheduleHandler) FetchWorkScheduleByID() gin.HandlerFunc {
 	}
 }
 
-func (h *WorkScheduleHandler) DeleteEmployeeFromWorkSchedule() gin.HandlerFunc {
+func (h *WorkScheduleRegisterHandler) DeleteEmployeeFromWorkScheduleRegister() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
@@ -161,7 +159,7 @@ func (h *WorkScheduleHandler) DeleteEmployeeFromWorkSchedule() gin.HandlerFunc {
 			return
 		}
 
-		err = h.service.DeleteEmployeeFromWorkSchedule(ctx, employeeID, workScheduleID)
+		err = h.service.DeleteEmployeeFromWorkScheduleRegister(ctx, employeeID, workScheduleID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
@@ -171,7 +169,7 @@ func (h *WorkScheduleHandler) DeleteEmployeeFromWorkSchedule() gin.HandlerFunc {
 	}
 }
 
-func (h *WorkScheduleHandler) DeleteManagerFromWorkSchedule() gin.HandlerFunc {
+func (h *WorkScheduleRegisterHandler) DeleteManagerFromWorkScheduleRegister() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
@@ -188,7 +186,7 @@ func (h *WorkScheduleHandler) DeleteManagerFromWorkSchedule() gin.HandlerFunc {
 			return
 		}
 
-		err = h.service.DeleteManagerFromWorkSchedule(ctx, employeeID, workScheduleID)
+		err = h.service.DeleteManagerFromWorkScheduleRegister(ctx, employeeID, workScheduleID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return

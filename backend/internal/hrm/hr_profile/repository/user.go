@@ -244,3 +244,27 @@ func (s *UserStore) UpdateEmployeeWithAccount(employee *model.Employee, accountI
 	}
 	return nil
 }
+
+func (s *UserStore) CheckExistEmployee(employeeIDs []string) ([]string, error) {
+	var employees []model.Employee
+
+	if err := s.db.
+		Where("employee_id IN ?", employeeIDs).
+		Find(&employees).Error; err != nil {
+		return nil, fmt.Errorf("failed to get employees: %w", err)
+	}
+	// Map để đối chiếu nhanh
+	found := make(map[string]bool)
+	for _, emp := range employees {
+		found[emp.EmployeeID] = true
+	}
+
+	// Tìm những ID không tồn tại
+	var missing []string
+	for _, id := range employeeIDs {
+		if !found[id] {
+			missing = append(missing, id)
+		}
+	}
+	return missing, nil
+}

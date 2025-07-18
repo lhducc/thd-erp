@@ -22,48 +22,62 @@ type WorkSchedule struct {
 	IsDeleted        bool                        `gorm:"column:is_deleted;default:false" json:"is_deleted"`
 
 	Managers  []WorkScheduleManager  `gorm:"foreignKey:WorkScheduleID;references:WorkScheduleID" json:"managers"`
-	Employees []WorkScheduleEmployee `gorm:"foreignKey:WorkScheduleID;references:WorkScheduleID" json:"employees,omitempty"`
-	Weekdays  []WorkScheduleShift    `gorm:"foreignKey:WorkScheduleID;references:WorkScheduleID" json:"weekdays,omitempty"`
+	Employees []WorkScheduleEmployee `gorm:"foreignKey:WorkScheduleID;references:WorkScheduleID" json:"employees"`
+	Weekdays  []WorkScheduleShift    `gorm:"foreignKey:WorkScheduleID;references:WorkScheduleID" json:"weekdays"`
 
-	Office *model.OfficeResponse `gorm:"foreignKey:OfficeID;references:office_id" json:"office"`
+	Office *model.OfficeResponse `gorm:"foreignKey:OfficeID;references:ID" json:"office"`
 }
 
 type WorkScheduleRequest struct {
-	WorkScheduleName string                      ` json:"work_schedule_name"`
-	OfficeID         string                      `json:"office_id"`
-	RepeatType       variable.RepeatTypeEnum     `json:"repeat_type"`
-	RepeatCycle      int                         `json:"repeat_cycle"`
-	EffectiveDate    time.Time                   `json:"effective_date"`
-	ExpirationDate   time.Time                   `json:"expiration_date"`
-	Status           variable.StatusWorkSchedule `json:"status"`
-	WeekDays         []WorkScheduleShift         `json:"weekdays"`
+	WorkScheduleName string                  ` json:"work_schedule_name"`
+	OfficeID         string                  `json:"office_id"`
+	RepeatType       variable.RepeatTypeEnum `json:"repeat_type"`
+	RepeatCycle      int                     `json:"repeat_cycle"`
+	EffectiveDate    time.Time               `json:"effective_date"`
+	ExpirationDate   time.Time               `json:"expiration_date"`
+	WeekDays         []WorkScheduleShift     `json:"weekdays"`
 }
 
 type WorkScheduleEmployee struct {
-	EmployeeID     string     `gorm:"column:employee_id;primaryKey;type:varchar" json:"employee_id"`
-	WorkScheduleID *int       `gorm:"column:work_schedule_id;primaryKey;type:integer" json:"work_schedule_id"`
-	AssignedAt     *time.Time `gorm:"column:assigned_at;default:CURRENT_TIMESTAMP" json:"assigned_at"`
+	WorkScheduleEmployeeID int        `gorm:"column:work_schedule_employee_id;primaryKey;autoIncrement" json:"work_schedule_employee_id"`
+	EmployeeID             string     `gorm:"column:employee_id;type:varchar;unique;index" json:"employee_id"`
+	WorkScheduleID         *int       `gorm:"column:work_schedule_id;type:integer;index" json:"work_schedule_id"`
+	AssignedAt             *time.Time `gorm:"column:assigned_at;default:CURRENT_TIMESTAMP" json:"assigned_at"`
+
+	Employee *model.ManagerResponse `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"employee"`
 }
 
 type WorkScheduleManager struct {
-	EmployeeID     string     `gorm:"column:employee_id;primaryKey;type:varchar" json:"employee_id"`
-	WorkScheduleID int        `gorm:"column:work_schedule_id;type:integer" json:"work_schedule_id"`
-	AssignedAt     *time.Time `gorm:"column:assigned_at;default:CURRENT_TIMESTAMP" json:"assigned_at"`
+	WorkScheduleManagerID int    `gorm:"column:work_schedule_manager_id;primaryKey;autoIncrement" json:"work_schedule_manager_id"`
+	EmployeeID            string `gorm:"column:employee_id;type:varchar;index:idx_emp_sched,unique" json:"employee_id"`
+	WorkScheduleID        int    `gorm:"column:work_schedule_id;type:integer;index:idx_emp_sched,unique" json:"work_schedule_id"`
+	IsReading             bool   `gorm:"column:is_reading;default:true" json:"is_reading"`
+	IsEditing             bool   `gorm:"column:is_editing;default:false" json:"is_editing"`
+
+	Employee *model.ManagerResponse `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"manager"`
 }
 type AssignEmployeeRequest struct {
-	EmployeeIDs []string `json:"employee_ids"`
-	ManagerIDs  []string `json:"manager_ids"`
-
-	WorkSchedule WorkSchedule `gorm:"foreignKey:WorkScheduleID;references:WorkScheduleID" json:"work_schedule,omitempty"`
+	EmployeeIDs []string               `json:"employee_ids"`
+	Managers    []ManagerAssignRequest `json:"managers"`
+}
+type ManagerAssignRequest struct {
+	ManagerID string `json:"manager_id"`
+	IsReading bool   `json:"is_reading"`
+	IsEditing bool   `json:"is_editing"`
 }
 
 type WorkScheduleShift struct {
-	WorkScheduleID int                  `gorm:"column:work_schedule_id;type:integer" json:"work_schedule_id"`
-	Weekday        variable.WeekdayEnum `gorm:"column:week_day;type:weekday_enum" json:"week_day"`
-	WorkShiftID    string               `gorm:"column:workshift_id;type:varchar(20)" json:"workshift_id"`
-	Order          int                  `gorm:"column:shift_order;type:integer" json:"order"`
+	WorkScheduleShiftID int                  `gorm:"column:work_schedule_shift_id;primaryKey;autoIncrement" json:"work_schedule_shift_id"`
+	WorkScheduleID      int                  `gorm:"column:work_schedule_id;type:integer" json:"work_schedule_id"`
+	Weekday             variable.WeekdayEnum `gorm:"column:week_day;type:weekday_enum" json:"week_day"`
+	WorkShiftID         string               `gorm:"column:workshift_id;type:varchar(20)" json:"workshift_id"`
+	Order               int                  `gorm:"column:shift_order;type:integer" json:"order"`
 
-	WorkShift WorkShifts `gorm:"foreignKey:WorkShiftID;references:WorkShiftID" json:"work_shift"`
+	WorkShift *WorkShifts `gorm:"foreignKey:WorkShiftID;references:WorkShiftID" json:"work_shift"`
+}
+
+func (WorkSchedule) TableName() string {
+	return "work_schedule"
 }
 
 func (WorkScheduleShift) TableName() string {
@@ -73,9 +87,7 @@ func (WorkScheduleShift) TableName() string {
 func (WorkScheduleEmployee) TableName() string {
 	return "work_schedule_employee"
 }
-func (WorkSchedule) TableName() string {
-	return "work_schedule"
-}
+
 func (WorkScheduleManager) TableName() string {
 	return "work_schedule_manager"
 }
@@ -89,7 +101,6 @@ func ConvertToWorkSchedule(req *WorkScheduleRequest) WorkSchedule {
 		EffectiveDate:    req.EffectiveDate,
 		ExpirationDate:   req.ExpirationDate,
 		Weekdays:         req.WeekDays,
-		Status:           req.Status,
 	}
 }
 
@@ -104,10 +115,6 @@ func (req *WorkSchedule) Validate() error {
 
 	if _, ok := struct_support.ValidRepeatTypes[req.RepeatType]; !ok {
 		return fmt.Errorf("invalid repeat_type: %s", req.RepeatType)
-	}
-
-	if _, ok := struct_support.ValidStatus[req.Status]; !ok {
-		return fmt.Errorf("invalid status: %s", req.Status)
 	}
 
 	for _, weekday := range req.Weekdays {

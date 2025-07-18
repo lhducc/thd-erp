@@ -43,8 +43,8 @@ type Employee struct {
 	JobTitle     *JobTitleResponse `gorm:"foreignKey:JobTitleID;references:job_title_id" json:"job_title,omitempty"`
 	Manager      *ManagerResponse  `gorm:"foreignKey:ManagerID;references:employee_id" json:"manager,omitempty"`
 	Department   *Department       `gorm:"foreignKey:DepartmentID;references:department_id" json:"department,omitempty"`
-	// Contracts []Contract gorm:"foreignKey:EmployeeID;references:employee_id" json:"contracts,omitempty"
-	// Decisions []Decision gorm:"foreignKey:EmployeeID;references:employee_id" json:"decisions,omitempty"
+
+	Contracts []Contract `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"contracts,omitempty"`
 	Decisions []Decision `gorm:"many2many:decision_employees;joinForeignKey:EmployeeID;joinReferences:DecisionID"`
 }
 

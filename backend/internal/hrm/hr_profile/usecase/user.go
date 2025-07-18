@@ -19,6 +19,7 @@ type EmployeeRepo interface {
 	UpdateEmployee(id string, updatedEmployee model.Employee) error
 	DeleteEmployee(id string) error
 	GetLastEmployeeByCode(emp *model.Employee) error
+	CheckExistEmployee(employeeIDs []string) ([]string, error)
 }
 
 type AccountRepo interface {

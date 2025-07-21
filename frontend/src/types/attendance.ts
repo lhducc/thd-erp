@@ -1,9 +1,5 @@
 import type {Office} from "@/types/index.ts";
 
-export type Attendance = {
-
-}
-
 export type AttendanceSetting = {
     attendance_category_id: string,
     attendance_category_name: string,

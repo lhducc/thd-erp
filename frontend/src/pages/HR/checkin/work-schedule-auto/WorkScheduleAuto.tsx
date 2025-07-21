@@ -1,39 +1,28 @@
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {useMutation} from "@tanstack/react-query";
 import {toast} from "sonner";
 import type {ColumnDef} from "@tanstack/react-table";
-import CreateOfficeForm from "@/components/CreateOfficeForm.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {EditIcon, SettingsIcon, ViewIcon} from "lucide-react";
 import ConfirmDelete from "@/components/ConfirmDelete.tsx";
-import Loading from "@/components/Loading.tsx";
 import DataTable from "@/components/DataTable.tsx";
-import {getAllSetupWorkshiftCalendar} from "@/apis/setup-workshift.api.ts";
 import type {WorkSchedule} from "@/types/work-schedule.ts";
 import {Link} from "react-router-dom";
 import {deleteWorkshiftSchedule} from "@/apis/work-schedule.api.ts";
+import {useWorkSchedule} from "@/query/useWorkSchedule.ts";
+import PATH from "@/constants/Path.ts";
 
 const WorkScheduleAuto = () => {
     const {
         data: schedule,
         isPending: pendingSchedule,
         refetch: refetchSchedule,
-    } = useQuery({
-        queryKey: ["work-schedule"],
-        queryFn: getAllSetupWorkshiftCalendar,
-        gcTime: 0,
-        staleTime: 0,
-    });
-
-    const queryClient = useQueryClient();
+    } = useWorkSchedule();
 
     const { mutateAsync: deleteSchedule } = useMutation({
-        mutationFn: (id: string) => deleteWorkshiftSchedule(id),
+        mutationFn: (id: number) => deleteWorkshiftSchedule(id),
         onSuccess: () => {
+            refetchSchedule();
             toast.success("Xóa lịch làm việc thành công");
-            // refetchOffices();
-            queryClient.invalidateQueries({
-                queryKey: ["work-schedule"],
-            });
         },
         onError: (error) => {
             toast.error(error.message);
@@ -104,17 +93,22 @@ const WorkScheduleAuto = () => {
         },
     ];
 
-    if (pendingSchedule) {
-        return <Loading />;
-    }
+    const button = (
+        <Button>
+            <Link to={`${PATH.WORK_SCHEDULE}/create`}>
+                Tạo mới
+            </Link>
+        </Button>
+    )
 
     return (
         <>
             <DataTable
                 columns={columns}
                 data={schedule || []}
+                isLoading={pendingSchedule}
                 title="Lịch làm việc"
-                buttonCreate={<CreateOfficeForm refetch={refetchSchedule} />}
+                buttonCreate={button}
                 keyFilter="work_schedule_name"
             />
         </>

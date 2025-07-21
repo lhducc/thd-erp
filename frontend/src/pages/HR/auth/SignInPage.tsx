@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.tsx";
 import {
   Form,
   FormControl,
@@ -10,12 +10,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import InputPassword from "@/components/InputPassword";
+} from "@/components/ui/form.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import InputPassword from "@/components/InputPassword.tsx";
 import LogoSignInPage from "@/assets/LogoSignInPage.svg";
 import { useMutation } from "@tanstack/react-query";
-import { signInApi } from "@/apis/signIn.api";
+import { signInApi } from "@/apis/signIn.api.ts";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";

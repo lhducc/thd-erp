@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card"
 import { Clock, CalendarDays } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import {formatTime} from "@/lib/utils.ts";
 
 export const WorkshiftScheduler = ({ workshifts }) => {
     const days = [
@@ -14,10 +15,6 @@ export const WorkshiftScheduler = ({ workshifts }) => {
         { id: 'sat', name: 'Thứ 7' },
         { id: 'sun', name: 'Chủ nhật' }
     ]
-
-    const formatTime = (timeStr) => {
-        return timeStr.substring(0, 5) // Converts "HH:mm:ss" to "HH:mm"
-    }
 
     return (
         <div className="flex flex-col lg:flex-row gap-6 p-4 bg-gray-50 rounded-lg">
@@ -97,11 +94,6 @@ export const WorkshiftScheduler = ({ workshifts }) => {
                         ))}
                     </div>
                 </div>
-
-                {/*<div className="flex justify-end gap-3 pt-2">*/}
-                {/*    <Button variant="outline">Hủy bỏ</Button>*/}
-                {/*    <Button>Xác nhận lịch</Button>*/}
-                {/*</div>*/}
             </div>
         </div>
     )

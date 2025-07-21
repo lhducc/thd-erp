@@ -1,31 +1,28 @@
-import { deletePositionApi, getAllPositionApi } from "@/apis/position.api.ts";
+import { deletePositionApi } from "@/apis/position.api.ts";
 import ConfirmDelete from "@/components/ConfirmDelete.tsx";
 import CreatePositionForm from "@/components/CreatePositionForm.tsx";
 import DataTable from "@/components/DataTable.tsx";
-import Loading from "@/components/Loading.tsx";
 import TitleNavLink from "@/components/TitleNavLink.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import type { Position } from "@/types";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { SquarePen } from "lucide-react";
 import { toast } from "sonner";
+import {usePosition} from "@/query/usePosition.ts";
 
 const PositionPage = () => {
   const {
     data: positions,
     isPending: pendingGetPositions,
     refetch: refetchPositions,
-  } = useQuery({
-    queryKey: ["positions"],
-    queryFn: getAllPositionApi,
-  });
+  } = usePosition()
 
   const { mutateAsync: deletePosition } = useMutation({
     mutationFn: deletePositionApi,
     onSuccess: () => {
-      toast.success("Xóa vị trí thành công");
       refetchPositions();
+      toast.success("Xóa vị trí thành công");
     },
     onError: (error) => {
       toast.error(error.message);
@@ -68,15 +65,12 @@ const PositionPage = () => {
     },
   ];
 
-  if (pendingGetPositions) {
-    return <Loading />;
-  }
-
   return (
     <DataTable
       columns={columns || []}
       data={positions || []}
       title="Chức danh"
+      isLoading={pendingGetPositions}
       navLink={<TitleNavLink />}
       buttonCreate={<CreatePositionForm refetch={refetchPositions} />}
       keyFilter="position_name"

@@ -1,6 +1,5 @@
 import {InfoRow} from "@/components/ui/info-row.tsx";
-import {useMutation, useQuery} from "@tanstack/react-query";
-import {getAllEmployeesApi} from "@/apis/profile.api.ts";
+import {useMutation} from "@tanstack/react-query";
 import type {Employee} from "@/types/employee.ts";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
 import {useEffect, useState} from "react";
@@ -14,10 +13,12 @@ import {Button} from "@/components/ui/button.tsx";
 import {Search} from "lucide-react";
 import {Input} from "@/components/ui/input.tsx";
 import {toast} from "sonner";
-import {assignWorkshiftSchedule, getWorkScheduleById} from "@/apis/work-schedule.api.ts";
+import {assignWorkshiftSchedule} from "@/apis/work-schedule.api.ts";
 import {Link, useParams} from "react-router-dom";
 import PATH from "@/constants/Path.ts";
 import Loading from "@/components/Loading.tsx";
+import {useWorkScheduleById} from "@/query/useWorkSchedule.ts";
+import {useAllEmployee} from "@/query/useEmployee.ts";
 
 interface AssignParams {
     id: string;
@@ -43,18 +44,9 @@ const formSchema = z.object({
 const SettingWorkScheduleAuto = () => {
     const {id} = useParams<{ id: string }>();
     const workScheduleId = id ? parseInt(id) : 0;
-    const {data: employees, isLoading: pendingGetEmployees, error} = useQuery({
-        queryKey: ["employees"],
-        queryFn: () => getAllEmployeesApi(1, 9999),
-    });
+    const {data: employees, isLoading: pendingGetEmployees, error} = useAllEmployee()
 
-    const {data: workSchedule, isLoading: pendingWorkSchedule} = useQuery({
-        queryKey: ["work-schedule", id],
-        queryFn: () => getWorkScheduleById(id!),
-        enabled: !!id,
-    });
-
-    console.log(workSchedule);
+    const {data: workSchedule, isLoading: pendingWorkSchedule} = useWorkScheduleById(id)
 
     const [selectedEmployees, setSelectedEmployees] = useState<Employee[]>([]);
     const [selectedManagers, setSelectedManagers] = useState<Employee[]>([]);

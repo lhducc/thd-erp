@@ -54,7 +54,6 @@ const AttendancePage = () => {
         staleTime: 0,
     });
 
-    // Tính khoảng cách Haversine
     const calculateDistance = (
         lat1: number,
         lon1: number,
@@ -73,7 +72,6 @@ const AttendancePage = () => {
         return R * c;
     };
 
-    // Lấy vị trí và khởi động camera
     useEffect(() => {
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(
@@ -103,7 +101,6 @@ const AttendancePage = () => {
         }
     }, []);
 
-    // Cập nhật thời gian thực
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentTime(new Date());

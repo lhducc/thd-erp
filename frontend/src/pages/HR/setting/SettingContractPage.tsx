@@ -1,15 +1,15 @@
-import {useMutation, useQuery} from "@tanstack/react-query";
+import {useMutation} from "@tanstack/react-query";
 import {toast} from "sonner";
 import type {ColumnDef} from "@tanstack/react-table";
 import ConfirmDelete from "@/components/ConfirmDelete.tsx";
-import Loading from "@/components/Loading.tsx";
 import DataTable from "@/components/DataTable.tsx";
-import {deleteContractTypeApi, getAllContractsTypeApi} from "@/apis/contract-type.api.ts";
+import {deleteContractTypeApi} from "@/apis/contract-type.api.ts";
 import type {ContractType} from "@/types/contract.ts";
 import CreateContractType from "@/components/CreateContractType.tsx";
 import {SquarePen} from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import {Link, useLocation} from "react-router-dom";
+import {useContractType} from "@/query/useContractType.ts";
 
 const SettingContractPage = () => {
     const location = useLocation().pathname;
@@ -17,12 +17,7 @@ const SettingContractPage = () => {
         data: types,
         isPending: pendingTypes,
         refetch: refetchTypes,
-    } = useQuery({
-        queryKey: ["contract_type"],
-        queryFn: getAllContractsTypeApi,
-        gcTime: 0,
-        staleTime: 0,
-    });
+    } = useContractType();
 
     const { mutateAsync: deleteTypes } = useMutation({
         mutationFn: (id: string) => deleteContractTypeApi(id),
@@ -85,10 +80,6 @@ const SettingContractPage = () => {
         },
     ];
 
-    if (pendingTypes) {
-        return <Loading />;
-    }
-
     const navLink = (
         <>
             <hr className={`mb-10`}/>
@@ -126,6 +117,7 @@ const SettingContractPage = () => {
                 columns={columns}
                 data={types || []}
                 title="Loại hợp đồng"
+                isLoading={pendingTypes}
                 navLink={navLink}
                 buttonCreate={<CreateContractType refetch={refetchTypes} />}
                 keyFilter="contract_type"

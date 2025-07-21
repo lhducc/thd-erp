@@ -1,5 +1,3 @@
-import type {Office} from "@/types/index.ts";
-
 export type WorkSchedule = {
     work_schedule_id: number;
     work_schedule_name: string;

@@ -13,31 +13,25 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { SquarePen } from "lucide-react";
 import { toast } from "sonner";
+import {useHierarchyLevel} from "@/query/useHierarchyLevel.ts";
 
 const HierarchyLevelPage = () => {
   const {
     data: hierarchyLevel,
     isPending: pendingGetHierarchyLevel,
     refetch: refetchHierarchyLevel,
-  } = useQuery({
-    queryKey: ["hierarchy-level"],
-    queryFn: getAllHierarchyLevelApi,
-  });
+  } = useHierarchyLevel();
 
   const { mutateAsync: deleteHierarchyLevel } = useMutation({
     mutationFn: deleteHierarchyLevelApi,
     onSuccess: () => {
-      toast.success("Xóa thành công");
       refetchHierarchyLevel();
+      toast.success("Xóa thành công");
     },
     onError: (error) => {
       toast.error(error.message);
     },
   });
-
-  if (pendingGetHierarchyLevel) {
-    return <Loading />;
-  }
 
   const columns: ColumnDef<HierarchyLevel>[] = [
     {
@@ -84,6 +78,7 @@ const HierarchyLevelPage = () => {
       columns={columns || []}
       data={hierarchyLevel || []}
       title="Chức danh"
+      isLoading={pendingGetHierarchyLevel}
       navLink={<TitleNavLink />}
       buttonCreate={
         <CreateHierarchyLevelForm refetch={refetchHierarchyLevel} />

@@ -1,25 +1,22 @@
-import { deleteJobTitleApi, getJobTitles } from "@/apis/jobTitle.api.ts";
+import { deleteJobTitleApi } from "@/apis/jobTitle.api.ts";
 import ConfirmDelete from "@/components/ConfirmDelete.tsx";
 import CreateJobTitleForm from "@/components/CreateJobTitleForm.tsx";
 import DataTable from "@/components/DataTable.tsx";
-import Loading from "@/components/Loading.tsx";
 import TitleNavLink from "@/components/TitleNavLink.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { SquarePen } from "lucide-react";
 import { toast } from "sonner";
 import type {JobTitle} from "@/types/job-title.ts";
+import {useJobTitle} from "@/query/useJobTitle.ts";
 
 const JobTitlePage = () => {
   const {
     data: jobTitles,
     isPending: pendingJobTitles,
     refetch: refetchJobTitles,
-  } = useQuery({
-    queryKey: ["jobTitles"],
-    queryFn: getJobTitles,
-  });
+  } = useJobTitle();
 
   const { mutateAsync: deleteJobTitle } = useMutation({
     mutationFn: deleteJobTitleApi,
@@ -31,10 +28,6 @@ const JobTitlePage = () => {
       toast.error(error.message);
     },
   });
-
-  if (pendingJobTitles) {
-    return <Loading />;
-  }
 
   const columns: ColumnDef<JobTitle>[] = [
     {
@@ -79,6 +72,7 @@ const JobTitlePage = () => {
           columns={columns}
           data={jobTitles || []}
           title="Chức danh"
+          isLoading={pendingJobTitles}
           navLink={<TitleNavLink />}
           buttonCreate={<CreateJobTitleForm refetch={refetchJobTitles} />}
           keyFilter="job_title"

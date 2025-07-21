@@ -1,9 +1,5 @@
-'use client';
-
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { SquarePen, Shield } from "lucide-react";
 import { useState, useRef } from "react";
 import {
   getAllShiftsApi,
@@ -11,11 +7,8 @@ import {
   createShiftApi,
   exportShiftExcelApi,
 } from "@/apis/shift.api";
-import ConfirmDelete from "@/components/ConfirmDelete";
 import DataTable from "@/components/shift_create";
 import Loading from "@/components/Loading";
-import CreateShiftForm from "@/components/CreateShiftForm";
-import UpdateShiftForm from "@/components/UpdateShiftForm";
 import type { Shift } from "@/types";
 import type { ColumnDef } from "@tanstack/react-table";
 import ShiftScheduleForm from "@/components/ShiftScheduleForm"

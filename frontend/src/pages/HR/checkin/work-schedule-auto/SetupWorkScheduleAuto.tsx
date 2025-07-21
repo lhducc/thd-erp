@@ -1,5 +1,4 @@
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {getAllOfficesApi} from "@/apis/office.api.ts";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
 import {useForm} from "react-hook-form";
@@ -8,11 +7,16 @@ import {z} from "zod";
 import type {WorkSchedule} from "@/types/work-schedule.ts";
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
-import {getAllWorkshiftApi} from "@/apis/workshift.api.ts";
 import {toast} from "sonner";
-import {createWorkshiftSchedule} from "@/apis/work-schedule.api.ts";
+import {createWorkshiftSchedule, updateWorkshiftSchedule} from "@/apis/work-schedule.api.ts";
 import {Link, useParams} from "react-router-dom";
 import PATH from "@/constants/Path.ts";
+import type {WorkShift} from "@/types/Workshift.ts";
+import {useOffice} from "@/query/useOffice.ts";
+import {useWorkshift} from "@/query/useWorkshift.ts";
+import {useWorkScheduleById} from "@/query/useWorkSchedule.ts";
+import {useEffect} from "react";
+import Loading from "@/components/Loading.tsx";
 
 export const RepeatTypeEnum = z.enum(["weekly", "monthly"]);
 
@@ -45,29 +49,23 @@ const auto_schedule = z.object({
 
 const SetupWorkScheduleAuto = () => {
     const { id } = useParams();
+    const isEditMode = id !== "create";
 
     const {
         data: offices,
-        isPending: pendingOffices,
-        refetch: refetchOffices,
-    } = useQuery({
-        queryKey: ["offices"],
-        queryFn: getAllOfficesApi,
-        gcTime: 0,
-        staleTime: 0,
-    });
+        isPending: pendingOffices
+    } = useOffice();
 
-    const {data: workshifts, isLoading: isWorkshiftLoading, refetch: refetchWorkshifts} = useQuery({
-        queryKey: ["workshift"],
-        queryFn: getAllWorkshiftApi,
-    })
+    const {data: workshifts, isPending: pendingWorkshift} = useWorkshift()
+
+    const {data: workSchedule, isLoading: pendingWorkSchedule} = useWorkScheduleById(id)
 
     const queryClient = useQueryClient();
 
     const {mutateAsync: createWorkSchedule} = useMutation({
-        mutationFn: (data) => createWorkshiftSchedule(data),
+        mutationFn: (data) => isEditMode ? updateWorkshiftSchedule(id, data) : createWorkshiftSchedule(data),
         onSuccess: () => {
-            toast.success("Tạo lịch làm việc thành công");
+            toast.success(isEditMode ? "Cập nhật lịch làm việc thành công" : "Tạo lịch làm việc thành công");
             queryClient.invalidateQueries({
                 queryKey: ["work-schedule"],
             });
@@ -77,12 +75,12 @@ const SetupWorkScheduleAuto = () => {
         },
     });
 
-    const form = useForm<auto_schedule>({
+    const form = useForm<any>({
         resolver: zodResolver(auto_schedule),
         defaultValues: {
             work_schedule_name: "",
             office_id: "",
-            repeat_type: RepeatTypeEnum.enum.week,
+            repeat_type: RepeatTypeEnum.enum.weekly,
             repeat_cycle: 1,
             effective_date: new Date().toISOString().split('T')[0],
             expiration_date: "",
@@ -93,8 +91,44 @@ const SetupWorkScheduleAuto = () => {
                 shifts: [],
             })),
         },
-
     });
+
+    useEffect(() => {
+        if (workSchedule && isEditMode) {
+            // Group shifts by weekday
+            const shiftsByWeekday: Record<string, WorkSchedule[]> = {};
+            workSchedule.weekdays.forEach(weekday => {
+                if (!shiftsByWeekday[weekday.week_day]) {
+                    shiftsByWeekday[weekday.week_day] = [];
+                }
+                shiftsByWeekday[weekday.week_day].push(weekday.work_shift);
+            });
+
+            // Prepare days array
+            const days = Array.from({length: 7}, (_, i) => {
+                const dayOfWeek = i + 2;
+                const weekdayKey = WEEKDAY_MAP[dayOfWeek];
+                const shiftsForDay = shiftsByWeekday[weekdayKey] || [];
+
+                return {
+                    day_of_week: dayOfWeek,
+                    enabled: shiftsForDay.length > 0,
+                    shift_count: shiftsForDay.length || 1,
+                    shifts: shiftsForDay.map(shift => shift.workshift_id)
+                };
+            });
+
+            form.reset({
+                work_schedule_name: workSchedule.work_schedule_name,
+                office_id: workSchedule.office.office_id,
+                repeat_type: workSchedule.repeat_type || RepeatTypeEnum.enum.weekly,
+                repeat_cycle: workSchedule.repeat_cycle || 1,
+                effective_date: workSchedule.effective_date.split('T')[0],
+                expiration_date: workSchedule.expiration_date.split('T')[0],
+                days: days
+            });
+        }
+    }, [workSchedule, isEditMode, form]);
 
     function isOverlap(start1: string, end1: string, start2: string, end2: string) {
         return !(end1 <= start2 || start1 >= end2);
@@ -125,9 +159,13 @@ const SetupWorkScheduleAuto = () => {
         createWorkSchedule(finalPayload)
     };
 
+    if (pendingWorkSchedule && isEditMode) {
+        return <Loading />;
+    }
+
     return (
         <div className="space-y-4">
-            <h3 className="text-lg font-medium">Tạo lịch làm việc</h3>
+            <h3 className="text-lg font-medium">{isEditMode ? "Chỉnh sửa lịch làm việc" : "Tạo lịch làm việc"}</h3>
             <hr className="border-gray-200"/>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 ">
@@ -321,12 +359,12 @@ const SetupWorkScheduleAuto = () => {
                     </div>
                     <div className="flex justify-center items-center gap-5">
                         <div className="flex justify-end">
-                            <Link to={`${PATH.WORK_SCHEDULE}/${id}`}>
+                            <Link to={`${PATH.WORK_SCHEDULE}`}>
                                 <Button variant="outline" type="button">Hủy bỏ</Button>
                             </Link>
                         </div>
                         <div className="flex justify-end">
-                            <Button type="submit">Tạo lịch làm việc</Button>
+                            <Button type="submit">{isEditMode ? "Cập nhật" : "Tạo"} lịch làm việc</Button>
                         </div>
                     </div>
                 </form>

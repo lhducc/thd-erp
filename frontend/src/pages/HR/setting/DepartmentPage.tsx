@@ -1,32 +1,30 @@
 import {
   deleteDepartmentApi,
-  getAllDepartmentsApi,
 } from "@/apis/department.api.ts";
 import ConfirmDelete from "@/components/ConfirmDelete.tsx";
 import CreateDepartmentForm from "@/components/CreateDepartmentForm.tsx";
 import DataTable from "@/components/DataTable.tsx";
-import Loading from "@/components/Loading.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import type { Department } from "@/types";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { SquarePen } from "lucide-react";
 import { toast } from "sonner";
+import {useDepartment} from "@/query/useDepartment.ts";
 
 const DepartmentPage = () => {
   const {
     data: departments,
     isPending: pendingGetDepartments,
     refetch: refetchDepartment,
-  } = useQuery({
-    queryKey: ["departments"],
-    queryFn: getAllDepartmentsApi,
-  });
+  } = useDepartment();
+
+  const queryClient = useQueryClient();
 
   const { mutate: deleteDepartment } = useMutation({
     mutationFn: deleteDepartmentApi,
     onSuccess: () => {
-      refetchDepartment();
+      queryClient.invalidateQueries({ queryKey: ['departments'] });
       toast.success("Xóa phòng ban thành công");
     },
     onError: (error) => {
@@ -70,15 +68,12 @@ const DepartmentPage = () => {
     },
   ];
 
-  if (pendingGetDepartments) {
-    return <Loading />;
-  }
-
   return (
     <DataTable
       columns={columns}
       data={departments || []}
       title="Phòng ban"
+      isLoading={pendingGetDepartments}
       buttonCreate={<CreateDepartmentForm refetch={refetchDepartment} />}
       keyFilter="department_name"
     />

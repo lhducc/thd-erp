@@ -114,7 +114,7 @@ export default function DataTable<TData, TValue>({
                                 <TableRow key={headerGroup.id} className="bg-[#DB3B21] hover:bg-[#DB3B21]">
                                     {headerGroup.headers.map((header) => {
                                         return (
-                                            <TableHead key={header.id} className={`text-white font-semibold ${header.column.columnDef.meta?.className || ""}`}>
+                                            <TableHead key={header.id} className={`text-white font-semibold`}>
                                                 {header.isPlaceholder
                                                     ? null
                                                     : flexRender(
@@ -135,7 +135,7 @@ export default function DataTable<TData, TValue>({
                                         data-state={row.getIsSelected() && "selected"}
                                     >
                                         {row.getVisibleCells().map((cell) => (
-                                            <TableCell key={cell.id} className={cell.column.columnDef.meta?.className || ""}>
+                                            <TableCell key={cell.id}>
                                                 {flexRender(
                                                     cell.column.columnDef.cell,
                                                     cell.getContext()

@@ -13,7 +13,7 @@ import {Link, useParams} from "react-router-dom";
 import PATH from "@/constants/Path.ts";
 import type {WorkShift} from "@/types/Workshift.ts";
 import {useOffice} from "@/query/useOffice.ts";
-import {useWorkshift} from "@/query/useWorkshift.ts";
+import {useQueryWorkshift} from "@/query/workshift.query.ts";
 import {useWorkScheduleById} from "@/query/useWorkSchedule.ts";
 import {useEffect} from "react";
 import Loading from "@/components/Loading.tsx";
@@ -56,7 +56,7 @@ const SetupWorkScheduleAuto = () => {
         isPending: pendingOffices
     } = useOffice();
 
-    const {data: workshifts, isPending: pendingWorkshift} = useWorkshift()
+    const {data: workshifts, isPending: pendingWorkshift} = useQueryWorkshift()
 
     const {data: workSchedule, isLoading: pendingWorkSchedule} = useWorkScheduleById(id)
 

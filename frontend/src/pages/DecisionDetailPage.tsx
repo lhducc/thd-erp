@@ -7,9 +7,6 @@ import { Pencil, Trash2 } from "lucide-react";
 import DocumentEmployeeForm from "@/components/DocumentEmployeeForm";
 
 const DecisionDetail = () => {
-    const [open, setOpen] = useState(false);
-    
-
     const Header = () => (
         <div className="flex items-center justify-between bg-white p-6 border-b-2 border-gray-800">
             <div>

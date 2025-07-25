@@ -15,7 +15,7 @@ import {registerWorkScheduleRegisterApi, updateWorkScheduleRegisterApi} from "@/
 import type {WeekdaySelection} from "@/types/work-schedule.ts";
 import {useNavigate, useParams} from "react-router-dom";
 import {useOffice} from "@/query/useOffice.ts";
-import {useWorkshift} from "@/query/useWorkshift.ts";
+import {useQueryWorkshift} from "@/query/workshift.query.ts";
 import {useWorkScheduleRegisterById} from "@/query/useWorkScheduleRegister.ts";
 import {WorkshiftScheduler} from "@/components/WeekScheduleSelector.tsx";
 import PATH from "@/constants/Path.ts";
@@ -42,7 +42,7 @@ const SetupWorkScheduleRegister = () => {
     });
     const {data: workSchedule, isLoading: pendingWorkSchedule} = useQuery(useWorkScheduleRegisterById(id))
     const { data: offices, isPending: pendingOffices } = useOffice()
-    const { data: workshifts, isPending: pendingWorkshifts } = useWorkshift()
+    const { data: workshifts, isPending: pendingWorkshifts } = useQueryWorkshift()
 
     const navigate = useNavigate();
 

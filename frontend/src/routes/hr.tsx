@@ -19,6 +19,10 @@ import {settingRoutes} from "@/routes/setting.tsx";
 import {Suspense} from "react";
 import Loading from "@/components/Loading.tsx";
 import WorkScheduleRegister from "@/pages/HR/checkin/wok-schedule-register/WorkScheduleRegister.tsx";
+import Rota from "@/pages/HR/checkin/Rota.tsx";
+import SettingWorkScheduleRegister from "@/pages/HR/checkin/wok-schedule-register/SettingWorkScheduleRegister..tsx";
+import AttendantHistory from "@/pages/HR/checkin/AttendantHistory.tsx";
+import AttendantHistoryDetail from "@/pages/HR/checkin/AttendantHistoryDetail.tsx";
 
 export const hrRoutes = [
     {
@@ -42,7 +46,7 @@ export const hrRoutes = [
                 element: <ContractPage/>,
             },
             {
-                path: PATH.DETAIL_INFO,
+                path: `${PATH.DETAIL_INFO}/:id`,
                 element: <DetailEmployeePage/>,
             },
             {
@@ -66,6 +70,10 @@ export const hrRoutes = [
                 element: <SettingWorkScheduleAuto />,
             },
             {
+                path: `${PATH.WORK_SCHEDULE_REGISTER}/:id/setting`,
+                element: <SettingWorkScheduleRegister />,
+            },
+            {
                 path: PATH.APPROVE_ATTENDANCE,
                 element: <ApproveAttendancePage />,
             },
@@ -74,8 +82,16 @@ export const hrRoutes = [
                 element: <DocumentDetail/>,
             },
             {
-                path: PATH.DETAIL_INFO,
-                element: <DetailEmployeePage/>,
+                path: PATH.ROTA,
+                element: <Rota/>,
+            },
+            {
+                path: PATH.ATTENDANT_HISTORY,
+                element: <AttendantHistory />,
+            },
+            {
+                path: `${PATH.ATTENDANT_HISTORY}/:id`,
+                element: <AttendantHistoryDetail />,
             },
             {
                 path: PATH.DOCUMENT_DETAIL,

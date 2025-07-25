@@ -20,12 +20,13 @@ const PATH = {
   SHIFT_MANAGEMENT: "/shift_management",
   CREATESHIFT: "/shift_create",
   SHIFTDETAILPAGE: "/ShiftDetailPage",
-
+  ROTA: "/rota",
   // HR Checkin
   WORKSHIFT: "/workshift",
   ATTENDANCE_MANAGEMENT: "/attendance-management",
   SETUP_WORKSHIFT: "/setup-workshift",
   APPROVE_ATTENDANCE: "/approve-attendant",
+  ATTENDANT_HISTORY: "/attendant-history",
   WORK_SCHEDULE: "/setup-work-schedule",
   WORK_SCHEDULE_REGISTER: "/setup-work-schedule-register",
   // HR Setting

@@ -60,6 +60,11 @@ const HRSidebar = ({...props}: ComponentProps<typeof Sidebar>) => {
                     url: PATH.WORK_SCHEDULE,
                 },
                 {
+                    name: "Bản phân ca",
+                    icon: null,
+                    url: PATH.ROTA,
+                },
+                {
                     name: "Lịch làm việc đăng ký",
                     icon: null,
                     url: PATH.WORK_SCHEDULE_REGISTER,
@@ -83,6 +88,11 @@ const HRSidebar = ({...props}: ComponentProps<typeof Sidebar>) => {
                             name: "Phê duyệt chấm công",
                             icon: null,
                             url: PATH.APPROVE_ATTENDANCE,
+                        },
+                        {
+                            name: "Xem lịch sử chấm công",
+                            icon: null,
+                            url: PATH.ATTENDANT_HISTORY,
                         },
                     ]
                 },

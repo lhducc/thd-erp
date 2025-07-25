@@ -38,10 +38,10 @@ export const getAllEmployeesApi = async (page: number = 2, pageSize: number = 5)
   }
 };
 
-export const getEmployeeByIdApi = async (employeeId: string): Promise<Employee> => {
+export const getEmployeeByIdApi = async (employeeId: string): Promise<any> => {
   try {
     const response = await api.get(`/employee/${employeeId}`);
-    return response.data;
+    return response.data.data;
   } catch (error: any) {
     console.error("Error fetching Employee by ID API:", error);
     if (error.response) {

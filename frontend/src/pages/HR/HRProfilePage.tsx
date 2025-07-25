@@ -13,15 +13,14 @@ import type {Employee} from "@/types";
 import type {ColumnDef} from "@tanstack/react-table";
 import {exportEmployeeExcelApi} from '@/apis/profile.api';
 import {Link} from "react-router-dom";
+import {useAllEmployee} from "@/query/useEmployee.ts";
 
 const EmployeePage = () => {
     const [open, setOpen] = useState(false);
     const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
+    const [activeTab, setActiveTab] = useState("hoat-dong");
 
-    const {data: employees, isLoading: pendingGetEmployees, refetch: refetchEmployee} = useQuery({
-        queryKey: ["employees"],
-        queryFn: getAllEmployeesApi,
-    });
+    const {data: employees, isLoading: pendingGetEmployees, refetch: refetchEmployee} = useAllEmployee()
 
     const {mutate: deleteEmployee} = useMutation({
         mutationFn: deleteEmployeeApi,
@@ -34,82 +33,93 @@ const EmployeePage = () => {
         },
     });
 
-    const columns: ColumnDef<Employee>[] = [
-            {accessorKey: "employee_id", header: "Mã nhân viên"},
-            {
-                accessorKey: "full_name", header: "Họ và tên",
-                cell: ({row}: { row: any }) => {
-                    return (
-                        <Link to={'/detail_infor'}>
-                            {
-                                row.original.full_name
-                            }
-                        </Link>
-                    )
-                }
-            },
-            {
-                accessorKey: "department",
-                header:
-                    "Phòng ban",
-                cell:
-                    ({row}: { row: any }) => row.original.department?.department_name || "N/A"
-            }
-            ,
-            {
-                accessorKey: "job_title_id", header:
-                    "Chức vụ"
-            }
-            ,
-            {
-                accessorKey: "position_id", header:
-                    "Vị trí"
-            }
-            ,
-            {
-                accessorKey: "office",
-                header:
-                    "Văn phòng",
-                cell:
-                    ({row}: { row: any }) => row.original.department?.office?.office_name || "N/A"
-            }
-            ,
-            {
-                accessorKey: "phone_number", header:
-                    "Số điện thoại"
-            }
-            ,
-            {
-                accessorKey: "manager_id", header:
-                    "Quản lý trực tiếp"
-            }
-            ,
-            {
-                accessorKey: "email", header:
-                    "Email"
-            }
-            ,
-            {
-                id: "actions",
-                header:
-                    "Chỉnh sửa",
-                cell:
-                    ({row}: { row: any }) => {
-                        const employee = row.original;
-                        return (
-                            <div className="flex gap-4">
-                                <Button variant={"outline"} onClick={() => setEditEmployee(employee)}>
-                                    <SquarePen/>
-                                </Button>
-                                <ConfirmDelete deleteFn={() => deleteEmployee(employee.employee_id)}/>
-                            </div>
-                        );
-                    },
-            }
-            ,
-        ]
-    ;
+    // Filter employees based on active tab
+    const filteredEmployees = employees?.filter((employee: Employee) => {
+        if (activeTab === "hoat-dong") {
+            return employee.status.toLowerCase() === "active";
+        } else {
+            return employee.status.toLowerCase() !== "active";
+        }
+    }) || [];
 
+    const columns: ColumnDef<Employee>[] = [
+        {accessorKey: "employee_id", header: "Mã nhân viên"},
+        {
+            accessorKey: "full_name",
+            header: "Họ và tên",
+            cell: ({row}: { row: any }) => {
+                return (
+                    <Link to={`/detail_infor/${row.original.employee_id}`}>
+                        {row.original.full_name}
+                    </Link>
+                )
+            }
+        },
+        {
+            accessorKey: "department",
+            header: "Phòng ban",
+            cell: ({row}: { row: any }) => row.original.department?.department_name || "N/A"
+        },
+        {
+            accessorKey: "job_title_id",
+            header: "Chức vụ",
+            cell: ({row}: { row: any }) => row.original.job_title?.job_title || "N/A"
+        },
+        {
+            accessorKey: "position_id",
+            header: "Vị trí",
+            cell: ({row}: { row: any }) => row.original.position?.position_name || "N/A"
+        },
+        {
+            accessorKey: "office",
+            header: "Văn phòng",
+            cell: ({row}: { row: any }) => row.original.department?.office?.office_name || "N/A"
+        },
+        {
+            accessorKey: "phone_number",
+            header: "Số điện thoại"
+        },
+        {
+            accessorKey: "manager_id",
+            header: "Quản lý trực tiếp",
+            cell: ({row}: { row: any }) => row.original.manager?.full_name || "N/A"
+        },
+        {
+            accessorKey: "email",
+            header: "Email"
+        },
+        {
+            accessorKey: "status",
+            header: "Trạng thái",
+            cell: ({row}: { row: any }) => {
+                const status = row.original.status.toLowerCase();
+                return (
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                        status === "active"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                    }`}>
+                        {status === "active" ? "Hoạt động" : "Vô hiệu hóa"}
+                    </span>
+                );
+            }
+        },
+        {
+            id: "actions",
+            header: "Chỉnh sửa",
+            cell: ({row}: { row: any }) => {
+                const employee = row.original;
+                return (
+                    <div className="flex gap-4">
+                        <Button variant={"outline"} onClick={() => setEditEmployee(employee)}>
+                            <SquarePen/>
+                        </Button>
+                        <ConfirmDelete deleteFn={() => deleteEmployee(employee.employee_id)}/>
+                    </div>
+                );
+            },
+        }
+    ];
 
     const ButtonCreate = () => {
         const [isDropdownVisible, setIsDropdownVisible] = useState(false);
@@ -157,14 +167,12 @@ const EmployeePage = () => {
                 <div ref={dropdownRef} className="dropdown relative">
                     <Button
                         onClick={toggleDropdown}
-                        className={`w-[200px] py-5 text-[17px] rounded-[15px]`
-                        }
+                        className={`w-[200px] py-5 text-[17px] rounded-[15px]`}
                     >
                         <span className={`mb-1 text-[24px]`}>+</span> Thêm nhân viên
                     </Button>
                     {isDropdownVisible && (
-                        <div
-                            className="dropdown-menu absolute left-0 w-[200px] text-[13px] bg-white shadow-lg rounded-b-2xl z-10">
+                        <div className="dropdown-menu absolute left-0 w-[200px] text-[13px] bg-white shadow-lg rounded-b-2xl z-10">
                             {["Nhân viên chính thức", "Thực tập sinh", "Cộng tác viên"].map((label, index) => (
                                 <button
                                     key={index}
@@ -183,22 +191,19 @@ const EmployeePage = () => {
                     className={`px-10 py-5 rounded-[15px] text-[17px]`}
                     disabled={loading}
                 >
-                    {loading ? "Đang xuất..." : (
-                        <>
-                            Xuất file
-                        </>
-                    )}
+                    {loading ? "Đang xuất..." : "Xuất file"}
                 </Button>
             </div>
         );
     };
 
     const NavLink = () => {
-        const [activeTab, setActiveTab] = useState("hoat-dong");
         const [isFilterVisible, setIsFilterVisible] = useState(false);
         const filterRef = useRef<HTMLDivElement | null>(null);
 
-        const handleTabClick = (tab: string) => setActiveTab(tab);
+        const handleTabClick = (tab: string) => {
+            setActiveTab(tab);
+        };
 
         const handleFilterClick = () => {
             setIsFilterVisible(!isFilterVisible);
@@ -208,13 +213,21 @@ const EmployeePage = () => {
             <div className="button-container flex items-center justify-right mb-[10px] mt-[50px] relative">
                 <label
                     onClick={() => handleTabClick("hoat-dong")}
-                    className={`cursor-pointer text-lg pb-[10px] w-[120px] ${activeTab === "hoat-dong" ? "font-bold border-b-2 border-[#DB3B21] text-[#DB3B21]" : "text-gray-300 border-b-2 border-gray-300"}`}
+                    className={`cursor-pointer text-lg pb-[10px] w-[120px] ${
+                        activeTab === "hoat-dong"
+                            ? "font-bold border-b-2 border-[#DB3B21] text-[#DB3B21]"
+                            : "text-gray-300 border-b-2 border-gray-300"
+                    }`}
                 >
                     Hoạt động
                 </label>
                 <label
                     onClick={() => handleTabClick("vo-hieu-hoa")}
-                    className={`cursor-pointer text-lg pb-[10px] w-[189px] text-center ${activeTab === "vo-hieu-hoa" ? "font-bold border-b-2 border-[#DB3B21] text-[#DB3B21]" : "text-gray-300 border-b-2 border-gray-300"}`}
+                    className={`cursor-pointer text-lg pb-[10px] w-[189px] text-center ${
+                        activeTab === "vo-hieu-hoa"
+                            ? "font-bold border-b-2 border-[#DB3B21] text-[#DB3B21]"
+                            : "text-gray-300 border-b-2 border-gray-300"
+                    }`}
                 >
                     Đã vô hiệu hóa
                 </label>
@@ -251,7 +264,6 @@ const EmployeePage = () => {
         );
     };
 
-
     if (pendingGetEmployees) return <Loading/>;
 
     return (
@@ -259,14 +271,18 @@ const EmployeePage = () => {
             <DataTable
                 columns={columns}
                 buttonCreate={<ButtonCreate/>}
-                data={employees || []}
+                data={filteredEmployees}
                 navLink={<NavLink/>}
                 title="Hồ sơ nhân viên"
                 keyFilter="employee_id"
             />
             {editEmployee && (
-                <EditEmployeeForm open={Boolean(editEmployee)} setOpen={setEditEmployee} data={editEmployee}
-                                  refetchEmployee={refetchEmployee}/>
+                <EditEmployeeForm
+                    open={Boolean(editEmployee)}
+                    setOpen={setEditEmployee}
+                    data={editEmployee}
+                    refetchEmployee={refetchEmployee}
+                />
             )}
         </>
     );

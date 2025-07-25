@@ -9,19 +9,14 @@ import {SquarePen} from "lucide-react";
 import ConfirmDelete from "@/components/ConfirmDelete.tsx";
 import Loading from "@/components/Loading.tsx";
 import DataTable from "@/components/DataTable.tsx";
-import {getAllSetupWorkshiftAPI} from "@/apis/setup-workshift.api.ts";
+import {useQueryAllSetupWorkshifts} from "@/query/workshift.query.ts";
 
 const SetupWorkshift = () => {
     const {
         data: setupWorkshift,
         isPending: pendingSetupWorkshift,
         refetch: refetchSetupWorkshift,
-    } = useQuery({
-        queryKey: ["setupWorkshift"],
-        queryFn: getAllSetupWorkshiftAPI,
-        gcTime: 0,
-        staleTime: 0,
-    });
+    } = useQueryAllSetupWorkshifts()
 
     const { mutateAsync: deleteOffice } = useMutation({
         mutationFn: (id: string) => deleteOfficeApi(id),

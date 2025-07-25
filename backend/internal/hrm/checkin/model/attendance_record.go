@@ -1,82 +1,38 @@
 package model
 
 import (
-	"errors"
+	"erp/backend/internal/hrm/hr_profile/model"
+	"erp/backend/pkg/variable"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 )
 
-type StatusEnum string
-
-const (
-	Pending  StatusEnum = "pending"
-	Approved StatusEnum = "approved"
-	Rejected StatusEnum = "rejected"
-)
-
 type AttendanceRecord struct {
-	AttendanceRecordID   string     `gorm:"column:attendance_record_id;primaryKey;type:uuid;default:uuid_generate_v4()" json:"attendance_record_id"`
-	EmployeeID           string     `gorm:"column:employee_id;type:varchar;not null;index" json:"employee_id"`
-	Timestamp            time.Time  `gorm:"column:timestamp;type:timestamp;not null" json:"timestamp"`
-	GPSLocation          string     `gorm:"-" json:"gps_location"` // GPS coordinates
-	Latitude             *float64   `gorm:"column:latitude;type:DECIMAL(10,8)" json:"latitude"`
-	Longitude            *float64   `gorm:"column:longitude;type:DECIMAL(11,8)" json:"longitude"`
-	ImageName            string     `gorm:"column:image_name;type:text" json:"image_name"`
-	ImageURL             string     `gorm:"-" json:"image_URL"`
-	OfficeID             *string    `gorm:"column:office_id;type:varchar;default:null" json:"office_id"`
-	AttendanceCategoryID string     `gorm:"column:category_id;type:uuid" json:"category_id"` // Onsite, WFH, AtOffice,..
-	NoteRequest          *string    `gorm:"column:note_request;type:text" json:"note_request"`
-	NoteReject           *string    `gorm:"column:note_reject;type:text" json:"note_reject"`
-	Status               StatusEnum `gorm:"column:status;default:pending" json:"status"`
+	AttendanceRecordID   string              `gorm:"column:attendance_record_id;primaryKey;type:uuid;default:uuid_generate_v4()" json:"attendance_record_id"`
+	EmployeeID           string              `gorm:"column:employee_id;type:varchar;not null;index" json:"employee_id"`
+	Timestamp            time.Time           `gorm:"column:timestamp;type:timestamp;not null" json:"timestamp"`
+	GPSLocation          string              `gorm:"-" json:"gps_location"` // GPS coordinates
+	Latitude             *float64            `gorm:"column:latitude;" json:"latitude"`
+	Longitude            *float64            `gorm:"column:longitude;" json:"longitude"`
+	ImageName            string              `gorm:"column:image_name;type:text" json:"image_name"`
+	ImageURL             string              `gorm:"-" json:"image_URL"`
+	OfficeID             *string             `gorm:"column:office_id;type:varchar;default:null" json:"office_id"`
+	AttendanceCategoryID *string             `gorm:"column:category_id;type:uuid" json:"category_id"` // Onsite, WFH, AtOffice,..
+	NoteRequest          *string             `gorm:"column:note_request;type:text" json:"note_request"`
+	NoteReject           *string             `gorm:"column:note_reject;type:text" json:"note_reject"`
+	Status               variable.StatusEnum `gorm:"column:status;default:pending" json:"status"`
+	CreatedBy            *string             `gorm:"column:created_by;type:varchar;default:null" json:"created_by"`
 
-	//Employee           model.Employee     `gorm:"foreignKey:EmployeeID;references:EmployeeID"`
-	//Office             *model.Office      `gorm:"foreignKey:OfficeID;references:ID"`
-	AttendanceCategory AttendanceCategory `gorm:"foreignKey:AttendanceCategoryID;references:AttendanceCategoryID"`
-}
-
-type AttendanceRecordCreate struct {
-	Timestamp            time.Time `form:"timestamp" gorm:"column:timestamp;type:timestamp;not null"`
-	GPSLocation          string    `form:"gps_location" gorm:"column:location;type:text"` // GPS coordinates
-	OfficeID             *string   `form:"office_id" gorm:"column:office_id;type:varchar"`
-	AttendanceCategoryID string    `form:"category_id" gorm:"column:category_id;type:uuid;not null"` // Onsite, WFH, AtOffice,..
-	NoteRequest          *string   `form:"note_request" gorm:"column:note_request;type:text"`
-}
-
-type AttendanceRecordUpdate struct {
-	Status     StatusEnum `gorm:"column:status;default:Pending" json:"status"`
-	NoteReject *string    `gorm:"column:note_reject;type:text" json:"note_reject"`
+	Employee           *model.EmployeeInforResponse `gorm:"foreignKey:EmployeeID;references:EmployeeID"`
+	Office             *model.Office                `gorm:"foreignKey:OfficeID;references:ID"`
+	CreateByInfo       *model.ManagerResponse       `gorm:"foreignKey:CreatedBy;references:EmployeeID" json:"create_by_info"`
+	AttendanceCategory *AttendanceCategory          `gorm:"foreignKey:AttendanceCategoryID;references:AttendanceCategoryID"`
 }
 
 func (AttendanceRecord) TableName() string {
 	return "attendance_records"
-}
-
-func (r *AttendanceRecord) Validate() error {
-	if r.EmployeeID == "" {
-		return errors.New("employee ID is required")
-	}
-
-	if r.Timestamp.IsZero() {
-		return errors.New("timestamp is required")
-	}
-
-	if r.AttendanceCategoryID == "" {
-		return errors.New("category ID is required")
-	}
-
-	return nil
-}
-
-func ConvertToAttendanceRecordStruct(record *AttendanceRecordCreate) AttendanceRecord {
-	return AttendanceRecord{
-		Timestamp:            record.Timestamp,
-		GPSLocation:          record.GPSLocation,
-		OfficeID:             record.OfficeID,
-		AttendanceCategoryID: record.AttendanceCategoryID,
-		NoteRequest:          record.NoteRequest,
-	}
 }
 
 func (r *AttendanceRecord) ParseGPS() error {

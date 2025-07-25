@@ -4,6 +4,7 @@ import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
+	hrm_model "erp/backend/internal/hrm/hr_profile/model"
 	utils "erp/backend/pkg"
 	"erp/backend/pkg/variable"
 	"errors"
@@ -33,8 +34,8 @@ func (r *workScheduleRepoImpl) Save(c context.Context, workSchedule *model.WorkS
 		if err := tx.Exec(`
             INSERT INTO work_schedule 
             (work_schedule_name, office_id, repeat_type, repeat_cycle, 
-             effective_date, expiration_date, status, is_deleted)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+             effective_date, expiration_date, status, is_deleted, is_schedule_auto)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			workSchedule.WorkScheduleName,
 			workSchedule.OfficeID,
 			workSchedule.RepeatType,
@@ -43,6 +44,7 @@ func (r *workScheduleRepoImpl) Save(c context.Context, workSchedule *model.WorkS
 			workSchedule.ExpirationDate,
 			workSchedule.Status,
 			workSchedule.IsDeleted,
+			workSchedule.IsScheduleAuto,
 		).Error; err != nil {
 			return err
 		}
@@ -76,8 +78,8 @@ func (r *workScheduleRepoImpl) Delete(c context.Context, id int) error {
 		Status:    variable.InActive,
 	}
 	return utils.WithTransaction(r.db, c, func(ctx context.Context, tx *gorm.DB) error {
-		if err := tx.WithContext(c).Model(&model.WorkScheduleEmployee{}).Where("work_schedule_id = ?", id).
-			Delete(&model.WorkScheduleEmployee{}).Error; err != nil {
+		if err := tx.WithContext(c).Model(&hrm_model.Employee{}).Where("schedule_id = ?", id).
+			Update("schedule_id", nil).Error; err != nil {
 			return err
 		}
 		if err := tx.WithContext(c).Model(&model.WorkScheduleManager{}).Where("work_schedule_id = ?", id).
@@ -180,10 +182,10 @@ func (r *workScheduleRepoImpl) IsExistsByName(c context.Context, name string) (b
 	return true, nil
 }
 
-func (r *workScheduleRepoImpl) IsExistsByID(c context.Context, id int) (bool, error) {
+func (r *workScheduleRepoImpl) IsExistsByScheduleIDAuto(c context.Context, id int) (bool, error) {
 	var workSchedule *model.WorkSchedule
 	err := r.db.WithContext(c).Model(model.WorkSchedule{}).
-		Where("work_schedule_id = ? AND is_deleted = ?", id, false).
+		Where("work_schedule_id = ? AND is_deleted = ? AND is_schedule_auto = true", id, false).
 		First(&workSchedule).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, nil
@@ -194,73 +196,56 @@ func (r *workScheduleRepoImpl) IsExistsByID(c context.Context, id int) (bool, er
 	return true, nil
 }
 
-func (r *workScheduleRepoImpl) AssignOrUpdateEmployeesAndManagers(
+func (r *workScheduleRepoImpl) IsExistsByScheduleIDRegister(c context.Context, id int) (bool, error) {
+	var workSchedule *model.WorkSchedule
+	err := r.db.WithContext(c).Model(model.WorkSchedule{}).
+		Where("work_schedule_id = ? AND is_deleted = ? AND is_schedule_auto = false", id, false).
+		First(&workSchedule).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, nil
+	}
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *workScheduleRepoImpl) AssignOrUpdateManagers(
 	ctx context.Context,
-	employees []model.WorkScheduleEmployee,
 	managers []model.WorkScheduleManager,
 ) error {
-	return utils.WithTransaction(r.db, ctx, func(ctx context.Context, tx *gorm.DB) error {
-		// Upsert cho Employees
-		if len(employees) > 0 {
-			if err := tx.WithContext(ctx).
-				Clauses(clause.OnConflict{
-					Columns:   []clause.Column{{Name: "employee_id"}},
-					DoUpdates: clause.AssignmentColumns([]string{"work_schedule_id", "assigned_at"}),
-				}).
-				Create(&employees).Error; err != nil {
-				return fmt.Errorf("failed to upsert employees: %w", err)
-			}
+	// Upsert cho Managers
+	if len(managers) > 0 {
+		if err := r.db.WithContext(ctx).
+			Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "employee_id"}, {Name: "work_schedule_id"}},
+				DoUpdates: clause.AssignmentColumns([]string{"is_reading", "is_editing"}),
+			}).
+			Create(&managers).Error; err != nil {
+			return fmt.Errorf("failed to upsert managers: %w", err)
 		}
+	}
 
-		// Upsert cho Managers
-		if len(managers) > 0 {
-			if err := tx.WithContext(ctx).
-				Clauses(clause.OnConflict{
-					Columns:   []clause.Column{{Name: "employee_id"}, {Name: "work_schedule_id"}},
-					DoUpdates: clause.AssignmentColumns([]string{"is_reading", "is_editing"}),
-				}).
-				Create(&managers).Error; err != nil {
-				return fmt.Errorf("failed to upsert managers: %w", err)
-			}
-		}
-
-		return nil
-	})
+	return nil
 }
 
-func (r *workScheduleRepoImpl) CheckExistEmployeeSchedule(ctx context.Context, employeeID string, idSchedule *int) (*model.WorkScheduleEmployee, *model.WorkSchedule, bool, error) {
-	var req model.WorkScheduleEmployee
-	var workS model.WorkSchedule
-	var err error
-
-	if idSchedule != nil {
-		err = r.db.WithContext(ctx).Model(model.WorkScheduleEmployee{}).
-			Preload("Employee").
-			Where("employee_id = ? AND work_schedule_id != ?", employeeID, idSchedule).First(&req).Error
-	} else {
-		err = r.db.WithContext(ctx).Model(model.WorkScheduleEmployee{}).
-			Preload("Employee").
-			Where("employee_id = ?", employeeID).First(&req).Error
-	}
-
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil, false, nil
-	}
-	if err != nil {
-		return nil, nil, false, err
-	}
-	err = r.db.WithContext(ctx).Model(model.WorkSchedule{}).
-		Where("work_schedule_id = ?", &req.WorkScheduleID).First(&workS).Error
-	if err != nil {
-		return nil, nil, false, err
-	}
-	return &req, &workS, true, nil
-}
-
-func (r *workScheduleRepoImpl) GetAll(ctx context.Context) ([]model.WorkSchedule, error) {
+func (r *workScheduleRepoImpl) GetAllScheduleAuto(ctx context.Context) ([]model.WorkSchedule, error) {
 	var schedules []model.WorkSchedule
 	if err := r.db.WithContext(ctx).
-		Where("is_deleted = false").
+		Where("is_deleted = false AND is_schedule_auto = true").
+		Preload("Office").
+		Preload("Managers").
+		Preload("Managers.Employee").
+		Find(&schedules).Error; err != nil {
+		return nil, err
+	}
+	return schedules, nil
+}
+
+func (r *workScheduleRepoImpl) GetAllScheduleRegister(ctx context.Context) ([]model.WorkSchedule, error) {
+	var schedules []model.WorkSchedule
+	if err := r.db.WithContext(ctx).
+		Where("is_deleted = false AND is_schedule_auto = false").
 		Preload("Office").
 		Preload("Managers").
 		Preload("Managers.Employee").
@@ -276,11 +261,9 @@ func (r *workScheduleRepoImpl) GetByID(ctx context.Context, id int) (*model.Work
 		Where("is_deleted = false").
 		Preload("Office").
 		Preload("Managers").
-		Preload("Employees").
 		Preload("Weekdays").
 		Preload("Weekdays.WorkShift").
 		Preload("Managers.Employee").
-		Preload("Employees.Employee").
 		Where("work_schedule_id = ?", id).First(&workSchedule).Error; err != nil {
 
 		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
@@ -297,7 +280,6 @@ func (r *workScheduleRepoImpl) DeleteManagerFromWorkSchedule(
 	workScheduleID int) error {
 	var wsEmp model.WorkScheduleManager
 
-	// Kiểm tra xem bản ghi có tồn tại không
 	err := r.db.WithContext(ctx).
 		Where("employee_id = ? AND work_schedule_id = ?", managerID, workScheduleID).
 		First(&wsEmp).Error
@@ -319,31 +301,18 @@ func (r *workScheduleRepoImpl) DeleteManagerFromWorkSchedule(
 	return nil
 }
 
-func (r *workScheduleRepoImpl) DeleteEmployeeFromWorkSchedule(
-	ctx context.Context,
-	employeeID string,
-	workScheduleID int,
-) error {
-	var wsEmp model.WorkScheduleEmployee
+func (r *workScheduleRepoImpl) GetListShiftRegister(ctx context.Context, scheduleID *int) ([]model.WorkScheduleShift, error) {
+	var scheduleShifts []model.WorkScheduleShift
 
-	// Kiểm tra xem bản ghi có tồn tại không
 	err := r.db.WithContext(ctx).
-		Where("employee_id = ? AND work_schedule_id = ?", employeeID, workScheduleID).
-		First(&wsEmp).Error
-
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return fmt.Errorf("Nhân viên %s không tồn tại ở lịch tự động", employeeID)
-	}
+		Joins("JOIN work_schedule ws ON ws.work_schedule_id = work_schedule_shift.work_schedule_id").
+		Where("ws.is_schedule_auto = false").
+		Where("work_schedule_shift.work_schedule_id = ?", scheduleID).
+		Preload("WorkShift").
+		Find(&scheduleShifts).Error
 
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	if err := r.db.WithContext(ctx).
-		Where("employee_id = ? AND work_schedule_id = ?", employeeID, workScheduleID).
-		Delete(&model.WorkScheduleEmployee{}).Error; err != nil {
-		return fmt.Errorf("Lỗi khi xóa nhân viên khỏi lịch: %w", err)
-	}
-
-	return nil
+	return scheduleShifts, nil
 }

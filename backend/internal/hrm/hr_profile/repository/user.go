@@ -1,12 +1,13 @@
 package repository
 
 import (
+	"context"
 	"erp/backend/internal/hrm/hr_profile/model"
 	"errors"
 	"fmt"
-	"log"
-
 	"gorm.io/gorm"
+	"log"
+	"strings"
 )
 
 type UserStore struct {
@@ -245,7 +246,7 @@ func (s *UserStore) UpdateEmployeeWithAccount(employee *model.Employee, accountI
 	return nil
 }
 
-func (s *UserStore) CheckExistEmployee(employeeIDs []string) ([]string, error) {
+func (s *UserStore) CheckExistEmployees(employeeIDs []string) ([]string, error) {
 	var employees []model.Employee
 
 	if err := s.db.
@@ -267,4 +268,67 @@ func (s *UserStore) CheckExistEmployee(employeeIDs []string) ([]string, error) {
 		}
 	}
 	return missing, nil
+}
+
+func (s *UserStore) GetBySchedule(ctx context.Context, scheduleIDs []int, managerID string, filter string) ([]model.Employee, error) {
+	var employees []model.Employee
+	query := s.db.WithContext(ctx).Model(model.Employee{}).
+		Select("employee.employee_id", "employee.full_name", "employee.schedule_id", "employee.department_id").
+		Preload("Department")
+
+	if strings.TrimSpace(managerID) != "" {
+		query = query.Joins("JOIN work_schedule_manager ON employee.schedule_id = work_schedule_manager.work_schedule_id").
+			Where("work_schedule_manager.employee_id = ?", managerID)
+	}
+
+	if filter != "" {
+		switch filter {
+		case "register":
+			query = query.Joins("JOIN work_schedule ON employee.schedule_id = work_schedule.work_schedule_id").
+				Where("work_schedule.is_schedule_auto = ?", false)
+		case "auto":
+			query = query.Joins("JOIN work_schedule ON employee.schedule_id = work_schedule.work_schedule_id").
+				Where("work_schedule.is_schedule_auto = ?", true)
+		case "no_schedule":
+			query = query.Where("employee.schedule_id IS NULL")
+		}
+	}
+
+	// Xử lý lọc theo scheduleIDs nếu có
+	if len(scheduleIDs) > 0 {
+		query = query.Where("employee.schedule_id IN (?)", scheduleIDs)
+	}
+
+	if err := query.Find(&employees).Error; err != nil {
+		fmt.Printf("Lỗi DB: %s", err.Error())
+		return nil, errors.New("Lỗi hệ thống, truy vấn người dùng theo lịch làm việc thất bại")
+	}
+
+	return employees, nil
+}
+
+func (s *UserStore) CheckExists(employeeID string) (bool, error) {
+	var employees model.Employee
+	err := s.db.
+		Where("employee_id = ?", employeeID).
+		First(&employees).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to get employees: %w", err)
+	}
+	return true, nil
+}
+
+func (s *UserStore) GetScheduleOfEmployee(employeeID string) (*model.Employee, error) {
+	var employee model.Employee
+	err := s.db.
+		Where("employee_id = ?", employeeID).
+		Select("schedule_id").
+		First(&employee).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get employees: %w", err)
+	}
+	return &employee, nil
 }

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	"erp/backend/internal/hrm/hr_profile/repository"
@@ -15,14 +16,12 @@ import (
 
 type WorkScheduleService struct {
 	repo         repo_interface.WorkScheduleRepo
-	registerRepo repo_interface.WorkScheduleRegisterRepo
 	employeeRepo *repository.UserStore
 }
 
-func NewWorkScheduleService(repo repo_interface.WorkScheduleRepo, registerRepo repo_interface.WorkScheduleRegisterRepo, employeeRepo *repository.UserStore) service_interface.WorkScheduleServiceInterface {
+func NewWorkScheduleService(repo repo_interface.WorkScheduleRepo, employeeRepo *repository.UserStore) service_interface.WorkScheduleServiceInterface {
 	return &WorkScheduleService{
 		repo:         repo,
-		registerRepo: registerRepo,
 		employeeRepo: employeeRepo,
 	}
 }
@@ -60,18 +59,30 @@ func (s *WorkScheduleService) CreateNewWorkSchedule(c context.Context, workSched
 	return s.repo.Save(c, workSchedule, weekdayShift)
 }
 
-func (s *WorkScheduleService) DeleteWorkSchedule(c context.Context, id int) error {
-	exists, err := s.repo.IsExistsByID(c, id)
+func (s *WorkScheduleService) DeleteWorkScheduleAuto(c context.Context, id int) error {
+	exists, err := s.repo.IsExistsByScheduleIDAuto(c, id)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		return errors.New("Lịch làm việc cần xóa không tồn tại")
+		return errors.New("Lịch làm việc tự động cần xóa không tồn tại")
 	}
 	return s.repo.Delete(c, id)
 }
-func (s *WorkScheduleService) UpdateWorkSchedule(c context.Context, workSchedule *model.WorkSchedule, id int) error {
-	exists, err := s.repo.IsExistsByID(c, id)
+
+func (s *WorkScheduleService) DeleteWorkScheduleRegister(c context.Context, id int) error {
+	exists, err := s.repo.IsExistsByScheduleIDRegister(c, id)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errors.New("Lịch làm việc đăng ký cần xóa không tồn tại")
+	}
+	return s.repo.Delete(c, id)
+}
+
+func (s *WorkScheduleService) UpdateWorkScheduleAuto(c context.Context, workSchedule *model.WorkSchedule, id int) error {
+	exists, err := s.repo.IsExistsByScheduleIDAuto(c, id)
 	timeNow := time.Now()
 	effectiveBeforeNow := workSchedule.EffectiveDate.Before(timeNow)
 	expirationAfterNow := workSchedule.ExpirationDate.After(timeNow)
@@ -94,43 +105,31 @@ func (s *WorkScheduleService) UpdateWorkSchedule(c context.Context, workSchedule
 	return s.repo.Update(c, workSchedule, id)
 }
 
-func (s *WorkScheduleService) checkEmployeeExistsInOtherSchedules(c context.Context, employeeIDs []string, idSchedule int) error {
-	for _, empID := range employeeIDs {
-		wSREmployee, wsr, exist, err := s.registerRepo.CheckExistEmployeeScheduleRegister(c, empID, nil)
-		if err != nil {
-			return err
-		}
-		if exist {
-			return fmt.Errorf("Nhân viên '%s: %s' đã thuộc lịch đăng ký tên '%s'",
-				empID, wSREmployee.Employee.Fullname, wsr.WorkScheduleRegisterName)
-		}
+func (s *WorkScheduleService) UpdateWorkScheduleRegister(c context.Context, workSchedule *model.WorkSchedule, id int) error {
+	exists, err := s.repo.IsExistsByScheduleIDRegister(c, id)
+	timeNow := time.Now()
+	effectiveBeforeNow := workSchedule.EffectiveDate.Before(timeNow)
+	expirationAfterNow := workSchedule.ExpirationDate.After(timeNow)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errors.New("Lịch làm việc cần sửa đổi không tồn tại")
+	}
 
-		wSEmployee, wSchedule, exist, err := s.repo.CheckExistEmployeeSchedule(c, empID, &idSchedule)
-		if err != nil {
-			return err
-		}
-		if exist {
-			return fmt.Errorf("Nhân viên '%s: %s' đã thuộc lịch tự động tên '%s'",
-				empID, wSEmployee.Employee.Fullname,
-				wSchedule.WorkScheduleName,
-			)
-		}
+	switch {
+	case workSchedule.EffectiveDate.After(timeNow):
+		workSchedule.Status = variable.InActive
+	case effectiveBeforeNow && expirationAfterNow:
+		workSchedule.Status = variable.Active
+	case effectiveBeforeNow && !expirationAfterNow:
+		workSchedule.Status = variable.Expired
 	}
-	return nil
-}
-func createWorkScheduleEmployeeRecords(employeeIDs []string, scheduleID int, now time.Time) []model.WorkScheduleEmployee {
-	var records []model.WorkScheduleEmployee
-	for _, empID := range employeeIDs {
-		records = append(records, model.WorkScheduleEmployee{
-			EmployeeID:     empID,
-			WorkScheduleID: &scheduleID,
-			AssignedAt:     &now,
-		})
-	}
-	return records
+
+	return s.repo.Update(c, workSchedule, id)
 }
 
-func createWorkScheduleManagerRecords(managers []model.ManagerAssignRequest, scheduleID int, now time.Time) []model.WorkScheduleManager {
+func createWorkScheduleManagerRecords(managers []dto.ManagerAssignRequest, scheduleID int, now time.Time) []model.WorkScheduleManager {
 	var records []model.WorkScheduleManager
 	for _, m := range managers {
 		records = append(records, model.WorkScheduleManager{
@@ -143,28 +142,20 @@ func createWorkScheduleManagerRecords(managers []model.ManagerAssignRequest, sch
 	return records
 }
 
-func (s *WorkScheduleService) AssignEmployeeToWorkSchedule(c context.Context, req *model.AssignEmployeeRequest, idSchedule int) error {
+func (s *WorkScheduleService) AssignEmployeeToWorkScheduleAuto(c context.Context, req *dto.AssignManagersRequest, idSchedule int) error {
 	now := time.Now()
 
-	if err := s.checkEmployeeExistsInOtherSchedules(c, req.EmployeeIDs, idSchedule); err != nil {
-		return err
-	}
-
-	employeeRecords := createWorkScheduleEmployeeRecords(req.EmployeeIDs, idSchedule, now)
 	managerRecords := createWorkScheduleManagerRecords(req.Managers, idSchedule, now)
 
-	exists, err := s.repo.IsExistsByID(c, idSchedule)
+	exists, err := s.repo.IsExistsByScheduleIDAuto(c, idSchedule)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		return errors.New("Lịch làm việc không tồn tại")
+		return errors.New("Lịch làm việc tự động không tồn tại")
 	}
 
-	allEmployeeIDs := make([]string, 0, len(employeeRecords)+len(managerRecords))
-	for _, emp := range employeeRecords {
-		allEmployeeIDs = append(allEmployeeIDs, emp.EmployeeID)
-	}
+	allEmployeeIDs := make([]string, 0, len(managerRecords))
 	for _, mgr := range managerRecords {
 		allEmployeeIDs = append(allEmployeeIDs, mgr.EmployeeID)
 	}
@@ -177,15 +168,52 @@ func (s *WorkScheduleService) AssignEmployeeToWorkSchedule(c context.Context, re
 		return fmt.Errorf("không tìm thấy các nhân viên có mã: %s", strings.Join(missing, ", "))
 	}
 
-	if err := s.repo.AssignOrUpdateEmployeesAndManagers(c, employeeRecords, managerRecords); err != nil {
+	if err := s.repo.AssignOrUpdateManagers(c, managerRecords); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *WorkScheduleService) GetAllWorkSchedule(ctx context.Context) ([]model.WorkSchedule, error) {
-	return s.repo.GetAll(ctx)
+func (s *WorkScheduleService) AssignEmployeeToWorkScheduleRegister(c context.Context, req *dto.AssignManagersRequest, idSchedule int) error {
+	now := time.Now()
+
+	managerRecords := createWorkScheduleManagerRecords(req.Managers, idSchedule, now)
+
+	exists, err := s.repo.IsExistsByScheduleIDRegister(c, idSchedule)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errors.New("Lịch làm việc đăng ký không tồn tại")
+	}
+
+	allEmployeeIDs := make([]string, 0, len(managerRecords))
+	for _, mgr := range managerRecords {
+		allEmployeeIDs = append(allEmployeeIDs, mgr.EmployeeID)
+	}
+
+	missing, err := s.validateEmployeeExists(allEmployeeIDs)
+	if err != nil {
+		return err
+	}
+	if missing != nil {
+		return fmt.Errorf("không tìm thấy các nhân viên có mã: %s", strings.Join(missing, ", "))
+	}
+
+	if err := s.repo.AssignOrUpdateManagers(c, managerRecords); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *WorkScheduleService) GetAllWorkScheduleRegister(ctx context.Context) ([]model.WorkSchedule, error) {
+	return s.repo.GetAllScheduleRegister(ctx)
+}
+
+func (s *WorkScheduleService) GetAllWorkScheduleAuto(ctx context.Context) ([]model.WorkSchedule, error) {
+	return s.repo.GetAllScheduleAuto(ctx)
 }
 
 func (s *WorkScheduleService) GetWorkScheduleByID(ctx context.Context, id int) (*model.WorkSchedule, error) {
@@ -193,16 +221,16 @@ func (s *WorkScheduleService) GetWorkScheduleByID(ctx context.Context, id int) (
 }
 
 func (s *WorkScheduleService) validateEmployeeExists(employeeIDs []string) ([]string, error) {
-	missing, err := s.employeeRepo.CheckExistEmployee(employeeIDs)
+	missing, err := s.employeeRepo.CheckExistEmployees(employeeIDs)
 	if err != nil {
 		return nil, err
 	}
 	return missing, nil
 }
 
-func (s *WorkScheduleService) DeleteEmployeeFromWorkSchedule(ctx context.Context, employeeID string, workScheduleID int) error {
+func (s *WorkScheduleService) DeleteManagerFromWorkScheduleAuto(ctx context.Context, managerID string, workScheduleID int) error {
 	// check exist schedule
-	exists, err := s.repo.IsExistsByID(ctx, workScheduleID)
+	exists, err := s.repo.IsExistsByScheduleIDAuto(ctx, workScheduleID)
 	if err != nil {
 		return err
 	}
@@ -210,16 +238,16 @@ func (s *WorkScheduleService) DeleteEmployeeFromWorkSchedule(ctx context.Context
 		return errors.New("Lịch làm việc cần sửa đổi không tồn tại")
 	}
 
-	err = s.repo.DeleteEmployeeFromWorkSchedule(ctx, employeeID, workScheduleID)
+	err = s.repo.DeleteManagerFromWorkSchedule(ctx, managerID, workScheduleID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *WorkScheduleService) DeleteManagerFromWorkSchedule(ctx context.Context, managerID string, workScheduleID int) error {
+func (s *WorkScheduleService) DeleteManagerFromWorkScheduleRegister(ctx context.Context, managerID string, workScheduleID int) error {
 	// check exist schedule
-	exists, err := s.repo.IsExistsByID(ctx, workScheduleID)
+	exists, err := s.repo.IsExistsByScheduleIDRegister(ctx, workScheduleID)
 	if err != nil {
 		return err
 	}

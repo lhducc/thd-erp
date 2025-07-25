@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"erp/backend/internal/hrm/hr_profile/model"
+	"erp/backend/internal/hrm/hr_profile/repository"
 	utils "erp/backend/pkg"
 	"erp/backend/pkg/mail"
 	"errors"
@@ -19,7 +20,10 @@ type EmployeeRepo interface {
 	UpdateEmployee(id string, updatedEmployee model.Employee) error
 	DeleteEmployee(id string) error
 	GetLastEmployeeByCode(emp *model.Employee) error
-	CheckExistEmployee(employeeIDs []string) ([]string, error)
+	CheckExistEmployees(employeeIDs []string) ([]string, error)
+	GetBySchedule(ctx context.Context, scheduleIDs []int, managerID string, filter string) ([]model.Employee, error)
+	CheckExists(employeeID string) (bool, error)
+	GetScheduleOfEmployee(employeeID string) (*model.Employee, error)
 }
 
 type AccountRepo interface {
@@ -37,7 +41,7 @@ type EmployeeBiz struct {
 	account AccountRepo
 }
 
-func NewEmployeeBiz(store EmployeeRepo, account AccountRepo) *EmployeeBiz {
+func NewEmployeeBiz(store *repository.UserStore, account AccountRepo) *EmployeeBiz {
 	return &EmployeeBiz{
 		repo:    store,
 		account: account,

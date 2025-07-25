@@ -5,6 +5,7 @@ import (
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	utils "erp/backend/pkg"
+	"erp/backend/pkg/variable"
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
@@ -84,7 +85,7 @@ func (r *attendanceCategoryRepository) GetByID(ctx context.Context, id string) (
 func (r *attendanceCategoryRepository) ListByOffice(ctx context.Context, officeID string) ([]model.AttendanceCategory, error) {
 	var list []model.AttendanceCategory
 	err := r.db.WithContext(ctx).
-		Where("office_id = ? AND is_deleted = false AND status = ?", officeID, model.StatusActive).
+		Where("office_id = ? AND is_deleted = false AND status = ?", officeID, variable.StatusActive).
 		Find(&list).Error
 
 	if err != nil {

@@ -37,7 +37,7 @@ func (r *ContractStore) GetContract(ctx context.Context, id string) (*hrmmodel.C
 		Preload("Employee.Department").
 		Preload("Employee.Department.Office").
 		Preload("Allowances").
-		Where("contract_id = ?", id).
+		Where("contract_id = ? AND is_deleted = false", id).
 		First(&contract).Error; err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (r *ContractStore) GetContractByEmployeeID(ctx context.Context, employeeId 
 	var contracts []hrmmodel.Contract
 	if err := r.AddDefaultScope(r.db.WithContext(ctx)).
 		Preload("ContractType").
-		Where("employee_id = ?", employeeId).
+		Where("employee_id = ? AND is_deleted = false", employeeId).
 		Find(&contracts).Error; err != nil {
 		return nil, err
 	}
@@ -84,6 +84,7 @@ func (r *ContractStore) GetAllContractPagination(ctx context.Context, page, page
 	}
 
 	if err := db.WithContext(ctx).
+		Where("is_deleted = ?", false).
 		Offset(offset).
 		Limit(pageSize).
 		Preload("Employee").
@@ -104,6 +105,7 @@ func (r *ContractStore) AddDefaultScope(db *gorm.DB) *gorm.DB {
 func (r *ContractStore) GetAllContract(ctx context.Context) ([]hrmmodel.Contract, error) {
 	var contracts []hrmmodel.Contract
 	if err := r.db.WithContext(ctx).
+		Where("is_deleted = false").
 		Preload("Allowances").
 		Preload("Employee").
 		Preload("Employee.Department").
@@ -174,7 +176,7 @@ func (r *ContractStore) DeleteContract(ctx context.Context, id string) error {
 
 func (s *ContractStore) CheckExistName(name string) (bool, error) {
 	var count int64
-	if err := s.db.Model(&hrmmodel.Contract{}).Where("contract_name = ?", name).Count(&count).Error; err != nil {
+	if err := s.db.Model(&hrmmodel.Contract{}).Where("contract_name = ? AND is_deleted = false", name).Count(&count).Error; err != nil {
 		return true, err
 	}
 	if count > 0 {

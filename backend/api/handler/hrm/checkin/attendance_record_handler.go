@@ -2,16 +2,18 @@ package checkin
 
 import (
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	"erp/backend/pkg"
 	"erp/backend/pkg/job"
 	"erp/backend/pkg/minIO"
-	"errors"
+	"erp/backend/pkg/variable"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -26,9 +28,14 @@ func NewAttendanceRecordHandler(biz service_interface.AttendanceRecordService) *
 func (h *AttendanceRecordHandler) CreateAttendanceRecord() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
-		req, err := bindAndValidateAttendanceRequest(c)
-		if err != nil {
-			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
+		var req dto.AttendanceRecordCreate
+		if err := c.ShouldBind(&req); err != nil {
+			utils.ResponseMessage(c, "Invalid input data", http.StatusBadRequest, nil)
+			return
+		}
+
+		if err := req.Validate(); err != nil {
+			utils.ResponseMessage(c, "Invalid input: "+err.Error(), http.StatusBadRequest, nil)
 			return
 		}
 
@@ -38,16 +45,11 @@ func (h *AttendanceRecordHandler) CreateAttendanceRecord() gin.HandlerFunc {
 			return
 		}
 
-		record := model.ConvertToAttendanceRecordStruct(req)
+		record := dto.ConvertToAttendanceRecordStruct(&req)
 		record.EmployeeID = employeeID
 
-		if err := record.Validate(); err != nil {
-			utils.ResponseMessage(c, "Invalid input: "+err.Error(), http.StatusBadRequest, nil)
-			return
-		}
-
 		//check exist category
-		category, err := h.biz.CheckCatrgoryExists(ctx, &record)
+		category, err := h.biz.CheckCategoryExists(ctx, &record)
 		if err != nil {
 			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
 			return
@@ -58,6 +60,8 @@ func (h *AttendanceRecordHandler) CreateAttendanceRecord() gin.HandlerFunc {
 				utils.ResponseMessage(c, "Validation failed: "+err.Error(), http.StatusBadRequest, nil)
 				return
 			}
+		} else {
+			record.Status = variable.Pending
 		}
 		if category.IsCheckLocation == false && category.IsGPS == false {
 			record.Longitude = nil
@@ -93,17 +97,6 @@ func processImageIfRequired(c *gin.Context, record *model.AttendanceRecord, empl
 
 	job.EnqueueUploadJob(file, employeeID, header, record.Timestamp, fileName)
 	return nil
-}
-
-func bindAndValidateAttendanceRequest(c *gin.Context) (*model.AttendanceRecordCreate, error) {
-	var req model.AttendanceRecordCreate
-	if err := c.ShouldBind(&req); err != nil {
-		return nil, errors.New("Invalid input data")
-	}
-
-	fmt.Printf("%+v\n", req)
-
-	return &req, nil
 }
 
 func extractEmployeeIDFromContext(c *gin.Context) (string, error) {
@@ -159,14 +152,14 @@ func (h *AttendanceRecordHandler) GetRecordsByEmployee() gin.HandlerFunc {
 	}
 }
 
-func (h *AttendanceRecordHandler) GetRecordsByDateRange() gin.HandlerFunc {
+func (h *AttendanceRecordHandler) GetRequestsByDateRange() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		employeeID := c.Param("employeeId")
 		from := c.Query("from")
 		to := c.Query("to")
 		ctx := c.Request.Context()
 
-		records, err := h.biz.ListAttendanceRecordsByDateRange(ctx, employeeID, from, to)
+		records, err := h.biz.ListAttendanceRequestsByDateRange(ctx, employeeID, from, to)
 		if err != nil {
 			utils.ResponseMessage(c, "Failed to get records by date range: "+err.Error(), http.StatusBadRequest, nil)
 			return
@@ -214,10 +207,15 @@ func (h *AttendanceRecordHandler) UpdateStatusRecord() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		id := c.Param("id")
-		var updateReq model.AttendanceRecordUpdate
+		var updateReq dto.AttendanceRecordUpdate
 		err := c.ShouldBindJSON(&updateReq)
 		if err != nil {
 			utils.ResponseMessage(c, "Failed to parse request body", http.StatusBadRequest, nil)
+			return
+		}
+
+		if err := updateReq.Validate(); err != nil {
+			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
 			return
 		}
 
@@ -227,5 +225,76 @@ func (h *AttendanceRecordHandler) UpdateStatusRecord() gin.HandlerFunc {
 			return
 		}
 		utils.ResponseMessage(c, "Update thành công", http.StatusOK, nil)
+	}
+}
+
+func (h *AttendanceRecordHandler) GetHistoryRecordByEmployee() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		employeeID := c.Param("employee-id")
+		ctx := c.Request.Context()
+
+		pageStr := c.DefaultQuery("page", "1")
+		limitStr := c.DefaultQuery("limit", "10")
+
+		page, err := strconv.Atoi(pageStr)
+		if err != nil || page < 1 {
+			utils.ResponseMessage(c, "Giá trị 'page' không hợp lệ", http.StatusBadRequest, nil)
+			return
+		}
+
+		limit, err := strconv.Atoi(limitStr)
+		if err != nil || limit < 1 {
+			utils.ResponseMessage(c, "Giá trị 'limit' không hợp lệ", http.StatusBadRequest, nil)
+			return
+		}
+
+		records, err := h.biz.GetHistoryRecordByEmployee(ctx, employeeID, page, limit)
+		if err != nil {
+			utils.ResponseMessage(c, "Không thể lấy lịch sử chấm công: "+err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+
+		addPresignedURLs(c, records)
+		utils.ResponseMessage(c, "Danh sách chấm công theo nhân viên", http.StatusOK, records)
+	}
+}
+
+func (h *AttendanceRecordHandler) CreateAttendanceRecordByAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		role := c.GetString("role")
+		if role != "admin" {
+			utils.ResponseMessage(c, "Access deni, must be admin role", http.StatusBadRequest, nil)
+			return
+		}
+		var req dto.AttendanceRecordCreateByAdmin
+		if err := c.ShouldBind(&req); err != nil {
+			utils.ResponseMessage(c, "Invalid input data", http.StatusBadRequest, nil)
+			return
+		}
+
+		if err := req.Validate(); err != nil {
+			utils.ResponseMessage(c, "Invalid input: "+err.Error(), http.StatusBadRequest, nil)
+			return
+		}
+
+		createrID, err := extractEmployeeIDFromContext(c)
+		if err != nil {
+			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
+			return
+		}
+
+		var record model.AttendanceRecord
+		record.EmployeeID = req.EmployeeID
+		record.Timestamp = req.Timestamp
+		record.CreatedBy = &createrID
+		record.Status = variable.Approved
+
+		if err := h.biz.CreateAttendanceRecord(ctx, &record); err != nil {
+			utils.ResponseMessage(c, "Failed to create attendance record: "+err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Attendance record created successfully", http.StatusOK, nil)
 	}
 }

@@ -1,14 +1,16 @@
 package repo_interface
 
-import "erp/backend/internal/hrm/checkin/model"
+import (
+	"context"
+	"erp/backend/internal/hrm/checkin/model"
+)
 
 type WorkShiftRepo interface {
-	CreateWorkShift(data *model.WorkShifts) error
-	GetWorkShiftById(id string) (model.WorkShifts, error)
-	GetAllWorkShift() ([]model.WorkShifts, error)
-	UpdateWorkShift(id string, data *model.WorkShifts) error
-	DeleteWorkShift(id string) error
-	GetLastWorkShiftByCode(emp *model.WorkShifts, predix string) error
-	IsExactTimeRangeExists(timeOfDay model.TimeOfDayEnum, start, end string) (*model.WorkShifts, error)
-	FindByID(id string) (model.WorkShifts, error)
+	GetWorkShiftById(ctx context.Context, id string) (*model.WorkShifts, error)
+	GetAllWorkShift(ctx context.Context) ([]model.WorkShifts, error)
+	DeleteWorkShift(ctx context.Context, id string) error
+	GetLastWorkShiftByCode(ctx context.Context, emp *model.WorkShifts, predix string) error
+	SaveWorkShift(ctx context.Context, workshift *model.WorkShifts) error
+	CheckExistByName(ctx context.Context, nameWS string, excludeID string) (bool, error)
+	IsDuplicateTimeRange(ctx context.Context, startTime, endTime, excludeID string) (bool, error)
 }

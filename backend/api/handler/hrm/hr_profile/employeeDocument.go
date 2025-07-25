@@ -17,6 +17,7 @@ type EmployeeDocumentBiz interface {
 	UpdateEmployeeDocument(ctx context.Context, id string, data *model.EmployeeDocument) error
 	DeleteEmployeeDocument(ctx context.Context, id string) error
 	GetEmployeeDocumentsPaginated(ctx context.Context, search, status, condition string, offset, limit int) ([]*model.EmployeeDocumentResponse, int64, error)
+	GetEmployeeDocumentsByEmployeeID(ctx context.Context, employeeID string) ([]*model.EmployeeDocument, error)
 }
 
 type EmployeeDocumentHandler struct {
@@ -127,6 +128,20 @@ func (h *EmployeeDocumentHandler) GetEmployeeDocumentById() gin.HandlerFunc {
 		id := c.Param("id")
 
 		result, err := h.employeeDocumentBiz.GetEmployeeDocument(c.Request.Context(), id)
+		if err != nil {
+			utils.ResponseMessage(c, "Không tìm thấy tài liệu nhân viên", http.StatusNotFound, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Lấy tài liệu nhân viên thành công", http.StatusOK, result)
+	}
+}
+
+func (h *EmployeeDocumentHandler) GetEmployeeDocumentByEmployeeId() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		employeeidID := c.Param("id")
+
+		result, err := h.employeeDocumentBiz.GetEmployeeDocumentsByEmployeeID(c.Request.Context(), employeeidID)
 		if err != nil {
 			utils.ResponseMessage(c, "Không tìm thấy tài liệu nhân viên", http.StatusNotFound, nil)
 			return

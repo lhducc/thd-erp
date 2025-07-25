@@ -1,12 +1,13 @@
 package service
 
 import (
+	"context"
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
-	utils "erp/backend/pkg"
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 )
 
 type WorkShiftService struct {
@@ -17,97 +18,105 @@ func NewWorkShiftService(repo repo_interface.WorkShiftRepo) service_interface.Wo
 	return &WorkShiftService{repo: repo}
 }
 
-func (ws *WorkShiftService) CreateWorkShiftService(w *model.WorkShifts) error {
-	var (
-		code string
-		err  error
-	)
-
-	// TimeOfDayEnum -> predix
-	timeOfDayPrefixes := map[model.TimeOfDayEnum]string{
-		model.FullTime:  "CN",
-		model.Morning:   "CS",
-		model.Afternoon: "CC",
-		model.Night:     "CT",
-	}
-	predix, ok := timeOfDayPrefixes[w.TimeOfDay]
-	if !ok {
-		return errors.New("thời gian làm việc không hợp lệ: chỉ chấp nhận 'Cả ngày', 'Sáng', 'Chiều', 'Tối'")
+func (sv *WorkShiftService) CreateWorkShift(ctx context.Context, w *model.WorkShifts) error {
+	_, err := sv.repo.GetWorkShiftById(ctx, w.WorkShiftID)
+	if err == nil {
+		return errors.New("Mã ca làm việc đã tồn tại")
 	}
 
-	// auto create ID
-	code, err = utils.GenerateCode(predix, 3, func() (string, error) {
-		var last model.WorkShifts
-		err := ws.repo.GetLastWorkShiftByCode(&last, predix)
-		if err != nil {
-			return "", err
-		}
-		return last.WorkShiftID, nil
-	})
-
-	if err != nil {
-		return fmt.Errorf("không thể tạo mã: %w", err)
-	}
-
-	// check exit start,end time
-	wData, err := ws.repo.IsExactTimeRangeExists(w.TimeOfDay, w.StartTime, w.EndTime)
-	if err != nil {
-		return err
-	}
-	if wData != nil {
-		return fmt.Errorf("khung giờ %s-%s đã tồn tại trong ca buổi '%s' mã ca '%s'",
-			w.StartTime, w.EndTime, w.TimeOfDay, wData.WorkShiftID)
-	}
-
-	// call repo create new
-	w.WorkShiftID = code
-	if err := ws.repo.CreateWorkShift(w); err != nil {
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
 
+	exist, err := sv.repo.CheckExistByName(ctx, w.WorkShiftName, "")
+	if err != nil {
+		return errors.New("Lỗi hệ thống, Không thể kiểm tra tồn tại của tên ca")
+	}
+	if exist {
+		return errors.New("Tên ca đã tồn tại trong hệ thống dữ liệu")
+	}
+
+	isDup, err := sv.repo.IsDuplicateTimeRange(ctx, w.StartTime, w.EndTime, "")
+	if err != nil {
+		fmt.Errorf("Lỗi: " + err.Error())
+		return errors.New("Lỗi hệ thống khi kiểm tra tùng lặp khung thời gian bắt đầu, kết thúc")
+	}
+	if isDup {
+		return fmt.Errorf("Ca làm việc với StartTime %s và EndTime %s đã tồn tại", w.StartTime, w.EndTime)
+	}
+
+	if err := sv.repo.SaveWorkShift(ctx, w); err != nil {
+		fmt.Printf(err.Error())
+		return errors.New("Lỗi hệ thống")
+	}
 	return nil
 }
 
-func (biz *WorkShiftService) GetWorkShiftByIdService(id string) (model.WorkShifts, error) {
+func (biz *WorkShiftService) GetWorkShiftById(ctx context.Context, id string) (*model.WorkShifts, error) {
 	if id == "" {
-		return model.WorkShifts{}, errors.New("invalid workshift ID")
+		return nil, errors.New("invalid workshift ID")
 	}
 
-	workshift, err := biz.repo.GetWorkShiftById(id)
+	workshift, err := biz.repo.GetWorkShiftById(ctx, id)
 	if err != nil {
-		return model.WorkShifts{}, fmt.Errorf("failed to get workshift: %w", err)
+		return nil, fmt.Errorf("failed to get workshift: %w", err)
 	}
 
 	return workshift, nil
 }
 
-func (biz *WorkShiftService) GetAllWorkShiftService() ([]model.WorkShifts, error) {
-	workshifts, err := biz.repo.GetAllWorkShift()
+func (biz *WorkShiftService) GetAllWorkShift(ctx context.Context) ([]model.WorkShifts, error) {
+	workshifts, err := biz.repo.GetAllWorkShift(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get all workshifts: %w", err)
+		fmt.Printf("failed to get all workshifts: %w", err)
+		return nil, errors.New("Lỗi hệ thống")
 	}
 
 	return workshifts, nil
 }
 
-func (biz *WorkShiftService) UpdateWorkShiftService(id string, workshift *model.WorkShifts) error {
-	if id == "" {
-		return errors.New("invalid employeeRepo ID")
+func (sv *WorkShiftService) UpdateWorkShift(ctx context.Context, workshift *model.WorkShifts) error {
+	_, err := sv.repo.GetWorkShiftById(ctx, workshift.WorkShiftID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return errors.New("Mã ca làm việc cần cập nhật không tồn tại")
+	}
+	if err != nil {
+		fmt.Printf("failed to get workshift: %w", err)
+		return fmt.Errorf("Lỗi khi tìm ca làm việc")
 	}
 
-	if err := biz.repo.UpdateWorkShift(id, workshift); err != nil {
-		return fmt.Errorf("failed to update employeeRepo: %w", err)
+	exist, err := sv.repo.CheckExistByName(ctx, workshift.WorkShiftName, workshift.WorkShiftID)
+	if err != nil {
+		return err
+	}
+	if exist {
+		return errors.New("Tên ca đã tồn tại trong hệ thống dữ liệu")
+	}
+
+	isDup, err := sv.repo.IsDuplicateTimeRange(ctx, workshift.StartTime, workshift.EndTime, workshift.WorkShiftID)
+	if err != nil {
+		fmt.Errorf("Lỗi: " + err.Error())
+		return errors.New("Lỗi hệ thống khi kiểm tra tùng lặp khung thời gian bắt đầu, kết thúc")
+	}
+	if isDup {
+		return fmt.Errorf("ca làm việc với StartTime %s và EndTime %s đã tồn tại", workshift.StartTime, workshift.EndTime)
+	}
+
+	if err := sv.repo.SaveWorkShift(ctx, workshift); err != nil {
+		fmt.Printf("failed to save workshift: %w", err)
+		return errors.New("Lỗi hệ thống")
 	}
 
 	return nil
 }
 
-func (biz *WorkShiftService) DeleteWorkShiftService(id string) error {
+func (biz *WorkShiftService) DeleteWorkShift(ctx context.Context, id string) error {
 	if id == "" {
-		return errors.New("invalid employeeRepo ID")
+		return errors.New("ID không hợp lệ")
 	}
-	if err := biz.repo.DeleteWorkShift(id); err != nil {
-		return fmt.Errorf("failed to delete employeeRepo: %w", err)
+	if err := biz.repo.DeleteWorkShift(ctx, id); err != nil {
+		fmt.Printf("failed to delete employeeRepo: %w", err)
+		return errors.New("Lỗi hệ thống")
 	}
 
 	return nil

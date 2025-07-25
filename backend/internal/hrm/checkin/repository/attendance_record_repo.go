@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	utils "erp/backend/pkg"
 	"errors"
@@ -28,7 +29,7 @@ func (r *attendanceRecordRepository) Create(ctx context.Context, record *model.A
 	})
 }
 
-func (r *attendanceRecordRepository) Update(ctx context.Context, record *model.AttendanceRecordUpdate, id string) error {
+func (r *attendanceRecordRepository) Update(ctx context.Context, record *dto.AttendanceRecordUpdate, id string) error {
 	return utils.WithTransaction(r.db, ctx, func(ctx context.Context, tx *gorm.DB) error {
 		result := tx.WithContext(ctx).
 			Model(&model.AttendanceRecord{}).
@@ -95,6 +96,35 @@ func (r *attendanceRecordRepository) ListByEmployee(ctx context.Context, employe
 	return records, nil
 }
 
+func (r *attendanceRecordRepository) ListHistoryRecordEmployee(
+	ctx context.Context,
+	employeeID string,
+	limit int,
+	offset int,
+) ([]model.AttendanceRecord, error) {
+	var records []model.AttendanceRecord
+
+	err := r.db.WithContext(ctx).
+		Preload("AttendanceCategory").
+		Preload("Employee").
+		Preload("Employee.Position").
+		Preload("Employee.Department").
+		Preload("Employee.Department.Office").
+		Preload("Office").
+		Preload("CreateByInfo").
+		Where("employee_id = ?", employeeID).
+		Order("timestamp DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&records).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to list attendance records by employee: %w", err)
+	}
+
+	return records, nil
+}
+
 func (r *attendanceRecordRepository) CountRequestsByEmployee(ctx context.Context, employeeID string) (int64, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
@@ -109,7 +139,7 @@ func (r *attendanceRecordRepository) CountRequestsByEmployee(ctx context.Context
 	return count, nil
 }
 
-func (r *attendanceRecordRepository) ListByDateRange(ctx context.Context, employeeID string, from, to time.Time) ([]model.AttendanceRecord, error) {
+func (r *attendanceRecordRepository) ListRequestByDateRange(ctx context.Context, employeeID string, from, to time.Time) ([]model.AttendanceRecord, error) {
 	var records []model.AttendanceRecord
 	err := r.db.WithContext(ctx).
 		Preload("AttendanceCategory").

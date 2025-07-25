@@ -1,9 +1,11 @@
 package repository
 
 import (
+	"context"
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"time"
 )
@@ -33,8 +35,14 @@ func (r *employeeWorkShiftRepo) Save(assign *model.EmployeeWorkshift) error {
 }
 
 func (r *employeeWorkShiftRepo) Delete(id string) error {
-	result := r.db.Delete(&model.EmployeeWorkshift{}, id)
-	return result.Error
+	result := r.db.Where("id = ?", id).Delete(&model.EmployeeWorkshift{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("employee_workshift with id %s not found", id)
+	}
+	return nil
 }
 
 func (r *employeeWorkShiftRepo) GetAllByEmployeeID(employeeID string) ([]model.EmployeeWorkshift, error) {
@@ -67,4 +75,39 @@ func (r *employeeWorkShiftRepo) FindByID(id string) (*model.EmployeeWorkshift, e
 		}
 	}
 	return &records, nil
+}
+
+func (r *employeeWorkShiftRepo) GetEmployeeWorkShifts(ctx context.Context, employeeID string) ([]model.EmployeeWorkshift, error) {
+	var empShift []model.EmployeeWorkshift
+
+	err := r.db.WithContext(ctx).
+		Model(&model.EmployeeWorkshift{}).
+		Preload("WorkShift").
+		Where("employee_id = ?", employeeID).
+		Order("date").
+		Find(&empShift).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get work shifts: %w", err)
+	}
+
+	return empShift, nil
+}
+
+func (r *employeeWorkShiftRepo) GetEmployeeWorkShiftsByMonthYear(ctx context.Context, employeeID string, startDate, endDate time.Time) ([]model.EmployeeWorkshift, error) {
+	var workShifts []model.EmployeeWorkshift
+
+	err := r.db.WithContext(ctx).
+		Model(&model.EmployeeWorkshift{}).
+		Where("employee_id = ?", employeeID).
+		Where("date BETWEEN ? AND ?", startDate, endDate).
+		Preload("WorkShift").
+		Order("date").
+		Find(&workShifts).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return workShifts, nil
 }

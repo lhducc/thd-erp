@@ -27,7 +27,7 @@ type Employee struct {
 	Fullname     string            `gorm:"column:full_name;type:varchar(255);not null" json:"full_name" validate:"required"`
 	Birthday     string            `gorm:"column:birthday;type:date" json:"birthday"`
 	Gender       string            `gorm:"column:gender;type:varchar(10)" json:"gender" validate:"oneof=Nam Nữ Khác"`
-	WorkType     string            `gorm:"column:work_type;type:varchar(255)" json:"work_type" validate:"oneof=TTS THD CTV"`
+	WorkType     string            `gorm:"column:work_type;type:varchar(255);type:work_type_enum" json:"work_type"`
 	PhoneNumber  string            `gorm:"column:phone_number;type:varchar(20)" json:"phone_number" validate:"omitempty,e164"`
 	Email        string            `gorm:"column:email;type:varchar(255)" json:"email" validate:"omitempty,email"`
 	Address      string            `gorm:"column:address;type:text" json:"address"`
@@ -38,6 +38,7 @@ type Employee struct {
 	ManagerID    string            `gorm:"column:manager;foreignKey:EmployeeID;references:employee_id" json:"manager_id"`
 	DepartmentID string            `gorm:"column:department_id" json:"department_id"`
 	CreatedDate  time.Time         `gorm:"column:created_date;autoCreateTime" json:"created_date"`
+	ScheduleID   *int              `gorm:"column:schedule_id" json:"schedule_id"`
 	Account      *Account          `gorm:"foreignKey:AccountID;references:id" json:"-"`
 	Position     *Position         `gorm:"foreignKey:PositionID;references:position_id" json:"position,omitempty"`
 	JobTitle     *JobTitleResponse `gorm:"foreignKey:JobTitleID;references:job_title_id" json:"job_title,omitempty"`
@@ -57,30 +58,23 @@ type JobTitleResponse struct {
 	JobTitle   string `gorm:"type:varchar(255);not null" json:"job_title"`
 }
 
+type EmployeeInforResponse struct {
+	EmployeeID   string `gorm:"column:employee_id" json:"employee_id"`
+	Fullname     string `gorm:"column:full_name;" json:"full_name" validate:"required"`
+	DepartmentID string `gorm:"column:department_id" json:"department_id"`
+	PositionID   string `gorm:"column:position_id" json:"position_id"`
+
+	Position   *Position   `gorm:"foreignKey:PositionID;references:position_id" json:"position,omitempty"`
+	Department *Department `gorm:"foreignKey:DepartmentID;references:department_id" json:"department,omitempty"`
+}
+
 func (JobTitleResponse) TableName() string { return "jobtitle" }
 
 func (ManagerResponse) TableName() string { return "employee" }
 
 func (Employee) TableName() string { return "employee" }
 
-type EmployeeCreate struct {
-	EmployeeID  string `gorm:"primaryKey"`
-	Fullname    string `gorm:"type:varchar(255);not null"`
-	Birthday    string `gorm:"type:date"`
-	Gender      string `gorm:"type:varchar(10)"`
-	PhoneNumber string `gorm:"type:varchar(20)"`
-	Email       string `gorm:"type:varchar(255)"`
-	Status      string `gorm:"column:status" json:"status"`
-	LoginID     string
-	PositionID  string
-	JobTitleID  string
-	ManagerID   string
-	CreatedDate time.Time `gorm:"autoCreateTime"`
-	// Contracts    []Contract `gorm:"foreignKey:Employee_ID"`
-	// Decisions    []Decision `gorm:"many2many:employee_decisions;"`
-}
-
-func (EmployeeCreate) TableName() string { return "employee" }
+func (EmployeeInforResponse) TableName() string { return "employee" }
 
 type ResetPassword struct {
 	AccountID       int    `json:"account_id"`

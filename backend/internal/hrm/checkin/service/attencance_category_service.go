@@ -17,10 +17,6 @@ func NewAttendanceCategoryService(repo repo_interface.AttendanceCategoryReposito
 }
 
 func (s *attendanceCategoryService) CreateAttendanceCategory(ctx context.Context, category *model.AttendanceCategory) error {
-	if err := category.Validate(); err != nil {
-		return err
-	}
-
 	// Check duplicate name
 	if exists, err := s.repo.ExistsByName(ctx, category.AttendanceCategoryName); err != nil {
 		return err
@@ -32,10 +28,6 @@ func (s *attendanceCategoryService) CreateAttendanceCategory(ctx context.Context
 }
 
 func (s *attendanceCategoryService) UpdateAttendanceCategory(ctx context.Context, category *model.AttendanceCategory) error {
-	if err := category.Validate(); err != nil {
-		return err
-	}
-
 	// Check record exists
 	if _, err := s.repo.GetByID(ctx, category.AttendanceCategoryID); err != nil {
 		return errors.New("không tìm thấy loại chấm công")

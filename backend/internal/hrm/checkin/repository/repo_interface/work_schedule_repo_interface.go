@@ -10,11 +10,12 @@ type WorkScheduleRepo interface {
 	Delete(c context.Context, id int) error
 	Update(c context.Context, workSchedule *model.WorkSchedule, id int) error
 	IsExistsByName(c context.Context, name string) (bool, error)
-	IsExistsByID(c context.Context, id int) (bool, error)
-	AssignOrUpdateEmployeesAndManagers(ctx context.Context, employees []model.WorkScheduleEmployee, managers []model.WorkScheduleManager) error
-	CheckExistEmployeeSchedule(ctx context.Context, employeeID string, idSchedule *int) (*model.WorkScheduleEmployee, *model.WorkSchedule, bool, error)
-	GetAll(ctx context.Context) ([]model.WorkSchedule, error)
+	IsExistsByScheduleIDRegister(c context.Context, id int) (bool, error)
+	IsExistsByScheduleIDAuto(c context.Context, id int) (bool, error)
+	AssignOrUpdateManagers(ctx context.Context, managers []model.WorkScheduleManager) error
+	GetAllScheduleAuto(ctx context.Context) ([]model.WorkSchedule, error)
+	GetAllScheduleRegister(ctx context.Context) ([]model.WorkSchedule, error)
 	GetByID(ctx context.Context, id int) (*model.WorkSchedule, error)
 	DeleteManagerFromWorkSchedule(ctx context.Context, managerID string, workScheduleID int) error
-	DeleteEmployeeFromWorkSchedule(ctx context.Context, employeeID string, workScheduleID int) error
+	GetListShiftRegister(ctx context.Context, scheduleID *int) ([]model.WorkScheduleShift, error)
 }

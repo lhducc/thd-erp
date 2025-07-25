@@ -1,7 +1,7 @@
 package checkin
 
 import (
-	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	utils "erp/backend/pkg"
 	"fmt"
@@ -22,7 +22,7 @@ func NewAttendanceCategoryHandler(biz service_interface.AttendanceCategoryServic
 func (h *AttendanceCategoryHandler) CreateAttendanceCategory() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
-		var req model.AttendanceCategoryRequest
+		var req dto.AttendanceCategoryRequest
 
 		if err := c.ShouldBindJSON(&req); err != nil {
 			utils.ResponseMessage(c, "Invalid input data", http.StatusBadRequest, nil)
@@ -30,7 +30,12 @@ func (h *AttendanceCategoryHandler) CreateAttendanceCategory() gin.HandlerFunc {
 			return
 		}
 
-		attendanceCategory := model.ConvertToAttendanceCategory(req)
+		if err := req.Validate(); err != nil {
+			utils.ResponseMessage(c, "Invalid input: "+err.Error(), http.StatusBadRequest, nil)
+			return
+		}
+
+		attendanceCategory := dto.ConvertToAttendanceCategory(req)
 
 		employeeID, err := utils.ExtractFromContext[string](c, "employeeId")
 		if err != nil {
@@ -39,11 +44,6 @@ func (h *AttendanceCategoryHandler) CreateAttendanceCategory() gin.HandlerFunc {
 		}
 
 		attendanceCategory.CreatedBy = employeeID
-
-		if err := attendanceCategory.Validate(); err != nil {
-			utils.ResponseMessage(c, "Invalid input: "+err.Error(), http.StatusBadRequest, nil)
-			return
-		}
 
 		if err := h.biz.CreateAttendanceCategory(ctx, &attendanceCategory); err != nil {
 			utils.ResponseMessage(c, "Failed to create attendance category: "+err.Error(), http.StatusInternalServerError, nil)
@@ -99,7 +99,7 @@ func (h *AttendanceCategoryHandler) UpdateAttendanceCategory() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		ctx := c.Request.Context()
-		var req model.AttendanceCategoryRequest
+		var req dto.AttendanceCategoryRequest
 
 		if err := c.ShouldBindJSON(&req); err != nil {
 			utils.ResponseMessage(c, "Invalid update data", http.StatusBadRequest, nil)
@@ -107,13 +107,13 @@ func (h *AttendanceCategoryHandler) UpdateAttendanceCategory() gin.HandlerFunc {
 			return
 		}
 
-		categoryUpdate := model.ConvertToAttendanceCategory(req)
-		categoryUpdate.AttendanceCategoryID = id
-
-		if err := categoryUpdate.Validate(); err != nil {
+		if err := req.Validate(); err != nil {
 			utils.ResponseMessage(c, "Invalid input: "+err.Error(), http.StatusBadRequest, nil)
 			return
 		}
+
+		categoryUpdate := dto.ConvertToAttendanceCategory(req)
+		categoryUpdate.AttendanceCategoryID = id
 
 		if err := h.biz.UpdateAttendanceCategory(ctx, &categoryUpdate); err != nil {
 			utils.ResponseMessage(c, "Failed to update attendance category", http.StatusInternalServerError, nil)

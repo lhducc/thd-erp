@@ -169,6 +169,12 @@ func createEnums(db *gorm.DB) error {
 				'saturday'
 			);
 		END IF;
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'work_type_enum') THEN
+			CREATE TYPE work_type_enum AS ENUM (
+				'ca hành chính',
+				'ca kíp'
+			);
+		END IF;
 	END
 	$$;
 	`
@@ -183,7 +189,7 @@ func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
 		//model.EmployeeWorkshift{},
 		//&officemodel.Office{},
-		//model.EmployeeWorkshift{},
+		model.EmployeeWorkshift{},
 		//&model.WorkshiftRule{},
 		//&hrmmodel.Position{},
 		//&hrmmodel.Department{},
@@ -209,12 +215,8 @@ func AutoMigrate(db *gorm.DB) error {
 		//&model.AttendanceRecord{},
 		//&model.WorkSchedule{},
 		//&model.WorkScheduleShift{},
-		//&model.WorkScheduleEmployee{},
 		//&model.WorkScheduleManager{},
-		//&model.WorkScheduleRegister{},
-		//&model.WorkScheduleRegisterShift{},
-		//&model.WorkScheduleRegisterEmployee{},
-		&model.WorkScheduleRegisterManager{},
+		//&model.Timesheet{},
 	)
 	fmt.Println("Migration complete")
 

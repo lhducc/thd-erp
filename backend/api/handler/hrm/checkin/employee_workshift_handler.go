@@ -7,14 +7,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"time"
 )
-
-type EmployeeWorkshiftBiz interface {
-	Register(employeeID string, workShift string, date time.Time) error
-	Delete(id uint) error
-	GetAllByEmployeeID(employeeID string) ([]model.EmployeeWorkshift, error)
-}
 
 type EmployeeWorkshiftHandler struct {
 	biz service_interface.EmployeeWorkshiftService
@@ -28,6 +21,7 @@ func NewEmployeeWorkshift(biz service_interface.EmployeeWorkshiftService) *Emplo
 
 func (h *EmployeeWorkshiftHandler) Register() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx := c.Request.Context()
 		var req model.EmployeeWorkshift
 
 		// Parse incoming JSON body
@@ -38,7 +32,7 @@ func (h *EmployeeWorkshiftHandler) Register() gin.HandlerFunc {
 		}
 
 		// Create the workshift
-		if err := h.biz.Register(req.EmployeeID, req.WorkShiftID, req.Date); err != nil {
+		if err := h.biz.Register(ctx, req.EmployeeID, req.WorkShiftID, req.Date); err != nil {
 			utils.ResponseMessage(c, "Failed to register workshift: "+err.Error(), http.StatusBadRequest, nil)
 			return
 		}
@@ -52,11 +46,11 @@ func (h *EmployeeWorkshiftHandler) Delete() gin.HandlerFunc {
 		id := c.Param("id")
 
 		if err := h.biz.Delete(id); err != nil {
-			utils.ResponseMessage(c, "Failed to register workshift: "+err.Error(), http.StatusBadRequest, nil)
+			utils.ResponseMessage(c, "Failed to delete employee_workshift: "+err.Error(), http.StatusBadRequest, nil)
 			return
 		}
 
-		utils.ResponseMessage(c, "Register workshift successfully", http.StatusOK, nil)
+		utils.ResponseMessage(c, "Delete workshift successfully", http.StatusOK, nil)
 	}
 }
 
@@ -106,5 +100,23 @@ func (h *EmployeeWorkshiftHandler) Update() gin.HandlerFunc {
 		}
 
 		utils.ResponseMessage(c, "Update workshift successfully", http.StatusOK, nil)
+	}
+}
+
+func (h *EmployeeWorkshiftHandler) GetListShiftAllowRegister() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		employeeID := c.GetString("employeeId")
+
+		// Call service
+		var (
+			shifts []model.WorkScheduleShift
+			err    error
+		)
+		if shifts, err = h.biz.GetListShiftAllowRegister(ctx, employeeID); err != nil {
+			utils.ResponseMessage(c, "Failed: "+err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+		utils.ResponseMessage(c, "successfully", http.StatusOK, shifts)
 	}
 }

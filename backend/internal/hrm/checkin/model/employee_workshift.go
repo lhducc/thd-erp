@@ -1,16 +1,17 @@
 package model
 
 import (
-	"gorm.io/gorm"
 	"time"
 )
 
 type EmployeeWorkshift struct {
-	gorm.Model
-	EmployeeID  string     `gorm:"column:employee_id" json:"employee_id"`
-	WorkShiftID string     `gorm:"column:work_shift_id" json:"work_shift_id"`
-	WorkShift   WorkShifts `gorm:"foreignKey:work_shift_id" json:"work_shift"`
-	Date        time.Time  `gorm:"column:date" json:"date"`
+	ID          uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	EmployeeID  string    `gorm:"column:employee_id;index:idx_employee_date" json:"employee_id"`
+	WorkShiftID string    `gorm:"column:work_shift_id" json:"work_shift_id"`
+	Date        time.Time `gorm:"column:date;index:idx_employee_date" json:"date"`
+	CreatedAt   time.Time `gorm:"column:created_at;" json:"created_at"`
+
+	WorkShift WorkShifts `gorm:"foreignKey:WorkShiftID" json:"work_shift"`
 }
 
 func (EmployeeWorkshift) TableName() string {

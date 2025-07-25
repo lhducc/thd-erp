@@ -3,10 +3,12 @@ package service
 import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	"erp/backend/internal/hrm/hr_profile/usecase"
 	"erp/backend/pkg"
+	"erp/backend/pkg/variable"
 	"errors"
 	"fmt"
 	"time"
@@ -25,9 +27,9 @@ func NewAttendanceRecordService(repo repo_interface.AttendanceRecordRepository, 
 	}
 }
 
-func (s *attendanceRecordService) CheckCatrgoryExists(ctx context.Context,
+func (s *attendanceRecordService) CheckCategoryExists(ctx context.Context,
 	record *model.AttendanceRecord) (*model.AttendanceCategory, error) {
-	category, exists, err := s.categoryRepo.GetIfExists(ctx, record.AttendanceCategoryID)
+	category, exists, err := s.categoryRepo.GetIfExists(ctx, *record.AttendanceCategoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -78,17 +80,16 @@ func (s *attendanceRecordService) ValidateAttendanceRecordDistance(ctx context.C
 		return fmt.Errorf("điểm danh cách văn phòng %.2f mét, vượt quá phạm vi cho phép (%d mét)",
 			distance, category.Scope)
 	}
-	record.Status = model.Approved
+	record.Status = variable.Approved
 
 	return nil
 }
 
 func (s *attendanceRecordService) CreateAttendanceRecord(ctx context.Context, record *model.AttendanceRecord) error {
-	record.Status = model.Pending
 	return s.repo.Create(ctx, record)
 }
 
-func (s *attendanceRecordService) UpdateAttendanceRecord(ctx context.Context, updaterecord *model.AttendanceRecordUpdate, recordID string) error {
+func (s *attendanceRecordService) UpdateAttendanceRecord(ctx context.Context, updaterecord *dto.AttendanceRecordUpdate, recordID string) error {
 	record, err := s.GetAttendanceRecordByID(ctx, recordID)
 	if err != nil {
 		return fmt.Errorf("Attendance record not found")
@@ -115,7 +116,7 @@ func (s *attendanceRecordService) ListAttendanceRecordsByEmployee(ctx context.Co
 	return s.repo.ListByEmployee(ctx, employeeID)
 }
 
-func (s *attendanceRecordService) ListAttendanceRecordsByDateRange(ctx context.Context, employeeID string, from, to string) ([]model.AttendanceRecord, error) {
+func (s *attendanceRecordService) ListAttendanceRequestsByDateRange(ctx context.Context, employeeID string, from, to string) ([]model.AttendanceRecord, error) {
 	fromTime, err1 := ParseDateTime(from)
 	toTime, err2 := ParseDateTime(to)
 
@@ -123,11 +124,24 @@ func (s *attendanceRecordService) ListAttendanceRecordsByDateRange(ctx context.C
 		return nil, errors.New("invalid datetime format")
 	}
 
-	return s.repo.ListByDateRange(ctx, employeeID, fromTime, toTime)
+	return s.repo.ListRequestByDateRange(ctx, employeeID, fromTime, toTime)
 }
 
 func (s *attendanceRecordService) GetTotalReqOfEmployee(ctx context.Context, employeeID string) (int64, error) {
 	return s.repo.CountRequestsByEmployee(ctx, employeeID)
+}
+
+func (s *attendanceRecordService) GetHistoryRecordByEmployee(ctx context.Context, employeeID string,
+	page int, limit int) ([]model.AttendanceRecord, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+
+	return s.repo.ListHistoryRecordEmployee(ctx, employeeID, limit, offset)
 }
 
 func ParseDateTime(value string) (time.Time, error) {

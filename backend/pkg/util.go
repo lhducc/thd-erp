@@ -12,6 +12,15 @@ func GetCurrentDate() time.Time {
 	return time.Now()
 }
 
+func GetCurrentTimeHCMCity() (time.Time, error) {
+	loc, err := time.LoadLocation("Asia/Ho_Chi_Minh")
+	if err != nil {
+		fmt.Errorf("Không thể load location: %w", err.Error())
+	}
+	timeNow := time.Now().In(loc)
+	return timeNow, err
+}
+
 func GenerateCode(prefix string, digits int, getLastCodeFunc func() (string, error)) (string, error) {
 	lastCode, err := getLastCodeFunc()
 	if err != nil {

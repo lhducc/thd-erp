@@ -5,7 +5,7 @@ import (
 	"erp/backend/internal/hrm/checkin/model"
 )
 
-type TimesheetServiceInterface interface {
+type TimesheetListServiceInterface interface {
 	CreateElementOfTimesheetList(ctx context.Context, timesheet *model.TimeSheetList) error
 	GetByID(ctx context.Context, id string) (*model.TimeSheetList, error)
 	Update(ctx context.Context, timesheet *model.TimeSheetList) error

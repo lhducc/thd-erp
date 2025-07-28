@@ -13,19 +13,19 @@ import (
 	time2 "time"
 )
 
-type timesheetService struct {
+type timesheetListService struct {
 	timesheetListRepo   repo_interface.TimesheetListInterface
 	employeeRepo        *repository.UserStore
 	timesheetRepo       repo_interface.TimeSheetRepoInterface
 	timesheetDetailRepo repo_interface.TimeSheetDetailRepoInterface
 }
 
-func NewTimesheetSerivce(timesheetListRepo repo_interface.TimesheetListInterface,
+func NewTimesheetListSerivce(timesheetListRepo repo_interface.TimesheetListInterface,
 	employeeRepo *repository.UserStore,
 	timesheetRepo repo_interface.TimeSheetRepoInterface,
 	timesheetDetailRepo repo_interface.TimeSheetDetailRepoInterface,
-) service_interface.TimesheetServiceInterface {
-	return &timesheetService{
+) service_interface.TimesheetListServiceInterface {
+	return &timesheetListService{
 		timesheetListRepo:   timesheetListRepo,
 		employeeRepo:        employeeRepo,
 		timesheetRepo:       timesheetRepo,
@@ -33,7 +33,7 @@ func NewTimesheetSerivce(timesheetListRepo repo_interface.TimesheetListInterface
 	}
 }
 
-func (s *timesheetService) CreateElementOfTimesheetList(ctx context.Context, timesheet *model.TimeSheetList) error {
+func (s *timesheetListService) CreateElementOfTimesheetList(ctx context.Context, timesheet *model.TimeSheetList) error {
 	duplicate, err := s.timesheetListRepo.IsDuplicate(ctx, timesheet.OfficeID, timesheet.Month, timesheet.Year, "")
 	if err != nil {
 		return fmt.Errorf("lỗi kiểm tra trùng thời gian bảng công: %w", err)
@@ -71,11 +71,11 @@ func (s *timesheetService) CreateElementOfTimesheetList(ctx context.Context, tim
 	return nil
 }
 
-func (s *timesheetService) GetByID(ctx context.Context, id string) (*model.TimeSheetList, error) {
+func (s *timesheetListService) GetByID(ctx context.Context, id string) (*model.TimeSheetList, error) {
 	return s.timesheetListRepo.GetByID(ctx, id)
 }
 
-func (s *timesheetService) Update(ctx context.Context, timesheet *model.TimeSheetList) error {
+func (s *timesheetListService) Update(ctx context.Context, timesheet *model.TimeSheetList) error {
 	ts, err := s.GetByID(ctx, timesheet.TimeSheetListID)
 	if err != nil {
 		return err
@@ -87,7 +87,7 @@ func (s *timesheetService) Update(ctx context.Context, timesheet *model.TimeShee
 	return s.timesheetListRepo.Update(ctx, timesheet)
 }
 
-func (s *timesheetService) Delete(ctx context.Context, id string) error {
+func (s *timesheetListService) Delete(ctx context.Context, id string) error {
 	ts, err := s.GetByID(ctx, id)
 	if err != nil {
 		return err
@@ -98,11 +98,11 @@ func (s *timesheetService) Delete(ctx context.Context, id string) error {
 	return s.timesheetListRepo.Delete(ctx, id)
 }
 
-func (s *timesheetService) List(ctx context.Context, page, limit int) ([]model.TimeSheetList, int64, error) {
+func (s *timesheetListService) List(ctx context.Context, page, limit int) ([]model.TimeSheetList, int64, error) {
 	return s.timesheetListRepo.List(ctx, page, limit)
 }
 
-func (s *timesheetService) createTimeSheetEmployee(ctx context.Context, timeSheetList *model.TimeSheetList) (bool, error) {
+func (s *timesheetListService) createTimeSheetEmployee(ctx context.Context, timeSheetList *model.TimeSheetList) (bool, error) {
 	employees, err := s.employeeRepo.GetEmployeesByOfficeID(ctx, timeSheetList.OfficeID)
 	if err != nil {
 		return false, err
@@ -127,7 +127,7 @@ func (s *timesheetService) createTimeSheetEmployee(ctx context.Context, timeShee
 	return true, nil
 }
 
-func (s *timesheetService) LockedTimesheet(ctx context.Context, timesheet *model.TimeSheetList) error {
+func (s *timesheetListService) LockedTimesheet(ctx context.Context, timesheet *model.TimeSheetList) error {
 	ts, err := s.GetByID(ctx, timesheet.TimeSheetListID)
 	if err != nil {
 		return err
@@ -140,4 +140,8 @@ func (s *timesheetService) LockedTimesheet(ctx context.Context, timesheet *model
 	timesheet.IsLocked = true
 
 	return s.timesheetListRepo.UpdateLocked(ctx, timesheet)
+}
+
+func (s *timesheetListService) GetByEmployeeID(ctx context.Context, id string) (*model.TimeSheetList, error) {
+	return s.timesheetListRepo.GetByID(ctx, id)
 }

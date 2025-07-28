@@ -57,7 +57,7 @@ func (biz *EmployeeHandler) CreateEmployee() gin.HandlerFunc {
 			return
 		}
 
-		utils.ResponseMessage(c, "Create success", http.StatusCreated, nil)
+		utils.ResponseMessage(c, "CreateElementOfTimesheetList success", http.StatusCreated, nil)
 	}
 }
 

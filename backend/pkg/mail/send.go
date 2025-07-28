@@ -97,7 +97,7 @@ func SendEmailWithAccountInfo(receiver, receiverName, accountPassword string) er
 	</html>
 	`, receiverName, receiver, accountPassword)
 
-	// Create message
+	// CreateElementOfTimesheetList message
 	m := gomail.NewMessage()
 	m.SetHeader("From", c.From)
 	m.SetHeader("To", receiver)

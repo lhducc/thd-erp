@@ -31,7 +31,7 @@ func (h *EmployeeWorkshiftHandler) Register() gin.HandlerFunc {
 			return
 		}
 
-		// Create the workshift
+		// CreateElementOfTimesheetList the workshift
 		if err := h.biz.Register(ctx, req.EmployeeID, req.WorkShiftID, req.Date); err != nil {
 			utils.ResponseMessage(c, "Failed to register workshift: "+err.Error(), http.StatusBadRequest, nil)
 			return
@@ -58,7 +58,7 @@ func (h *EmployeeWorkshiftHandler) GetAllByEmployeeID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		employeeID := c.Param("employeeID")
 		result, err := h.biz.GetByUserId(employeeID)
-		// Create the workshift
+		// CreateElementOfTimesheetList the workshift
 		if err != nil {
 			utils.ResponseMessage(c, "Failed to get workshift: "+err.Error(), http.StatusBadRequest, nil)
 			return

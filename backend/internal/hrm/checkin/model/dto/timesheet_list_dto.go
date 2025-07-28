@@ -6,11 +6,10 @@ import (
 )
 
 type TimesheetDTO struct {
-	Name        string `json:"name"`
-	OfficeID    string `json:"office_id"`
-	Month       int    `json:"month"`
-	Year        int    `json:"year"`
-	IsFinalized bool   `json:"is_finalized"`
+	Name     string `json:"name"`
+	OfficeID string `json:"office_id"`
+	Month    int    `json:"month"`
+	Year     int    `json:"year"`
 }
 
 func (timesheet TimesheetDTO) Validate() error {
@@ -26,12 +25,11 @@ func (timesheet TimesheetDTO) Validate() error {
 	return nil
 }
 
-func (ts *TimesheetDTO) ConvertToBusinessModel() *model.Timesheet {
-	return &model.Timesheet{
-		Name:        ts.Name,
-		OfficeID:    ts.OfficeID,
-		Month:       ts.Month,
-		Year:        ts.Year,
-		IsFinalized: ts.IsFinalized,
+func (ts *TimesheetDTO) ConvertToBusinessModel() *model.TimeSheetList {
+	return &model.TimeSheetList{
+		TimeSheetListName: ts.Name,
+		OfficeID:          ts.OfficeID,
+		Month:             ts.Month,
+		Year:              ts.Year,
 	}
 }

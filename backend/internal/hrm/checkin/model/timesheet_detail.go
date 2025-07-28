@@ -1,23 +1,58 @@
 package model
 
 import (
-	"github.com/google/uuid"
+	"erp/backend/internal/hrm/hr_profile/model"
+	"erp/backend/pkg/variable"
 	"time"
 )
 
-type TimesheetDetail struct {
-	ID             int        `gorm:"type:serial;primaryKey" json:"id"`
-	TimesheetID    uuid.UUID  `gorm:"type:uuid;not null;index" json:"timesheet_id"`
-	EmployeeID     uuid.UUID  `gorm:"type:uuid;not null;index" json:"employee_id"`
-	WorkDate       time.Time  `gorm:"type:date;not null;index" json:"work_date"`
-	ExpectedShift  string     `gorm:"type:varchar(50)" json:"expected_shift"` // ca dự kiến (VD: "08:00-17:00")
-	ActualCheckin  *time.Time `json:"actual_checkin"`
-	ActualCheckout *time.Time `json:"actual_checkout"`
-	WorkingHours   float64    `gorm:"type:numeric(5,2);default:0" json:"working_hours"`
-	WorkdayPoint   float64    `gorm:"type:numeric(3,2);default:0" json:"workday_point"` // VD: 1.0 công, 0.5 công,...
-	Note           string     `gorm:"type:text" json:"note"`
+type TimeSheetDetail struct {
+	TimeSheetDetailID int       `gorm:"column:timesheet_detail_id;primaryKey;type:serial" json:"timesheet_detail_id"`
+	TimeSheetID       int       `gorm:"column:timesheet_id;not null;index" json:"timesheet_id"`
+	Date              time.Time `gorm:"column:date;type:date;not null;index" json:"date"`
+	DayOfWeek         int       `gorm:"column:day_of_week;type:integer" json:"day_of_week"` // 1=monday, 7=sunday
+
+	//  Work shift information
+	WorkShiftID  *string `gorm:"column:work_shift_id;type:varchar(20)" json:"work_shift_id"`
+	IsWorkingDay bool    `gorm:"column:is_working_day;type:boolean;default:true" json:"is_working_day"`
+	IsHoliday    bool    `gorm:"column:is_holiday;type:boolean;default:false" json:"is_holiday"`
+	IsWeekend    bool    `gorm:"column:is_weekend;type:boolean;default:false" json:"is_weekend"`
+
+	// Attendance information
+	CheckInTime      *time.Time `gorm:"column:checkin_time;type:timestamp" json:"checkin_time"`
+	CheckOutTime     *time.Time `gorm:"column:checkout_time;type:timestamp" json:"checkout_time"`
+	CheckInRecordID  *string    `gorm:"column:checkin_record_id;type:uuid" json:"checkin_record_id"`
+	CheckOutRecordID *string    `gorm:"column:checkout_record_id;type:uuid" json:"checkout_record_id"`
+
+	// Workday calculation
+	WorkHours         float64 `gorm:"column:work_hours;type:decimal(4,2);default:0" json:"work_hours"`
+	WorkDays          float64 `gorm:"column:work_days;type:decimal(3,2);default:0" json:"work_days"`
+	IsAdditionalShift bool    `gorm:"column:is_additional_shift;type:boolean;default:false" json:"is_additional_shift"`
+
+	// Late information
+	IsLate      bool `gorm:"column:is_late;type:boolean;default:false" json:"is_late"`
+	LateMinutes int  `gorm:"column:late_minutes;type:integer;default:0" json:"late_minutes"`
+
+	// Leave and status info – Not yet processed
+	LeaveType    *variable.LeaveTypeEnum `gorm:"column:leave_type;type:varchar(50)" json:"leave_type"`
+	LeaveHours   float64                 `gorm:"column:leave_hours;type:decimal(4,2);default:0" json:"leave_hours"`
+	IsAbsent     bool                    `gorm:"column:is_absent;type:boolean;default:false" json:"is_absent"`
+	AbsentReason *string                 `gorm:"column:absent_reason;type:text" json:"absent_reason"`
+
+	//Notes and manual adjustments
+	//Note             *string    `gorm:"column:note;type:text" json:"note"`
+	ManualAdjustment float64 `gorm:"column:manual_adjustment;type:decimal(3,2);default:0" json:"manual_adjustment"`
+	//AdjustmentReason *string    `gorm:"column:adjustment_reason;type:text" json:"adjustment_reason"`
+	AdjustmentBy *string    `gorm:"column:adjustment_by;type:varchar" json:"adjustment_by"`
+	AdjustmentAt *time.Time `gorm:"column:adjustment_at" json:"adjustment_at"`
+
+	// Relationships
+	WorkShift      *WorkShifts            `gorm:"foreignKey:WorkShiftID;references:WorkShiftID" json:"work_shift,omitempty"`
+	CheckInRecord  *AttendanceRecord      `gorm:"foreignKey:CheckInRecordID;references:AttendanceRecordID" json:"checkin_record,omitempty"`
+	CheckOutRecord *AttendanceRecord      `gorm:"foreignKey:CheckOutRecordID;references:AttendanceRecordID" json:"checkout_record,omitempty"`
+	AdjustmentUser *model.ManagerResponse `gorm:"foreignKey:AdjustmentBy;references:EmployeeID" json:"adjustment_user,omitempty"`
 }
 
-func (TimesheetDetail) TableName() string {
+func (TimeSheetDetail) TableName() string {
 	return "timesheet_details"
 }

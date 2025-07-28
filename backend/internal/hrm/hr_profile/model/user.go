@@ -46,7 +46,7 @@ type Employee struct {
 	Department   *Department       `gorm:"foreignKey:DepartmentID;references:department_id" json:"department,omitempty"`
 
 	Contracts []Contract `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"contracts,omitempty"`
-	Decisions []Decision `gorm:"many2many:decision_employees;joinForeignKey:EmployeeID;joinReferences:DecisionID"`
+	Decisions []Decision `gorm:"many2many:decision_employees;joinForeignKey:EmployeeID;joinReferences:DecisionID" json:"decisions,omitempty"`
 }
 
 type ManagerResponse struct {
@@ -59,13 +59,14 @@ type JobTitleResponse struct {
 }
 
 type EmployeeInforResponse struct {
-	EmployeeID   string `gorm:"column:employee_id" json:"employee_id"`
-	Fullname     string `gorm:"column:full_name;" json:"full_name" validate:"required"`
-	DepartmentID string `gorm:"column:department_id" json:"department_id"`
-	PositionID   string `gorm:"column:position_id" json:"position_id"`
+	EmployeeID string `gorm:"column:employee_id" json:"employee_id"`
+	Fullname   string `gorm:"column:full_name;" json:"full_name" validate:"required"`
+	PositionID string `gorm:"column:position_id" json:"-"`
+	JobTitleID string `gorm:"column:job_title_id" json:"-"`
 
-	Position   *Position   `gorm:"foreignKey:PositionID;references:position_id" json:"position,omitempty"`
-	Department *Department `gorm:"foreignKey:DepartmentID;references:department_id" json:"department,omitempty"`
+	JobTitle       *JobTitle       `gorm:"foreignKey:JobTitleID;references:job_title_id" json:"-"`
+	HierarchyLevel *HierarchyLevel `gorm:"-" json:"hierarchy_level,omitempty"`
+	Position       *Position       `gorm:"foreignKey:PositionID;references:position_id" json:"position,omitempty"`
 }
 
 func (JobTitleResponse) TableName() string { return "jobtitle" }

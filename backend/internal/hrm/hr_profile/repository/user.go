@@ -332,3 +332,19 @@ func (s *UserStore) GetScheduleOfEmployee(employeeID string) (*model.Employee, e
 	}
 	return &employee, nil
 }
+
+func (r *UserStore) GetEmployeesByOfficeID(ctx context.Context, officeID string) ([]*model.Employee, error) {
+	var employees []*model.Employee
+
+	err := r.db.WithContext(ctx).
+		Model(&model.Employee{}).
+		Joins("JOIN department ON employee.department_id = department.department_id").
+		Where("department.office_id = ?", officeID).
+		Find(&employees).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return employees, nil
+}

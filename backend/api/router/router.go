@@ -98,7 +98,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	categoryRepo := checkinRepo.NewAttendanceCategoryRepository(db)
 	employeeWorkShiftRepo := checkinRepo.NewEmployeeWorkShiftRepo(db)
 	workScheduleRepo := checkinRepo.NewWorkScheduleRepo(db)
-	timesheetRepo := checkinRepo.NewTimesheetRepo(db)
+	timesheetListRepo := checkinRepo.NewTimesheetListRepo(db)
 
 	//checkin service
 	attendanceRecordService := checkinService.NewAttendanceRecordService(attendanceRecordRepo, categoryRepo, officeRepo)
@@ -107,7 +107,9 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	employeeWorkShiftService := checkinService.NewEmployeeWorkshiftService(employeeWorkShiftRepo, userRepo, workShiftRepo, workScheduleRepo)
 	workScheduleService := checkinService.NewWorkScheduleService(workScheduleRepo, userRepo)
 	shiftAllocationService := checkinService.NewShiftAllocationService(workScheduleRepo, userRepo, employeeWorkShiftRepo)
-	timesheetService := checkinService.NewTimesheetSerivce(timesheetRepo)
+	timesheetRepo := checkinRepo.NewTimesheetRepo(db)
+	timesheetDetailRepo := checkinRepo.NewTimesheetDetailRepo(db)
+	timesheetListService := checkinService.NewTimesheetSerivce(timesheetListRepo, userRepo, timesheetRepo, timesheetDetailRepo)
 
 	//CheckIn handler
 	workShiftHandler := checkin.NewWorkShiftHandler(workShiftService)
@@ -116,7 +118,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	employeeWorkShiftHandler := checkin.NewEmployeeWorkshift(employeeWorkShiftService)
 	workScheduleHandler := checkin.NewWorkScheduleHandler(workScheduleService)
 	shiftAllocationHandler := checkin.NewShiftAllocationHandler(shiftAllocationService)
-	timesheetHandler := checkin.NewTimesheetHandler(timesheetService)
+	timesheetListHandler := checkin.NewTimesheetHandler(timesheetListService)
 
 	//setup routes
 	public := router.Group("/auth")
@@ -148,7 +150,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupEmployeeWorkshiftRoutes(hrmRouter, employeeWorkShiftHandler)
 	setupWorkSchedule(hrmRouter, workScheduleHandler)
 	setupShiftAllocation(hrmRouter, shiftAllocationHandler)
-	setupTimesheet(hrmRouter, timesheetHandler)
+	setupTimesheetList(hrmRouter, timesheetListHandler)
 
 }
 
@@ -389,13 +391,14 @@ func setupShiftAllocation(router *gin.RouterGroup, shiftAllocationHandler *check
 	}
 }
 
-func setupTimesheet(router *gin.RouterGroup, timesheetHandler *checkin.TimesheetHandler) {
-	timesheet := router.Group("/timesheet")
+func setupTimesheetList(router *gin.RouterGroup, timesheetHandler *checkin.TimesheetHandler) {
+	timesheet := router.Group("/timesheet-list")
 	{
 		timesheet.GET("/:id", timesheetHandler.GetByID())
 		timesheet.GET("", timesheetHandler.List())
-		timesheet.DELETE("", timesheetHandler.Delete())
+		timesheet.DELETE("/:id", timesheetHandler.Delete())
 		timesheet.POST("", timesheetHandler.Create())
 		timesheet.PUT("/:id", timesheetHandler.Update())
+		timesheet.PUT("/:id/locked", timesheetHandler.LockedTimeSheet())
 	}
 }

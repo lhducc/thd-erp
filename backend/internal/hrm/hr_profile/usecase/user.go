@@ -24,6 +24,7 @@ type EmployeeRepo interface {
 	GetBySchedule(ctx context.Context, scheduleIDs []int, managerID string, filter string) ([]model.Employee, error)
 	CheckExists(employeeID string) (bool, error)
 	GetScheduleOfEmployee(employeeID string) (*model.Employee, error)
+	GetEmployeesByOfficeID(ctx context.Context, officeID string) ([]*model.Employee, error)
 }
 
 type AccountRepo interface {

@@ -1,6 +1,7 @@
 package checkin
 
 import (
+	model "erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	"erp/backend/pkg"
@@ -18,7 +19,6 @@ func NewTimesheetHandler(svc service_interface.TimesheetServiceInterface) *Times
 	return &TimesheetHandler{service: svc}
 }
 
-// POST /timesheets
 func (h *TimesheetHandler) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req dto.TimesheetDTO
@@ -35,16 +35,15 @@ func (h *TimesheetHandler) Create() gin.HandlerFunc {
 		model := req.ConvertToBusinessModel()
 		model.CreatedBy = c.GetString("employeeId")
 
-		if err := h.service.Create(c.Request.Context(), model); err != nil {
+		if err := h.service.CreateElementOfTimesheetList(c.Request.Context(), model); err != nil {
 			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
 			return
 		}
 
-		utils.ResponseMessage(c, "Tạo timesheet thành công", http.StatusCreated, model.ID)
+		utils.ResponseMessage(c, "Tạo timesheet_list thành công", http.StatusCreated, model.TimeSheetListID)
 	}
 }
 
-// PUT /timesheets/:id
 func (h *TimesheetHandler) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req dto.TimesheetDTO
@@ -53,24 +52,20 @@ func (h *TimesheetHandler) Update() gin.HandlerFunc {
 			return
 		}
 
-		if err := req.Validate(); err != nil {
-			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
-			return
-		}
-
 		model := req.ConvertToBusinessModel()
-		model.ID = c.Param("id")
+		model.TimeSheetListID = c.Param("id")
+		updateBy := c.GetString("employeeId")
+		model.UpdatedBy = &updateBy
 
 		if err := h.service.Update(c.Request.Context(), model); err != nil {
 			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
 			return
 		}
 
-		utils.ResponseMessage(c, "Cập nhật timesheet thành công", http.StatusOK, model.ID)
+		utils.ResponseMessage(c, "Cập nhật timesheet_list thành công", http.StatusOK, model.TimeSheetListID)
 	}
 }
 
-// GET /timesheets/:id
 func (h *TimesheetHandler) GetByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
@@ -85,7 +80,6 @@ func (h *TimesheetHandler) GetByID() gin.HandlerFunc {
 	}
 }
 
-// GET /timesheets
 func (h *TimesheetHandler) List() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -125,7 +119,6 @@ func (h *TimesheetHandler) List() gin.HandlerFunc {
 	}
 }
 
-// DELETE /timesheets/:id
 func (h *TimesheetHandler) Delete() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
@@ -135,6 +128,23 @@ func (h *TimesheetHandler) Delete() gin.HandlerFunc {
 			return
 		}
 
-		utils.ResponseMessage(c, "Xoá timesheet thành công", http.StatusNoContent, nil)
+		utils.ResponseMessage(c, "Xoá timesheet_list thành công", http.StatusNoContent, nil)
+	}
+}
+
+func (h *TimesheetHandler) LockedTimeSheet() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		lockeModel := &model.TimeSheetList{}
+		lockeModel.TimeSheetListID = c.Param("id")
+		employeeID := c.GetString("employeeId")
+		lockeModel.LockedBy = &employeeID
+
+		if err := h.service.LockedTimesheet(c.Request.Context(), lockeModel); err != nil {
+			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Chốt công thành công", http.StatusOK, lockeModel.TimeSheetListID)
 	}
 }

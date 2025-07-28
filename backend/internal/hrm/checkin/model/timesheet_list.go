@@ -2,7 +2,6 @@ package model
 
 import (
 	"erp/backend/internal/hrm/hr_profile/model"
-	"erp/backend/pkg/variable"
 	"time"
 )
 
@@ -26,7 +25,7 @@ type TimeSheetList struct {
 	//DeadlineApprove *time.Time `gorm:"column:deadline_approve;type:timestamp" json:"deadline_approve"`
 
 	//Not yet processed
-	Status variable.TimeSheetListStatusEnum `gorm:"column:status;type:varchar(20);default:'open'" json:"status"`
+	//Status variable.TimeSheetListStatusEnum `gorm:"column:status;type:varchar(20);default:'open'" json:"status"`
 
 	// Status and permissions
 	IsLocked bool `gorm:"column:is_locked;type:boolean;default:false" json:"is_locked"`

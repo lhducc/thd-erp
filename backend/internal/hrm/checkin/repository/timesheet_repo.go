@@ -32,9 +32,10 @@ func (r *timesheetRepo) FindByID(id int) (*model.TimeSheet, error) {
 	return &ts, nil
 }
 
-func (r *timesheetRepo) FindByEmployeeAndMonth(employeeID string, month, year int) (*model.TimeSheet, error) {
+func (r *timesheetRepo) FindByEmployeeAndMonth(ctx context.Context, employeeID string, month, year int) (*model.TimeSheet, error) {
 	var ts model.TimeSheet
-	err := r.db.Where("employee_id = ? AND month = ? AND year = ?", employeeID, month, year).
+	err := r.db.WithContext(ctx).
+		Where("employee_id = ? AND month = ? AND year = ?", employeeID, month, year).
 		Preload("Details").
 		First(&ts).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {

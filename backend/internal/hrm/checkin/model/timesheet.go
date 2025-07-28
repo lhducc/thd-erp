@@ -46,7 +46,7 @@ type TimeSheet struct {
 	UpdatedAt *time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
 	//ApprovedBy *string    `gorm:"column:approved_by;type:varchar" json:"approved_by"`
 	//ApprovedAt *time.Time `gorm:"column:approved_at" json:"approved_at"`
-	IsDeleted bool `gorm:"column:is_deleted;type:boolean;default:false" json:"is_deleted"`
+	//IsDeleted bool `gorm:"column:is_deleted;type:boolean;default:false" json:"is_deleted"`
 
 	// Relationships
 	Employee   *model.EmployeeInforResponse `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"employee,omitempty"`

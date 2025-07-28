@@ -11,15 +11,15 @@ import (
 	"strconv"
 )
 
-type TimesheetHandler struct {
-	service service_interface.TimesheetServiceInterface
+type TimesheetListHandler struct {
+	service service_interface.TimesheetListServiceInterface
 }
 
-func NewTimesheetHandler(svc service_interface.TimesheetServiceInterface) *TimesheetHandler {
-	return &TimesheetHandler{service: svc}
+func NewTimesheetListHandler(svc service_interface.TimesheetListServiceInterface) *TimesheetListHandler {
+	return &TimesheetListHandler{service: svc}
 }
 
-func (h *TimesheetHandler) Create() gin.HandlerFunc {
+func (h *TimesheetListHandler) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req dto.TimesheetDTO
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -44,7 +44,7 @@ func (h *TimesheetHandler) Create() gin.HandlerFunc {
 	}
 }
 
-func (h *TimesheetHandler) Update() gin.HandlerFunc {
+func (h *TimesheetListHandler) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req dto.TimesheetDTO
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -66,7 +66,7 @@ func (h *TimesheetHandler) Update() gin.HandlerFunc {
 	}
 }
 
-func (h *TimesheetHandler) GetByID() gin.HandlerFunc {
+func (h *TimesheetListHandler) GetByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
@@ -80,7 +80,7 @@ func (h *TimesheetHandler) GetByID() gin.HandlerFunc {
 	}
 }
 
-func (h *TimesheetHandler) List() gin.HandlerFunc {
+func (h *TimesheetListHandler) List() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 		if err != nil {
@@ -119,7 +119,7 @@ func (h *TimesheetHandler) List() gin.HandlerFunc {
 	}
 }
 
-func (h *TimesheetHandler) Delete() gin.HandlerFunc {
+func (h *TimesheetListHandler) Delete() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
@@ -132,7 +132,7 @@ func (h *TimesheetHandler) Delete() gin.HandlerFunc {
 	}
 }
 
-func (h *TimesheetHandler) LockedTimeSheet() gin.HandlerFunc {
+func (h *TimesheetListHandler) LockedTimeSheet() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		lockeModel := &model.TimeSheetList{}

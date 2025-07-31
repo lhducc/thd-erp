@@ -86,6 +86,7 @@ func (s *attendanceRecordService) ValidateAttendanceRecordDistance(ctx context.C
 }
 
 func (s *attendanceRecordService) CreateAttendanceRecord(ctx context.Context, record *model.AttendanceRecord) error {
+	// convert time To UTC
 	return s.repo.Create(ctx, record)
 }
 

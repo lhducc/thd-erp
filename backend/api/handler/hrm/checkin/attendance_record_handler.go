@@ -286,7 +286,7 @@ func (h *AttendanceRecordHandler) CreateAttendanceRecordByAdmin() gin.HandlerFun
 
 		var record model.AttendanceRecord
 		record.EmployeeID = req.EmployeeID
-		record.Timestamp = req.Timestamp
+		record.Timestamp = req.Timestamp.UTC()
 		record.CreatedBy = &createrID
 		record.Status = variable.Approved
 

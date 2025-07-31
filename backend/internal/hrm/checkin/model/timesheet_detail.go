@@ -8,8 +8,8 @@ import (
 
 type TimeSheetDetail struct {
 	TimeSheetDetailID int       `gorm:"column:timesheet_detail_id;primaryKey;type:serial" json:"timesheet_detail_id"`
-	TimeSheetID       int       `gorm:"column:timesheet_id;not null;index" json:"timesheet_id"`
-	Date              time.Time `gorm:"column:date;type:date;not null;index" json:"date"`
+	TimeSheetID       int       `gorm:"column:timesheet_id;not null;uniqueIndex:idx_timesheet_date" json:"timesheet_id"`
+	Date              time.Time `gorm:"column:date;type:date;not null;uniqueIndex:idx_timesheet_date" json:"date"`
 	DayOfWeek         int       `gorm:"column:day_of_week;type:integer" json:"day_of_week"` // 1=monday, 7=sunday
 
 	//  Work shift information
@@ -19,10 +19,8 @@ type TimeSheetDetail struct {
 	IsWeekend    bool    `gorm:"column:is_weekend;type:boolean;default:false" json:"is_weekend"`
 
 	// Attendance information
-	CheckInTime      *time.Time `gorm:"column:checkin_time;type:timestamp" json:"checkin_time"`
-	CheckOutTime     *time.Time `gorm:"column:checkout_time;type:timestamp" json:"checkout_time"`
-	CheckInRecordID  *string    `gorm:"column:checkin_record_id;type:uuid" json:"checkin_record_id"`
-	CheckOutRecordID *string    `gorm:"column:checkout_record_id;type:uuid" json:"checkout_record_id"`
+	CheckInRecordID  *string `gorm:"column:checkin_record_id;type:uuid" json:"checkin_record_id"`
+	CheckOutRecordID *string `gorm:"column:checkout_record_id;type:uuid" json:"checkout_record_id"`
 
 	// Workday calculation
 	WorkHours         float64 `gorm:"column:work_hours;type:decimal(4,2);default:0" json:"work_hours"`
@@ -41,7 +39,7 @@ type TimeSheetDetail struct {
 
 	//Notes and manual adjustments
 	//Note             *string    `gorm:"column:note;type:text" json:"note"`
-	ManualAdjustment float64 `gorm:"column:manual_adjustment;type:decimal(3,2);default:0" json:"manual_adjustment"`
+	//ManualAdjustment float64 `gorm:"column:manual_adjustment;type:decimal(3,2);default:0" json:"manual_adjustment"`
 	//AdjustmentReason *string    `gorm:"column:adjustment_reason;type:text" json:"adjustment_reason"`
 	AdjustmentBy *string    `gorm:"column:adjustment_by;type:varchar" json:"adjustment_by"`
 	AdjustmentAt *time.Time `gorm:"column:adjustment_at" json:"adjustment_at"`

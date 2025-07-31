@@ -44,3 +44,16 @@ func (h *TimesheetHandler) GetPersonalTimesheet() gin.HandlerFunc {
 		utils.ResponseMessage(c, "Lấy bảng công cá nhân thành công", http.StatusOK, &personalTS)
 	}
 }
+
+func (h *TimesheetHandler) CalculationTimeSheet() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		timeSheetID := c.Param("id")
+		err := h.tsService.CalculatorTimeSheetList(ctx, timeSheetID)
+		if err != nil {
+			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+		utils.ResponseMessage(c, "Tính toán thành công", http.StatusOK, nil)
+	}
+}

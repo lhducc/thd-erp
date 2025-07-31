@@ -47,16 +47,18 @@ func (r *employeeWorkShiftRepo) Delete(id string) error {
 
 func (r *employeeWorkShiftRepo) GetAllByEmployeeID(employeeID string) ([]model.EmployeeWorkshift, error) {
 	var records []model.EmployeeWorkshift
-	result := r.db.Preload("WorkShift").Where("employee_id = ?", employeeID).Find(&records)
+	result := r.db.Where("employee_id = ?", employeeID).
+		Model(&model.EmployeeWorkshift{}).
+		Preload("WorkShift").Find(&records)
 	if result.Error != nil {
-		return []model.EmployeeWorkshift{}, result.Error
+		return nil, result.Error
 	}
 	return records, nil
 }
 
 func (r *employeeWorkShiftRepo) IsExisting(userID string, WorkShiftID string, date time.Time) bool {
 	var records model.EmployeeWorkshift
-	result := r.db.Where("employee_id = ? AND work_shift_id = ? AND date = ?", userID, WorkShiftID, date).First(&records)
+	result := r.db.Where("employee_id = ? AND workshift_id = ? AND date = ?", userID, WorkShiftID, date).First(&records)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return false

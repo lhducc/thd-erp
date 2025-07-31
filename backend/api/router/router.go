@@ -110,7 +110,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	workScheduleService := checkinService.NewWorkScheduleService(workScheduleRepo, userRepo)
 	shiftAllocationService := checkinService.NewShiftAllocationService(workScheduleRepo, userRepo, employeeWorkShiftRepo)
 	timesheetListService := checkinService.NewTimesheetListSerivce(timesheetListRepo, userRepo, timesheetRepo, timesheetDetailRepo)
-	timesheetService := checkinService.NewTimesheetService(timesheetRepo)
+	timesheetService := checkinService.NewTimesheetService(timesheetRepo, timesheetListRepo, attendanceRecordRepo, employeeWorkShiftRepo)
 
 	//CheckIn handler
 	workShiftHandler := checkin.NewWorkShiftHandler(workShiftService)
@@ -410,5 +410,6 @@ func setupTimesheet(router *gin.RouterGroup, timesheetHandler *checkin.Timesheet
 	timesheet := router.Group("/timesheet")
 	{
 		timesheet.GET("/personal", timesheetHandler.GetPersonalTimesheet())
+		timesheet.GET("/:id", timesheetHandler.CalculationTimeSheet())
 	}
 }

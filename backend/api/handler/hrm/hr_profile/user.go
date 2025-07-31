@@ -2,6 +2,7 @@ package handler
 
 import (
 	"erp/backend/internal/hrm/hr_profile/model"
+	"erp/backend/internal/hrm/hr_profile/model/dto"
 	utils "erp/backend/pkg"
 	"fmt"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 )
 
 type EmployeeBiz interface {
-	CreateEmployeeWithAccount(employee model.Employee) error
+	CreateEmployeeWithAccount(employee *model.Employee, roleID string) error
 	GetUserById(id string) (model.Employee, error)
 	UpdateEmployee(id string, updatedEmployee model.Employee) error
 	DeleteEmployee(id string) error
@@ -35,14 +36,16 @@ func NewEmployeeHandler(biz EmployeeBiz, bizDepartment DepartmentBiz) *EmployeeH
 
 func (biz *EmployeeHandler) CreateEmployee() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var data model.Employee
+		var dataDTO dto.EmployeeDTO
 
-		if err := c.ShouldBind(&data); err != nil {
+		if err := c.ShouldBind(&dataDTO); err != nil {
 			utils.ResponseMessage(c, "Error data", http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 			return
 		}
+
+		data := dataDTO.ConvertToEmployeeModel()
 
 		if err := model.ValidateEmployee(data); err != nil {
 			utils.ResponseMessage(c, "Error data", http.StatusBadRequest, gin.H{
@@ -50,7 +53,7 @@ func (biz *EmployeeHandler) CreateEmployee() gin.HandlerFunc {
 			})
 			return
 		}
-		if err := biz.employeeBiz.CreateEmployeeWithAccount(data); err != nil {
+		if err := biz.employeeBiz.CreateEmployeeWithAccount(data, dataDTO.RoleID); err != nil {
 			utils.ResponseMessage(c, "Error save db", http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})

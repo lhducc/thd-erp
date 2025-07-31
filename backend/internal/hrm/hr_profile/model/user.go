@@ -10,14 +10,15 @@ import (
 
 type Account struct {
 	ID          int64     `gorm:"primaryKey;column:id" json:"account_id"`
-	LoginMail   string    `gorm:"column:login_mail" json:"login_mail"`
+	LoginMail   string    `gorm:"column:login_mail;index" json:"login_mail"`
 	Password    string    `gorm:"column:password" json:"password"`
 	FirstLogin  bool      `gorm:"column:first_login" json:"first_login"`
 	RoleID      string    `gorm:"column:role_id" json:"role_id"`
 	EmployeeId  string    `gorm:"column:employee_id" json:"employee_id"`
 	CreatedDate time.Time `gorm:"column:created_date;autoCreateTime" json:"created_date"`
 
-	Role *Role `gorm:"foreignKey:RoleID;references:ID" json:"role,omitempty"`
+	Role     *Role     `gorm:"foreignKey:RoleID;references:ID" json:"role,omitempty"`
+	Employee *Employee `gorm:"foreignKey:EmployeeId;references:employee_id" json:"employee,omitempty"`
 }
 
 func (Account) TableName() string { return "account" }
@@ -86,7 +87,7 @@ type ResetPassword struct {
 
 var validate = validator.New()
 
-func ValidateEmployee(emp Employee) error {
+func ValidateEmployee(emp *Employee) error {
 	err := validate.Struct(emp)
 	if err != nil {
 		if _, ok := err.(*validator.InvalidValidationError); ok {

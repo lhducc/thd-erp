@@ -348,3 +348,14 @@ func (r *UserStore) GetEmployeesByOfficeID(ctx context.Context, officeID string)
 
 	return employees, nil
 }
+
+func (s *UserStore) CheckExistEmployeeID(employeeID string) (bool, error) {
+	var count int64
+	if err := s.db.Model(&model.Employee{}).Where("employee_id = ?", employeeID).Count(&count).Error; err != nil {
+		return true, err
+	}
+	if count > 0 {
+		return true, errors.New("EmployeeID is already")
+	}
+	return false, nil
+}

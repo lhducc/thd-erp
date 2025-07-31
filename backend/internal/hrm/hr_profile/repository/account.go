@@ -27,7 +27,6 @@ func (s *accountStore) CreateAccount(employee *hrmmodel.Employee, hashedPassword
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
-			// log.Printf("Panic occurred, transaction rolled back: %v", r)
 		}
 	}()
 

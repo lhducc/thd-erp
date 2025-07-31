@@ -8,6 +8,7 @@ import (
 	"erp/backend/pkg/mail"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type EmployeeRepo interface {
@@ -25,6 +26,7 @@ type EmployeeRepo interface {
 	CheckExists(employeeID string) (bool, error)
 	GetScheduleOfEmployee(employeeID string) (*model.Employee, error)
 	GetEmployeesByOfficeID(ctx context.Context, officeID string) ([]*model.Employee, error)
+	CheckExistEmployeeID(employeeID string) (bool, error)
 }
 
 type AccountRepo interface {
@@ -49,22 +51,17 @@ func NewEmployeeBiz(store *repository.UserStore, account AccountRepo) *EmployeeB
 	}
 }
 
-func (s *EmployeeBiz) CreateEmployeeWithAccount(employee model.Employee) error {
-	id, err := utils.GenerateCode("THD", 3, func() (string, error) {
-		var lastEmployee model.Employee
-		err := s.repo.GetLastEmployeeByCode(&lastEmployee)
-		if err != nil {
-			return "", err
-		}
-		return lastEmployee.EmployeeID, nil
-	})
+func (s *EmployeeBiz) CreateEmployeeWithAccount(employee *model.Employee, roleID string) error {
+
+	exists, err := s.repo.CheckExistEmployeeID(employee.EmployeeID)
 	if err != nil {
-		return fmt.Errorf("không thể tạo mã nhân viên: %w", err)
+		return err
+	}
+	if exists {
+		return errors.New("employee with id " + employee.EmployeeID + " already exists")
 	}
 
-	employee.EmployeeID = id
-
-	if err := s.repo.CreateEmployee(&employee); err != nil {
+	if err := s.repo.CreateEmployee(employee); err != nil {
 		return err
 	}
 
@@ -78,8 +75,10 @@ func (s *EmployeeBiz) CreateEmployeeWithAccount(employee model.Employee) error {
 		return err
 	}
 
-	roleID := "admin"
-	account, err := s.account.CreateAccount(&employee, hashedPassword, roleID)
+	if strings.TrimSpace(roleID) == "" {
+		roleID = "employee"
+	}
+	account, err := s.account.CreateAccount(employee, hashedPassword, roleID)
 	if err != nil {
 		return err
 	}
@@ -88,7 +87,7 @@ func (s *EmployeeBiz) CreateEmployeeWithAccount(employee model.Employee) error {
 		return fmt.Errorf("tạo nhân viên thành công nhưng gửi email thất bại: %w", err)
 	}
 
-	if err := s.repo.UpdateEmployeeWithAccount(&employee, account.ID); err != nil {
+	if err := s.repo.UpdateEmployeeWithAccount(employee, account.ID); err != nil {
 		return err
 	}
 

@@ -60,14 +60,16 @@ type JobTitleResponse struct {
 }
 
 type EmployeeInforResponse struct {
-	EmployeeID string `gorm:"column:employee_id" json:"employee_id"`
-	Fullname   string `gorm:"column:full_name;" json:"full_name" validate:"required"`
-	PositionID string `gorm:"column:position_id" json:"-"`
-	JobTitleID string `gorm:"column:job_title_id" json:"-"`
+	EmployeeID   string `gorm:"column:employee_id" json:"employee_id"`
+	Fullname     string `gorm:"column:full_name;" json:"full_name" validate:"required"`
+	PositionID   string `gorm:"column:position_id" json:"-"`
+	JobTitleID   string `gorm:"column:job_title_id" json:"-"`
+	DepartmentID string `gorm:"column:department_id" json:"-"`
 
 	JobTitle       *JobTitle       `gorm:"foreignKey:JobTitleID;references:job_title_id" json:"-"`
 	HierarchyLevel *HierarchyLevel `gorm:"-" json:"hierarchy_level,omitempty"`
 	Position       *Position       `gorm:"foreignKey:PositionID;references:position_id" json:"position,omitempty"`
+	Department     Department      `gorm:"column:department_id" json:"department,omitempty"`
 }
 
 func (JobTitleResponse) TableName() string { return "jobtitle" }

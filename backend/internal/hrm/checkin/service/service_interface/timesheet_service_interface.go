@@ -7,4 +7,5 @@ import (
 
 type TimeSheetServiceInterface interface {
 	FindByEmployeeIDAndMonth(ctx context.Context, employeeID string, month, year int) (*model.TimeSheet, error)
+	CalculatorTimeSheetList(ctx context.Context, timesheetListID string) error
 }

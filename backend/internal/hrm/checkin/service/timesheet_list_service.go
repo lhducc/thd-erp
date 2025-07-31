@@ -53,7 +53,7 @@ func (s *timesheetListService) CreateElementOfTimesheetList(ctx context.Context,
 		return fmt.Errorf("không thể tạo mã: %w", err)
 	}
 	timesheet.TimeSheetListID = code
-	timesheet.StartDate, timesheet.EndDate = utils.GetStartAndEndDate(timesheet.Month, timesheet.Year)
+	timesheet.StartDate, timesheet.EndDate = utils.GetStartAndEndDateVNTime(timesheet.Month, timesheet.Year)
 
 	if err = s.timesheetListRepo.Create(ctx, timesheet); err != nil {
 		return err
@@ -83,6 +83,11 @@ func (s *timesheetListService) Update(ctx context.Context, timesheet *model.Time
 	if ts.IsLocked {
 		return errors.New("bảng công đã chốt, không thể sửa đổi")
 	}
+	timeNowVN, err := utils.GetCurrentTimeHCMCity()
+	if err != nil {
+		return err
+	}
+	timesheet.UpdatedAt = &timeNowVN
 
 	return s.timesheetListRepo.Update(ctx, timesheet)
 }

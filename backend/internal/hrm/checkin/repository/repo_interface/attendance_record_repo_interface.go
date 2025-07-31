@@ -16,4 +16,5 @@ type AttendanceRecordRepository interface {
 	ListRequestByDateRange(ctx context.Context, employeeID string, from, to time.Time) ([]model.AttendanceRecord, error)
 	CountRequestsByEmployee(ctx context.Context, employeeID string) (int64, error)
 	ListHistoryRecordEmployee(ctx context.Context, employeeID string, limit int, offset int) ([]model.AttendanceRecord, error)
+	ListHistoryRecordApproveByEmpID(ctx context.Context, employeeID string, startTime time.Time, endTime time.Time) ([]model.AttendanceRecord, error)
 }

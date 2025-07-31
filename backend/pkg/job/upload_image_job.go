@@ -1,4 +1,4 @@
-// internal/pkg/job/job.go
+// internal/pkg/job/upload_image_job.go
 package job
 
 import (

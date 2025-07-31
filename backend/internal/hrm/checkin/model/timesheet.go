@@ -15,15 +15,15 @@ type TimeSheet struct {
 	DepartmentID    string `gorm:"column:department_id;type:varchar" json:"department_id"` //get from Employee.DepartmentID
 
 	// Working day summary
-	TotalWorkDays       float64 `gorm:"column:total_work_days;type:decimal(5,2);default:0" json:"total_work_days"`
-	AdditionalShiftDays float64 `gorm:"column:additional_shift_days;type:decimal(5,2);default:0" json:"additional_shift_days"`
-	TotalDays           float64 `gorm:"column:total_days;type:decimal(5,2);default:0" json:"total_days"`
+	TotalWorkDays float64 `gorm:"column:total_work_days;type:decimal(5,2);default:0" json:"total_work_days"`
+	//AdditionalShiftDays float64 `gorm:"column:additional_shift_days;type:decimal(5,2);default:0" json:"additional_shift_days"`
+	//TotalDays           float64 `gorm:"column:total_days;type:decimal(5,2);default:0" json:"total_days"`
 
 	// Late shift statistics
 	LateShifts       int `gorm:"column:late_shifts;type:integer;default:0" json:"late_shifts"`
 	TotalLateMinutes int `gorm:"column:total_late_minutes;type:integer;default:0" json:"total_late_minutes"`
 
-	// Types of leave and remote work (by day)
+	// Types of leave and remote work (by day) – Not yet processed
 	AnnualLeaveDays   float64 `gorm:"column:annual_leave_days;type:decimal(5,2);default:0" json:"annual_leave_days"`
 	PersonalLeaveDays float64 `gorm:"column:personal_leave_days;type:decimal(5,2);default:0" json:"personal_leave_days"`
 	BusinessTripDays  float64 `gorm:"column:business_trip_days;type:decimal(5,2);default:0" json:"business_trip_days"`

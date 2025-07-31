@@ -186,7 +186,6 @@ func GetDB() *gorm.DB {
 
 func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
-	//model.EmployeeWorkshift{},
 	//&officemodel.Office{},
 	//model.EmployeeWorkshift{},
 	//&model.WorkshiftRule{},
@@ -195,6 +194,7 @@ func AutoMigrate(db *gorm.DB) error {
 	//&hrmmodel.Office{},
 	//&hrmmodel.JobTitle{},
 	//&model.WorkShifts{},
+	//&model.EmployeeWorkshift{},
 	//&hrmmodel.EmployeeDocumentType{},
 	//&hrmmodel.Employee{},
 	//&hrmmodel.ContractType{},

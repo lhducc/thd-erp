@@ -82,7 +82,7 @@ func EnqueueUploadJob(file multipart.File, employee string, header *multipart.Fi
 // Goroutine xử lý job lỗi
 func handleFailedJobs() {
 	for job := range FailedJobQueue {
-		log.Printf("❗ Failed job captured: %s by %s at %s", job.Header.Filename, job.EmployeeID, job.Timestamp.Format(time.RFC3339))
+		log.Printf("Failed job captured: %s by %s at %s", job.Header.Filename, job.EmployeeID, job.Timestamp.Format(time.RFC3339))
 		// TODO: Ghi vào DB, gửi email cảnh báo, lưu log file,...
 	}
 }

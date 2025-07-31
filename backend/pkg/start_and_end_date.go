@@ -2,12 +2,12 @@ package utils
 
 import "time"
 
-func GetStartAndEndDate(month, year int) (time.Time, time.Time) {
-	startDate := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+func GetStartAndEndDateVNTime(month, year int) (time.Time, time.Time) {
+	locVN, _ := time.LoadLocation("Asia/Ho_Chi_Minh")
 
-	firstOfNextMonth := startDate.AddDate(0, 1, 0)
+	startVN := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, locVN)
+	firstOfNextMonthVN := startVN.AddDate(0, 1, 0)
+	endVN := firstOfNextMonthVN.AddDate(0, 0, -1)
 
-	endDate := firstOfNextMonth.AddDate(0, 0, -1)
-
-	return startDate, endDate
+	return startVN, endVN
 }

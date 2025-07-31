@@ -6,6 +6,7 @@ import (
 	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	utils "erp/backend/pkg"
+	"erp/backend/pkg/variable"
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
@@ -152,5 +153,29 @@ func (r *attendanceRecordRepository) ListRequestByDateRange(ctx context.Context,
 	if err != nil {
 		return nil, fmt.Errorf("failed to list attendance records by date range: %w", err)
 	}
+	return records, nil
+}
+
+func (r *attendanceRecordRepository) ListHistoryRecordApproveByEmpID(
+	ctx context.Context,
+	employeeID string,
+	startTime time.Time,
+	endTime time.Time,
+) ([]model.AttendanceRecord, error) {
+	var records []model.AttendanceRecord
+
+	err := r.db.WithContext(ctx).
+		Preload("AttendanceCategory").
+		Preload("Employee").
+		Where("employee_id = ?", employeeID).
+		Where("status = ?", variable.Approved).
+		Where("timestamp >= ? AND timestamp <= ?", startTime, endTime).
+		Order("timestamp ASC").
+		Find(&records).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to list approved attendance records by employee: %w", err)
+	}
+
 	return records, nil
 }

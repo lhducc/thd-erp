@@ -4,6 +4,7 @@ import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
+	utils "erp/backend/pkg/transaction"
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
@@ -134,7 +135,43 @@ func (r *employeeWorkShiftRepo) GetByID(id string) (*model.EmployeeWorkshift, er
 	return &record, nil
 }
 
-//func (r *employeeWorkShiftRepo) Save(assign []*model.EmployeeWorkshift) error {
-//	result := r.db.Save(assign)
-//	return result.Error
-//}
+func (r *employeeWorkShiftRepo) AssignmentShift(ctx context.Context, assigns []model.EmployeeWorkshift, scheduleId []int) error {
+	return utils.WithTransaction(r.db, ctx, func(ctx context.Context, tx *gorm.DB) error {
+		// 1. Lưu các assignment shift
+		if err := tx.WithContext(ctx).Model(&model.EmployeeWorkshift{}).Save(&assigns).Error; err != nil {
+			return fmt.Errorf("failed to save employee workshifts: %w", err)
+		}
+
+		// 2. Cập nhật trạng thái auto recurring
+		query := tx.WithContext(ctx).Model(&model.WorkSchedule{}).
+			Where("is_schedule_auto = ?", true)
+
+		// Tối ưu cho cả trường hợp 1 hoặc nhiều scheduleId
+		if len(scheduleId) > 0 {
+			if len(scheduleId) == 1 {
+				query = query.Where("work_schedule_id = ?", scheduleId[0])
+			} else {
+				query = query.Where("work_schedule_id IN (?)", scheduleId)
+			}
+
+		}
+		if err := query.Update("is_auto_recurring", true).Error; err != nil {
+			return fmt.Errorf("failed to update work schedules: %w", err)
+		}
+
+		return nil
+	})
+}
+
+func (r *employeeWorkShiftRepo) CheckShiftConflict(ctx context.Context, employeeID string, workshiftID string, date time.Time) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&model.EmployeeWorkshift{}).
+		Where("employee_id = ? AND workshift_id = ? AND date = ?",
+			employeeID,
+			workshiftID,
+			date.Format("2006-01-02")).
+		Count(&count).Error
+
+	return count > 0, err
+}

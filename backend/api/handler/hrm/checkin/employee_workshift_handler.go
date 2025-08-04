@@ -2,6 +2,7 @@ package checkin
 
 import (
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	utils "erp/backend/pkg"
 	"errors"
@@ -37,7 +38,7 @@ func (h *EmployeeWorkshiftHandler) RegisterPersonal() gin.HandlerFunc {
 
 		// CreateElementOfTimesheetList the workshift
 		if err := h.biz.Register(ctx, employeeID, req.WorkShiftID, req.Date); err != nil {
-			utils.ResponseMessage(c, "Failed to register workshift: "+err.Error(), http.StatusBadRequest, nil)
+			utils.ResponseMessage(c, "Failed to register workshift: "+err.Error(), http.StatusInternalServerError, nil)
 			return
 		}
 
@@ -72,7 +73,7 @@ func (h *EmployeeWorkshiftHandler) Register() gin.HandlerFunc {
 
 		// CreateElementOfTimesheetList the workshift
 		if err := h.biz.Register(ctx, req.EmployeeID, req.WorkShiftID, req.Date); err != nil {
-			utils.ResponseMessage(c, "Failed to register workshift: "+err.Error(), http.StatusBadRequest, nil)
+			utils.ResponseMessage(c, "Failed to register workshift: "+err.Error(), http.StatusInternalServerError, nil)
 			return
 		}
 
@@ -237,5 +238,32 @@ func (h *EmployeeWorkshiftHandler) GetListShiftAllowRegister() gin.HandlerFunc {
 			return
 		}
 		utils.ResponseMessage(c, "successfully", http.StatusOK, shifts)
+	}
+}
+
+func (h *EmployeeWorkshiftHandler) AssignEmpShifts() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		var req dto.AssignEmployeeWorkshiftRequest
+		// Parse incoming JSON body
+		if err := c.ShouldBindJSON(&req); err != nil {
+			utils.ResponseMessage(c, "Invalid input data", http.StatusBadRequest, nil)
+			fmt.Printf("error: %s", err.Error())
+			return
+		}
+
+		// validate
+		if len(req.EmpWorkShift) == 0 {
+			utils.ResponseMessage(c, "Empty shift assignment list", http.StatusBadRequest, nil)
+			return
+		}
+
+		// CreateElementOfTimesheetList the workshift
+		if err := h.biz.Assign(ctx, req.EmpWorkShift, req.ScheduleIDs); err != nil {
+			utils.ResponseMessage(c, "Failed to register workshift: "+err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Assign workshift successfully", http.StatusOK, nil)
 	}
 }

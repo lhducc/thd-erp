@@ -132,3 +132,39 @@ func (s *employeeWorkshiftService) GetListShiftAllowRegister(ctx context.Context
 
 	return shifts, nil
 }
+
+func (s *employeeWorkshiftService) Assign(ctx context.Context, empWorkshifts []model.EmployeeWorkshift, scheduleIDs []int) error {
+	var employeeWorkshifts []model.EmployeeWorkshift
+	for _, empWS := range empWorkshifts {
+		existingUser, err := s.employeeRepo.GetUserById(empWS.EmployeeID)
+		if err != nil {
+			return err
+		}
+
+		existingWorkshift, err := s.workshiftRepo.GetWorkShiftById(ctx, empWS.WorkShiftID)
+		if err != nil {
+			return err
+		}
+
+		exist, err := s.repo.CheckShiftConflict(ctx, empWS.EmployeeID, empWS.WorkShiftID, empWS.Date)
+		if err != nil {
+			return err
+		}
+		// if exist, continue with another record
+		if exist {
+			continue
+		}
+		employeeWorkshifts = append(employeeWorkshifts, model.EmployeeWorkshift{
+			EmployeeID:  existingUser.EmployeeID,
+			WorkShiftID: existingWorkshift.WorkShiftID,
+			Date:        empWS.Date,
+		})
+	}
+	if len(employeeWorkshifts) > 0 {
+		if err := s.repo.AssignmentShift(ctx, employeeWorkshifts, scheduleIDs); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

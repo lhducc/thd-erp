@@ -173,6 +173,7 @@ func setupEmployeeWorkshiftRoutes(adminRouter, managerRouter, userRouter *gin.Ro
 		adminGr.GET("", handler.GetAll())
 		adminGr.PUT("/:id", handler.Update())
 		adminGr.GET("/:employeeID", handler.GetAllByEmployeeID())
+		adminGr.POST("/assign", handler.AssignEmpShifts())
 	}
 	userGr := userRouter.Group("/employee-workshifts")
 	{
@@ -411,7 +412,7 @@ func setupWorkScheduleRoutes(router *gin.RouterGroup, workScheduleHandler *check
 		workSchedule.GET("", workScheduleHandler.FetchListWorkScheduleAuto())
 		workSchedule.GET("/:id", workScheduleHandler.FetchWorkScheduleByID())
 		workSchedule.DELETE("/manager/:schedule-id", workScheduleHandler.DeleteManagerFromWorkScheduleAuto())
-		workSchedule.GET("/register", workScheduleHandler.FetchListWorkScheduleRegister())
+		workSchedule.POST("/:id/recurring", workScheduleHandler.UpdateStatusAutoRecurring())
 	}
 	workScheduleRegister := router.Group("/work-schedule-register")
 	{
@@ -419,7 +420,6 @@ func setupWorkScheduleRoutes(router *gin.RouterGroup, workScheduleHandler *check
 		workScheduleRegister.PUT("/:id", workScheduleHandler.UpdateWorkScheduleRegister())
 		workScheduleRegister.DELETE("/:id", workScheduleHandler.DeleteWorkScheduleRegister())
 		workScheduleRegister.POST("/assign/:work-schedule-id", workScheduleHandler.AddManagerToWorkScheduleRegister())
-		workScheduleRegister.GET("", workScheduleHandler.FetchListWorkScheduleRegister())
 		workScheduleRegister.GET("/:id", workScheduleHandler.FetchWorkScheduleByID())
 		workScheduleRegister.DELETE("/manager/:schedule-id", workScheduleHandler.DeleteManagerFromWorkScheduleRegister())
 		workScheduleRegister.GET("/register", workScheduleHandler.FetchListWorkScheduleRegister())

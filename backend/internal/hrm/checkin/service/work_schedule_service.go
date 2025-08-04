@@ -261,3 +261,7 @@ func (s *WorkScheduleService) DeleteManagerFromWorkScheduleRegister(ctx context.
 	}
 	return nil
 }
+
+func (s *WorkScheduleService) UpdateStatusRecuringSchedule(ctx context.Context, scheduleId int, isAuto bool) error {
+	return s.repo.UpdateStatusRecuringSchedule(ctx, scheduleId, isAuto)
+}

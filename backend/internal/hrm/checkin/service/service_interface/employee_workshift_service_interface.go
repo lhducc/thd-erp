@@ -16,4 +16,5 @@ type EmployeeWorkshiftService interface {
 	GetListShiftAllowRegister(ctx context.Context, employeeID string) ([]model.WorkScheduleShift, error)
 	DeleteByManager(idEmpShift string) error
 	CheckManagerPermission(ctx context.Context, managerID, employeeID string) (*model.WorkScheduleManager, error)
+	Assign(ctx context.Context, empWorkshifts []model.EmployeeWorkshift, scheduleIDs []int) error
 }

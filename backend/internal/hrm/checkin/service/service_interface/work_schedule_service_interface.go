@@ -19,4 +19,5 @@ type WorkScheduleServiceInterface interface {
 	GetWorkScheduleByID(ctx context.Context, id int) (*model.WorkSchedule, error)
 	DeleteManagerFromWorkScheduleAuto(ctx context.Context, managerID string, workScheduleID int) error
 	DeleteManagerFromWorkScheduleRegister(ctx context.Context, managerID string, workScheduleID int) error
+	UpdateStatusRecuringSchedule(ctx context.Context, scheduleId int, isAuto bool) error
 }

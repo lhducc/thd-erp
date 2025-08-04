@@ -19,7 +19,7 @@ func NewShiftAllocationHandler(service service_interface.ShiftAllocationServiceI
 	}
 }
 
-func (biz *ShiftAllocationHandler) GetAllByHR() gin.HandlerFunc {
+func (biz *ShiftAllocationHandler) GetAll() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var (
 			data  []dto.EmployeeScheduleResponse

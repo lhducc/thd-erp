@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"erp/backend/internal/hrm/hr_profile/model"
 	"erp/backend/internal/hrm/hr_profile/model/dto"
 	utils "erp/backend/pkg"
@@ -13,7 +14,7 @@ import (
 )
 
 type EmployeeBiz interface {
-	CreateEmployeeWithAccount(employee *model.Employee, roleID string) error
+	CreateEmployeeWithAccount(ctx context.Context, employee *model.Employee, roleID string) error
 	GetUserById(id string) (model.Employee, error)
 	UpdateEmployee(id string, updatedEmployee model.Employee) error
 	DeleteEmployee(id string) error
@@ -53,7 +54,7 @@ func (biz *EmployeeHandler) CreateEmployee() gin.HandlerFunc {
 			})
 			return
 		}
-		if err := biz.employeeBiz.CreateEmployeeWithAccount(data, dataDTO.RoleID); err != nil {
+		if err := biz.employeeBiz.CreateEmployeeWithAccount(c.Request.Context(), data, dataDTO.RoleID); err != nil {
 			utils.ResponseMessage(c, "Error save db", http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})
@@ -126,6 +127,20 @@ func (biz *EmployeeHandler) GetAllEmployeeByStatus() gin.HandlerFunc {
 func (biz *EmployeeHandler) GetUserById() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idParam := c.Param("id")
+
+		result, err := biz.employeeBiz.GetUserById(idParam)
+		if err != nil {
+			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusNotFound, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Danh sách dữ liệu", http.StatusOK, result)
+	}
+}
+
+func (biz *EmployeeHandler) GetPersonalInfById() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		idParam := c.GetString("employeeId")
 
 		result, err := biz.employeeBiz.GetUserById(idParam)
 		if err != nil {

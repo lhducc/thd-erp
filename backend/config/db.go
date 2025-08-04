@@ -1,8 +1,10 @@
 package config
 
 import (
+	"erp/backend/internal/hrm/hr_profile/model"
 	"fmt"
 	"log"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -11,20 +13,22 @@ import (
 var DB *gorm.DB
 
 func ConnectPostgres() {
-	// Sử dụng trực tiếp chuỗi DBSource
 	dsn := AppConfig.Postgres.DBSource
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Không thể kết nối PostgreSQL:", err)
 	}
-	// Gọi hàm tạo enum trước khi migrate
 	if err := createEnums(db); err != nil {
 		log.Fatalf("Không thể tạo ENUM: %v", err)
 	}
 	errT := AutoMigrate(db)
 	if errT != nil {
 		fmt.Print(errT)
+	}
+
+	if err := createDefaultRoles(db); err != nil {
+		log.Fatalf("Không thể tạo role mặc định: %v", err)
 	}
 
 	fmt.Println("Đã kết nối PostgreSQL!")
@@ -225,5 +229,27 @@ func AutoMigrate(db *gorm.DB) error {
 		return fmt.Errorf("migrate thất bại: %w", err)
 	}
 
+	return nil
+}
+
+func createDefaultRoles(db *gorm.DB) error {
+	defaultRoles := []string{"admin", "manager", "employee"}
+
+	for _, name := range defaultRoles {
+		var count int64
+		if err := db.Model(&model.Role{}).Where("role_name = ?", name).Count(&count).Error; err != nil {
+			return err
+		}
+		if count == 0 {
+			role := model.Role{
+				ID:          name,
+				RoleName:    name,
+				CreatedDate: time.Now(),
+			}
+			if err := db.Create(&role).Error; err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }

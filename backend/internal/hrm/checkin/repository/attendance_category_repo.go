@@ -4,7 +4,7 @@ import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
-	utils "erp/backend/pkg"
+	utils "erp/backend/pkg/transaction"
 	"erp/backend/pkg/variable"
 	"errors"
 	"fmt"

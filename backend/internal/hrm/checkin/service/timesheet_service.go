@@ -24,6 +24,7 @@ type timesheetServiceImp struct {
 	tsListRepo           repo_interface.TimesheetListInterface
 	attendanceRecordRepo repo_interface.AttendanceRecordRepository
 	empWSRepo            repo_interface.EmployeeWorkShiftRepo
+	tsDetailsRepo        repo_interface.TimeSheetDetailRepoInterface
 }
 
 func NewTimesheetService(
@@ -31,12 +32,14 @@ func NewTimesheetService(
 	tsListRepo repo_interface.TimesheetListInterface,
 	attendanceRecordRepo repo_interface.AttendanceRecordRepository,
 	empWSRepo repo_interface.EmployeeWorkShiftRepo,
+	tsDetailsRepo repo_interface.TimeSheetDetailRepoInterface,
 ) service_interface.TimeSheetServiceInterface {
 	return &timesheetServiceImp{
 		timesheetRepo:        timesheetRepo,
 		tsListRepo:           tsListRepo,
 		attendanceRecordRepo: attendanceRecordRepo,
 		empWSRepo:            empWSRepo,
+		tsDetailsRepo:        tsDetailsRepo,
 	}
 }
 
@@ -50,15 +53,12 @@ func (t *timesheetServiceImp) CalculatorTimeSheetList(ctx context.Context, times
 		return errors.New("Lỗi khi lấy danh sách tính toán")
 	}
 
-	// Tạo context có thể hủy
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	// Kênh cho các job và kết quả
 	jobs := make(chan model.TimeSheet, len(tsl.Timesheets))
 	results := make(chan error, len(tsl.Timesheets))
 
-	// Số lượng worker (tối ưu dựa trên số lượng job)
 	numWorkers := 5
 	if numWorkers > len(tsl.Timesheets) {
 		numWorkers = len(tsl.Timesheets)
@@ -67,58 +67,67 @@ func (t *timesheetServiceImp) CalculatorTimeSheetList(ctx context.Context, times
 	var wg sync.WaitGroup
 	wg.Add(numWorkers)
 
-	// Khởi động worker
 	for i := 0; i < numWorkers; i++ {
 		go func() {
 			defer wg.Done()
 			for ts := range jobs {
-				// Kiểm tra context trước khi xử lý
 				if ctx.Err() != nil {
 					results <- nil
 					return
 				}
 
-				// Tính toán cho từng nhân viên
 				err := t.calculateForEmployee(ctx, ts, tsl)
 				results <- err
 			}
 		}()
 	}
 
-	// Gửi job vào kênh
 	for _, ts := range tsl.Timesheets {
 		jobs <- ts
 	}
 	close(jobs)
 
-	// Đợi worker hoàn thành và đóng kênh kết quả
 	go func() {
 		wg.Wait()
 		close(results)
 	}()
 
-	// Thu thập kết quả
 	var firstErr error
 	for i := 0; i < len(tsl.Timesheets); i++ {
 		err := <-results
 		if err != nil && firstErr == nil {
 			firstErr = err
-			cancel() // Hủy context khi có lỗi đầu tiên
+			cancel()
 		}
 	}
 
 	return firstErr
 }
 
-// Hàm tính toán cho từng nhân viên (được gọi song song)
+// concurrency
 func (t *timesheetServiceImp) calculateForEmployee(
 	ctx context.Context,
 	ts model.TimeSheet,
 	tsl *model.TimeSheetList,
 ) error {
-	// Kiểm tra context trước các thao tác tốn kém
+	// Check if context is cancelled before expensive operations
 	if ctx.Err() != nil {
 		return ctx.Err()
+	}
+
+	// Fetch existing timesheet details to preserve manual adjustments
+	existingDetails, err := t.tsDetailsRepo.GetDetailsByTimeSheetID(ctx, ts.TimeSheetID)
+	if err != nil {
+		log.Printf("Error fetching existing details for timesheet %d: %v", ts.TimeSheetID, err)
+		return err
+	}
+
+	// CreateTimeSheets map for existing details for quick lookup
+	existingDetailMap := make(map[time.Time]model.TimeSheetDetail)
+	for _, detail := range existingDetails {
+		// Use normalized date as key for consistent comparison
+		dateKey := normalizeToDay(detail.Date, vietnamLoc)
+		existingDetailMap[dateKey] = detail
 	}
 
 	records, err := t.attendanceRecordRepo.ListHistoryRecordApproveByEmpID(ctx, ts.EmployeeID, tsl.StartDate, tsl.EndDate)
@@ -126,7 +135,7 @@ func (t *timesheetServiceImp) calculateForEmployee(
 		return err
 	}
 
-	// Kiểm tra context sau mỗi thao tác I/O
+	// Check context after I/O operations
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -139,7 +148,7 @@ func (t *timesheetServiceImp) calculateForEmployee(
 	// Map day-shift
 	shiftMap := make(map[time.Time]model.EmployeeWorkshift)
 	for _, shift := range employeeShifts {
-		dateKey := NormalizeToDay(shift.Date, vietnamLoc)
+		dateKey := normalizeToDay(shift.Date, vietnamLoc)
 		shiftMap[dateKey] = shift
 	}
 
@@ -153,26 +162,44 @@ func (t *timesheetServiceImp) calculateForEmployee(
 
 	currentDate = time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 0, 0, 0, 0, vietnamLoc)
 	endDate = time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 0, vietnamLoc)
+
 	for currentDate.Before(tsl.EndDate) || currentDate.Equal(endDate) {
-		// Kiểm tra context trước mỗi lần lặp
+		// Check context before each iteration
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
 
-		dateKey := NormalizeToDay(currentDate, vietnamLoc)
+		dateKey := normalizeToDay(currentDate, vietnamLoc)
 
-		// Chỉ xử lý nếu có ca làm việc
-		if shift, exists := shiftMap[dateKey]; exists {
-			detail := model.TimeSheetDetail{
-				TimeSheetID:  ts.TimeSheetID,
-				Date:         dateKey,
-				DayOfWeek:    int(dateKey.Weekday()),
-				IsWorkingDay: true,
-				IsWeekend:    isWeekend(dateKey),
-				WorkShiftID:  &shift.WorkShiftID,
+		// Check if this date has a manual adjustment
+		if existingDetail, exists := existingDetailMap[dateKey]; exists && existingDetail.IsManuallyAdjusted {
+			// Preserve manually adjusted details
+			details = append(details, existingDetail)
+
+			// Add to totals
+			totalWorkDays += existingDetail.WorkDays
+			if existingDetail.IsLate {
+				totalLateMinutes += existingDetail.LateMinutes
+				lateShifts++
 			}
 
-			// Lấy khung thời gian check-in/out từ ca làm việc
+			currentDate = currentDate.AddDate(0, 0, 1)
+			continue
+		}
+
+		// Process only if shift exists
+		if shift, exists := shiftMap[dateKey]; exists {
+			// Start with either existing detail or new one
+			detail := existingDetailMap[dateKey]
+			detail.TimeSheetID = ts.TimeSheetID
+			detail.Date = dateKey
+			detail.DayOfWeek = int(dateKey.Weekday())
+			detail.IsWorkingDay = true
+			detail.IsWeekend = isWeekend(dateKey)
+			detail.WorkShiftID = &shift.WorkShiftID
+			detail.IsManuallyAdjusted = false // Reset manual adjustment flag
+
+			// Get check-in/out time ranges from shift
 			checkinFrom, checkinTo, checkoutFrom, checkoutTo, err := t.getShiftTimeRange(
 				shift.WorkShift, dateKey)
 
@@ -189,21 +216,19 @@ func (t *timesheetServiceImp) calculateForEmployee(
 				detail.CheckInRecordID = &checkInRecords[0].AttendanceRecordID
 			}
 
-			// Xử lý nếu có bản ghi check-out hợp lệ
 			if len(checkOutRecords) > 0 {
 				detail.CheckOutRecordID = &checkOutRecords[0].AttendanceRecordID
 			}
 
-			// Tính toán nếu có cả check-in và check-out
 			if len(checkInRecords) > 0 && len(checkOutRecords) > 0 {
 				firstCheckIn := checkInRecords[0].Timestamp.In(vietnamLoc)
 				lastCheckOut := checkOutRecords[0].Timestamp.In(vietnamLoc)
 
-				// caculator real time working
+				// Calculate real working hours
 				workHours := lastCheckOut.Sub(firstCheckIn).Hours()
 				detail.WorkHours = math.Round(workHours*100) / 100
 
-				// convert string time to time.Time
+				// Convert string time to time.Time
 				startTime, err := time.ParseInLocation("15:04:05", shift.WorkShift.StartTime, dateKey.Location())
 				if err != nil {
 					currentDate = currentDate.AddDate(0, 0, 1)
@@ -219,7 +244,7 @@ func (t *timesheetServiceImp) calculateForEmployee(
 					0, 0, dateKey.Location(),
 				)
 
-				// check
+				// Check valid checkin/checkout times
 				hasValidCheckIn := checkinFrom != nil && checkinTo != nil &&
 					firstCheckIn.After(checkinFrom.Add(-1*time.Minute)) &&
 					firstCheckIn.Before(checkinTo.Add(1*time.Minute))
@@ -229,6 +254,11 @@ func (t *timesheetServiceImp) calculateForEmployee(
 					lastCheckOut.Before(checkoutTo.Add(1*time.Minute))
 
 				if hasValidCheckIn && hasValidCheckOut {
+					// Save original value before any potential manual adjustment
+					if detail.OriginalWorkDays == nil {
+						detail.OriginalWorkDays = &detail.WorkDays
+					}
+
 					detail.WorkDays = float64(shift.WorkShift.WorkDay)
 					totalWorkDays += float64(shift.WorkShift.WorkDay)
 
@@ -238,6 +268,8 @@ func (t *timesheetServiceImp) calculateForEmployee(
 						detail.IsLate = true
 						totalLateMinutes += lateMinutes
 						lateShifts++
+					} else {
+						detail.IsLate = false
 					}
 				} else {
 					detail.WorkDays = 0
@@ -267,7 +299,7 @@ func (t *timesheetServiceImp) calculateForEmployee(
 	ts.LateShifts = lateShifts
 	ts.Details = details
 
-	// Kiểm tra context trước khi lưu
+	// Check context before saving
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -368,8 +400,73 @@ func (t *timesheetServiceImp) classifyRecords(records []model.AttendanceRecord,
 	return checkInRecords, checkOutRecords
 }
 
-func NormalizeToDay(t time.Time, loc *time.Location) time.Time {
+func normalizeToDay(t time.Time, loc *time.Location) time.Time {
 	localTime := t.In(loc)
 	dayStart := time.Date(localTime.Year(), localTime.Month(), localTime.Day(), 0, 0, 0, 0, loc)
 	return dayStart
+}
+
+func (t *timesheetServiceImp) ResetWorkDayAdjustment(
+	ctx context.Context,
+	timesheetDetailID int,
+) error {
+	// Get detail data
+	detail, err := t.tsDetailsRepo.GetDetailByID(ctx, timesheetDetailID)
+	if err != nil {
+		return err
+	}
+
+	//get timesheet
+	if err != nil {
+		return errors.New("Lỗi khi lấy timesheet")
+	}
+
+	// Reset
+	if detail.OriginalWorkDays != nil {
+		detail.WorkDays = *detail.OriginalWorkDays
+	}
+	detail.OriginalWorkDays = nil
+	detail.WorkDaysAdjusted = 0
+	detail.IsManuallyAdjusted = false
+	detail.AdjustmentBy = nil
+	detail.AdjustmentAt = nil
+
+	// update detail and total workday
+	return t.tsDetailsRepo.UpdateTimeSheetDetail(ctx, detail)
+}
+
+// service/timesheet_service.go
+func (t *timesheetServiceImp) ManualAdjustWorkDay(
+	ctx context.Context,
+	timesheetDetailID int,
+	adjustedWorkDays float64,
+	adjustedBy string,
+) error {
+	// get detail have in database
+	detail, err := t.tsDetailsRepo.GetDetailByID(ctx, timesheetDetailID)
+	if err != nil {
+		return err
+	}
+
+	//get timesheet
+	if err != nil {
+		return errors.New("Lỗi khi lấy timesheet")
+	}
+
+	// save old workday
+	if detail.OriginalWorkDays == nil {
+		value := detail.WorkDays
+		detail.OriginalWorkDays = &value
+	}
+
+	// update manual workday and
+	detail.WorkDays = adjustedWorkDays
+	detail.WorkDaysAdjusted = adjustedWorkDays
+	detail.IsManuallyAdjusted = true
+	detail.AdjustmentBy = &adjustedBy
+	now := time.Now()
+	detail.AdjustmentAt = &now
+
+	// update detail
+	return t.tsDetailsRepo.UpdateTimeSheetDetail(ctx, detail)
 }

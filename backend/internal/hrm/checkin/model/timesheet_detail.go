@@ -23,9 +23,9 @@ type TimeSheetDetail struct {
 	CheckOutRecordID *string `gorm:"column:checkout_record_id;type:uuid" json:"checkout_record_id"`
 
 	// Workday calculation
-	WorkHours         float64 `gorm:"column:work_hours;type:decimal(4,2);default:0" json:"work_hours"`
-	WorkDays          float64 `gorm:"column:work_days;type:decimal(3,2);default:0" json:"work_days"`
-	IsAdditionalShift bool    `gorm:"column:is_additional_shift;type:boolean;default:false" json:"is_additional_shift"`
+	WorkHours float64 `gorm:"column:work_hours;type:decimal(4,2);default:0" json:"work_hours"`
+	WorkDays  float64 `gorm:"column:work_days;type:decimal(3,2);default:0" json:"work_days"`
+	//IsAdditionalShift bool    `gorm:"column:is_additional_shift;type:boolean;default:false" json:"is_additional_shift"`
 
 	// Late information
 	IsLate      bool `gorm:"column:is_late;type:boolean;default:false" json:"is_late"`
@@ -38,11 +38,11 @@ type TimeSheetDetail struct {
 	AbsentReason *string                 `gorm:"column:absent_reason;type:text" json:"absent_reason"`
 
 	//Notes and manual adjustments
-	//Note             *string    `gorm:"column:note;type:text" json:"note"`
-	//ManualAdjustment float64 `gorm:"column:manual_adjustment;type:decimal(3,2);default:0" json:"manual_adjustment"`
-	//AdjustmentReason *string    `gorm:"column:adjustment_reason;type:text" json:"adjustment_reason"`
-	AdjustmentBy *string    `gorm:"column:adjustment_by;type:varchar" json:"adjustment_by"`
-	AdjustmentAt *time.Time `gorm:"column:adjustment_at" json:"adjustment_at"`
+	WorkDaysAdjusted   float64    `gorm:"column:work_day_adjusted;type:decimal(3,2);default:0" json:"work_day_adjusted"`
+	OriginalWorkDays   *float64   `gorm:"column:original_work_days;type:decimal(3,2)" json:"original_work_days"`
+	IsManuallyAdjusted bool       `gorm:"column:is_manually_adjusted;type:boolean;default:false" json:"is_manually_adjusted"`
+	AdjustmentBy       *string    `gorm:"column:adjustment_by;type:varchar" json:"adjustment_by"`
+	AdjustmentAt       *time.Time `gorm:"column:adjustment_at" json:"adjustment_at"`
 
 	// Relationships
 	WorkShift      *WorkShifts            `gorm:"foreignKey:WorkShiftID;references:WorkShiftID" json:"work_shift,omitempty"`

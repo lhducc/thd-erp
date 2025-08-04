@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	checkin_model "erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"erp/backend/internal/hrm/hr_profile/model"
 	"erp/backend/internal/hrm/hr_profile/repository"
 	utils "erp/backend/pkg"
@@ -40,18 +42,28 @@ type AccountRepo interface {
 }
 
 type EmployeeBiz struct {
-	repo    EmployeeRepo
-	account AccountRepo
+	repo              EmployeeRepo
+	account           AccountRepo
+	timesheetRepo     repo_interface.TimeSheetRepoInterface
+	timesheetListRepo repo_interface.TimesheetListInterface
+	departmentRepo    DepartmentRepo
 }
 
-func NewEmployeeBiz(store *repository.UserStore, account AccountRepo) *EmployeeBiz {
+func NewEmployeeBiz(store *repository.UserStore,
+	account AccountRepo,
+	timesheetRepo repo_interface.TimeSheetRepoInterface,
+	timesheetListRepo repo_interface.TimesheetListInterface,
+	departmentRepo DepartmentRepo) *EmployeeBiz {
 	return &EmployeeBiz{
-		repo:    store,
-		account: account,
+		repo:              store,
+		account:           account,
+		timesheetRepo:     timesheetRepo,
+		timesheetListRepo: timesheetListRepo,
+		departmentRepo:    departmentRepo,
 	}
 }
 
-func (s *EmployeeBiz) CreateEmployeeWithAccount(employee *model.Employee, roleID string) error {
+func (s *EmployeeBiz) CreateEmployeeWithAccount(ctx context.Context, employee *model.Employee, roleID string) error {
 
 	exists, err := s.repo.CheckExistEmployeeID(employee.EmployeeID)
 	if err != nil {
@@ -89,6 +101,35 @@ func (s *EmployeeBiz) CreateEmployeeWithAccount(employee *model.Employee, roleID
 
 	if err := s.repo.UpdateEmployeeWithAccount(employee, account.ID); err != nil {
 		return err
+	}
+
+	// add employee into timesheet
+	timeNow, err := utils.GetCurrentTimeHCMCity()
+	if err != nil {
+		return err
+	}
+	month := int(timeNow.Month())
+	year := int(timeNow.Year())
+
+	timesheetList, err := s.timesheetListRepo.GetTimeSheetByOfficeIDAndTime(employee.Department.OfficeID, month, year)
+	if timesheetList != nil {
+		department, err := s.departmentRepo.GetDepartment(ctx, employee.DepartmentID)
+		if err != nil {
+			return errors.New("Lỗi khi lấy dữ liệu Department")
+		}
+		timesheet := checkin_model.TimeSheet{
+			TimeSheetListID: timesheetList.TimeSheetListID,
+			OfficeID:        department.OfficeID,
+			Month:           timesheetList.Month,
+			Year:            timesheetList.Year,
+			DepartmentID:    employee.DepartmentID,
+			EmployeeID:      employee.EmployeeID,
+			CreatedBy:       timesheetList.CreatedBy,
+		}
+		if err = s.timesheetRepo.CreateEmployeeTimeSheet(&timesheet); err != nil {
+			fmt.Printf(err.Error())
+			return errors.New("Lỗi trong quá trình thêm nhân viên vào bảng công")
+		}
 	}
 
 	return nil

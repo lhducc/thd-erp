@@ -5,7 +5,7 @@ import (
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
-	utils "erp/backend/pkg"
+	utils "erp/backend/pkg/transaction"
 	"erp/backend/pkg/variable"
 	"errors"
 	"fmt"
@@ -67,16 +67,24 @@ func (r *attendanceRecordRepository) GetByID(ctx context.Context, id string) (*m
 	var record model.AttendanceRecord
 	err := r.db.WithContext(ctx).
 		Preload("AttendanceCategory").
-		Joins("JOIN attendance_categories ON attendance_records.category_id = attendance_categories.attendance_category_id").
-		Where("attendance_records.attendance_record_id = ? AND attendance_categories.auto_approve = ?",
-			id, false).
+		Where("attendance_record_id = ?", id).
 		First(&record).Error
 
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("attendance record not found or is auto-approved: %w", err)
-		}
-		return nil, fmt.Errorf("failed to get attendance record: %w", err)
+		return nil, err
+	}
+	return &record, nil
+}
+
+func (r *attendanceRecordRepository) GetByIDPersonal(ctx context.Context, recordId, employeeId string) (*model.AttendanceRecord, error) {
+	var record model.AttendanceRecord
+	err := r.db.WithContext(ctx).
+		Preload("AttendanceCategory").
+		Where("attendance_record_id = ? AND employee_id = ?", recordId, employeeId).
+		First(&record).Error
+
+	if err != nil {
+		return nil, err
 	}
 	return &record, nil
 }

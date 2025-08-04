@@ -259,6 +259,37 @@ func (h *AttendanceRecordHandler) GetHistoryRecordByEmployee() gin.HandlerFunc {
 	}
 }
 
+func (h *AttendanceRecordHandler) GetPersonalHistoryRecord() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		employeeID := c.GetString("employeeId")
+		ctx := c.Request.Context()
+
+		pageStr := c.DefaultQuery("page", "1")
+		limitStr := c.DefaultQuery("limit", "10")
+
+		page, err := strconv.Atoi(pageStr)
+		if err != nil || page < 1 {
+			utils.ResponseMessage(c, "Giá trị 'page' không hợp lệ", http.StatusBadRequest, nil)
+			return
+		}
+
+		limit, err := strconv.Atoi(limitStr)
+		if err != nil || limit < 1 {
+			utils.ResponseMessage(c, "Giá trị 'limit' không hợp lệ", http.StatusBadRequest, nil)
+			return
+		}
+
+		records, err := h.biz.GetHistoryRecordByEmployee(ctx, employeeID, page, limit)
+		if err != nil {
+			utils.ResponseMessage(c, "Không thể lấy lịch sử chấm công: "+err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+
+		addPresignedURLs(c, records)
+		utils.ResponseMessage(c, "Danh sách chấm công cá nhân", http.StatusOK, records)
+	}
+}
+
 func (h *AttendanceRecordHandler) CreateAttendanceRecordByAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
@@ -296,5 +327,23 @@ func (h *AttendanceRecordHandler) CreateAttendanceRecordByAdmin() gin.HandlerFun
 		}
 
 		utils.ResponseMessage(c, "Attendance record created successfully", http.StatusOK, nil)
+	}
+}
+
+func (h *AttendanceRecordHandler) GetPersonalRecordDetailById() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		id := c.Param("id")
+		employeeID := c.GetString("employeeId")
+		record, err := h.biz.GetAttendanceRecordByIDPersonal(ctx, id, employeeID)
+		if err != nil {
+			utils.ResponseMessage(c, "Attendance record not found", http.StatusNotFound, nil)
+			return
+		}
+
+		url, err := minIO.GeneratePresignedURL(c, minIO.AttendanceBucket, record.ImageName, 15*time.Minute)
+		record.ImageURL = url
+
+		utils.ResponseSuccess(c, "Attendance record found", http.StatusOK, &record)
 	}
 }

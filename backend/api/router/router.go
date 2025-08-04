@@ -40,6 +40,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 		log.Fatal("Error creating JWT maker:", err)
 	}
 
+	// transaction
 	// hrm_repo
 	accountAuthRepo := authRepo.NewAccountRepository(db)
 	contractTypeRepo := repository.NewContractTypeRepository(db)
@@ -57,6 +58,17 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	employeeDocumentRepo := repository.NewEmployeeDocument(db)
 	hierarchyLevelRepo := repository.NewhierarchyLevelStore(db)
 	allowanceRepo := repository.NewAllowanceRepo(db)
+	roleRepo := repository.NewRoleRepo(db)
+
+	//checkin Repo
+	workShiftRepo := checkinRepo.NewWorkShiftStore(db)
+	attendanceRecordRepo := checkinRepo.NewAttendanceRecordRepository(db)
+	categoryRepo := checkinRepo.NewAttendanceCategoryRepository(db)
+	employeeWorkShiftRepo := checkinRepo.NewEmployeeWorkShiftRepo(db)
+	workScheduleRepo := checkinRepo.NewWorkScheduleRepo(db)
+	timesheetListRepo := checkinRepo.NewTimesheetListRepo(db)
+	timesheetRepo := checkinRepo.NewTimesheetRepo(db)
+	timesheetDetailRepo := checkinRepo.NewTimesheetDetailRepo(db)
 
 	//usecase hrm
 	accountUsecase := authUsecase.NewAuthentication(accountAuthRepo, jwtMaker)
@@ -66,7 +78,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	departmentUsecase := usecase.NewDepartmentBiz(departmentRepo)
 	officeUsecase := usecase.NewOfficeBiz(officeRepo)
 	jobTitleUsecase := usecase.NewJobTitleBiz(jobTitleRepo, hierarchyLevelRepo)
-	employeeUsecase := usecase.NewEmployeeBiz(userRepo, accountManagementRepo)
+	employeeUsecase := usecase.NewEmployeeBiz(userRepo, accountManagementRepo, timesheetRepo, timesheetListRepo, departmentRepo)
 	contractUsecase := usecase.NewContractBiz(contractRepo, userRepo)
 	employeeDocumentUsecase := usecase.NewEmployeeDocumentBiz(employeeDocumentRepo)
 	positionUsecase := usecase.NewPositionBiz(positionRepo)
@@ -74,6 +86,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	documentTypUsecase := usecase.NewDocumentTypeBiz(documentTypeRepo)
 	hierarchyLevelUsecase := usecase.NewHierarchyLevelBiz(hierarchyLevelRepo)
 	allowanceUsecase := usecase.NewAllowanceBiz(allowanceRepo)
+	roleUsecase := usecase.NewRoleUsecase(roleRepo)
 
 	//hanlder hrm
 	officeHandler := handler.NewOficeHandler(officeUsecase)
@@ -91,16 +104,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	insuranceHandler := handler.NewInsuranceHandler(insuranceUsecase)
 	employeeDocumentHandler := handler.NewEmployeeDocumentHandler(employeeDocumentUsecase)
 	allowanceHandler := handler.NewAllowanceHandler(allowanceUsecase)
-
-	//checkin Repo
-	workShiftRepo := checkinRepo.NewWorkShiftStore(db)
-	attendanceRecordRepo := checkinRepo.NewAttendanceRecordRepository(db)
-	categoryRepo := checkinRepo.NewAttendanceCategoryRepository(db)
-	employeeWorkShiftRepo := checkinRepo.NewEmployeeWorkShiftRepo(db)
-	workScheduleRepo := checkinRepo.NewWorkScheduleRepo(db)
-	timesheetListRepo := checkinRepo.NewTimesheetListRepo(db)
-	timesheetRepo := checkinRepo.NewTimesheetRepo(db)
-	timesheetDetailRepo := checkinRepo.NewTimesheetDetailRepo(db)
+	roleHanlder := handler.NewRoleHandler(roleUsecase)
 
 	//checkin service
 	attendanceRecordService := checkinService.NewAttendanceRecordService(attendanceRecordRepo, categoryRepo, officeRepo)
@@ -110,7 +114,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	workScheduleService := checkinService.NewWorkScheduleService(workScheduleRepo, userRepo)
 	shiftAllocationService := checkinService.NewShiftAllocationService(workScheduleRepo, userRepo, employeeWorkShiftRepo)
 	timesheetListService := checkinService.NewTimesheetListSerivce(timesheetListRepo, userRepo, timesheetRepo, timesheetDetailRepo)
-	timesheetService := checkinService.NewTimesheetService(timesheetRepo, timesheetListRepo, attendanceRecordRepo, employeeWorkShiftRepo)
+	timesheetService := checkinService.NewTimesheetService(timesheetRepo, timesheetListRepo, attendanceRecordRepo, employeeWorkShiftRepo, timesheetDetailRepo)
 
 	//CheckIn handler
 	workShiftHandler := checkin.NewWorkShiftHandler(workShiftService)
@@ -130,53 +134,72 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	hrmRouter.Use(middleware.AuthMiddleware(jwtMaker))
 	hrmRouter.PUT("/auth/password", accountHandler.ChangePassword)
 
-	setupOfficeRoutes(hrmRouter, officeHandler)
-	setupDepartmentRoutes(hrmRouter, departmentHandler)
-	setupJobTitleRoutes(hrmRouter, jobtitleHandler)
-	setupPositionRoutes(hrmRouter, positionHandler)
-	setuphierarchyLevelRoutes(hrmRouter, hierarchyLevel)
-	setupEmployeeRouters(hrmRouter, employeeHandler)
-	setupContractRoutes(hrmRouter, contractHandler)
-	setupDecisionRoutes(hrmRouter, decisionHandler)
-	setupDocumentTypeRoutes(hrmRouter, documentTypeHandler)
-	setupInsuranceRoutes(hrmRouter, insuranceHandler)
-	setupDecisionTypeRoutes(hrmRouter, decisionTypeHandler)
-	setupContractTypeRoutes(hrmRouter, contractTypeHandler)
-	setupAllowanceRoutes(hrmRouter, allowanceHandler)
-	setupEmployeeDocumentRoutes(hrmRouter, employeeDocumentHandler)
+	managerRouter := hrmRouter.Group("")
+	managerRouter.Use(middleware.RoleMiddleware("manager", "admin"))
+	adminRouter := managerRouter.Group("")
+	adminRouter.Use(middleware.RoleMiddleware("admin"))
+
+	setupOfficeRoutes(adminRouter, hrmRouter, officeHandler)
+	setupDepartmentRoutes(adminRouter, departmentHandler)
+	setupJobTitleRoutes(adminRouter, jobtitleHandler)
+	setupPositionRoutes(adminRouter, positionHandler)
+	setuphierarchyLevelRoutes(adminRouter, hierarchyLevel)
+	setupEmployeeRouters(adminRouter, hrmRouter, employeeHandler)
+	setupContractRoutes(adminRouter, contractHandler)
+	setupDecisionRoutes(adminRouter, decisionHandler)
+	setupDocumentTypeRoutes(adminRouter, documentTypeHandler)
+	setupInsuranceRoutes(adminRouter, insuranceHandler)
+	setupDecisionTypeRoutes(adminRouter, decisionTypeHandler)
+	setupContractTypeRoutes(adminRouter, contractTypeHandler)
+	setupAllowanceRoutes(adminRouter, allowanceHandler)
+	setupEmployeeDocumentRoutes(adminRouter, employeeDocumentHandler)
+	setupRoleRoutes(adminRouter, roleHanlder)
 
 	//CheckIn
 	setupWorkShiftRoutes(hrmRouter, workShiftHandler)
-	setupAttandanceRecordRoutes(hrmRouter, attandanceRecord)
-	setupAttendanceCategory(hrmRouter, attendanceCategoryHandler)
-	setupEmployeeWorkshiftRoutes(hrmRouter, employeeWorkShiftHandler)
-	setupWorkSchedule(hrmRouter, workScheduleHandler)
-	setupShiftAllocation(hrmRouter, shiftAllocationHandler)
-	setupTimesheetList(hrmRouter, timesheetListHandler)
-	setupTimesheet(hrmRouter, timesheetHandler)
+	setupAttandanceRecordRoutes(adminRouter, hrmRouter, attandanceRecord)
+	setupAttendanceCategory(adminRouter, hrmRouter, attendanceCategoryHandler)
+	setupEmployeeWorkshiftRoutes(adminRouter, managerRouter, hrmRouter, employeeWorkShiftHandler)
+	setupWorkScheduleRoutes(adminRouter, workScheduleHandler)
+	setupShiftAllocationRoutes(managerRouter, shiftAllocationHandler)
+	setupTimesheetListRoutes(adminRouter, timesheetListHandler)
+	setupTimesheetRoutes(adminRouter, hrmRouter, timesheetHandler)
 
 }
 
-func setupEmployeeWorkshiftRoutes(router *gin.RouterGroup, handler *checking_handler.EmployeeWorkshiftHandler) {
-	employeeWorkshift := router.Group("/employee-workshifts")
+func setupEmployeeWorkshiftRoutes(adminRouter, managerRouter, userRouter *gin.RouterGroup, handler *checking_handler.EmployeeWorkshiftHandler) {
+	adminGr := adminRouter.Group("/employee-workshifts")
 	{
-		employeeWorkshift.GET("/:employeeID", handler.GetAllByEmployeeID())
-		employeeWorkshift.GET("", handler.GetAll())
-		employeeWorkshift.POST("", handler.Register())
-		employeeWorkshift.PUT("/:id", handler.Update())
-		employeeWorkshift.GET("/register-shift", handler.GetListShiftAllowRegister())
-		employeeWorkshift.DELETE("/:id", handler.Delete())
+		adminGr.GET("", handler.GetAll())
+		adminGr.PUT("/:id", handler.Update())
+		adminGr.GET("/:employeeID", handler.GetAllByEmployeeID())
+	}
+	userGr := userRouter.Group("/employee-workshifts")
+	{
+		userGr.POST("", handler.RegisterPersonal())
+		userGr.GET("/register-shift", handler.GetListShiftAllowRegister())
+		userGr.GET("/personal", handler.GetAllPersonal())
+		userGr.DELETE("/personal/:id", handler.DeletePersonalShift())
+
+	}
+	managerGr := managerRouter.Group("/employee-workshifts")
+	{
+		managerGr.DELETE("/:id", handler.DeleteByManager())
+		managerGr.POST("/manager", handler.Register())
 	}
 }
 
-func setupOfficeRoutes(router *gin.RouterGroup, handler *handler.OfficeHandler) {
-	officeRouter := router.Group("/office")
+func setupOfficeRoutes(adminRouter, userRouter *gin.RouterGroup, handler *handler.OfficeHandler) {
+	officeRouter := userRouter.Group("/office")
 	{
 		officeRouter.GET("", handler.GetAllOffice())
-		officeRouter.POST("", handler.CreateOffice())
 		officeRouter.GET("/:id", handler.GetOffice())
-		officeRouter.PUT("/:id", handler.UpdateOffice())
-		officeRouter.DELETE("/:id", handler.DeleteOffice())
+	}
+	adminOnly := adminRouter.Group("/office")
+	{
+		adminOnly.POST("", handler.CreateOffice())
+		adminOnly.PUT("/:id", handler.UpdateOffice())
+		adminOnly.DELETE("/:id", handler.DeleteOffice())
 	}
 }
 
@@ -224,20 +247,25 @@ func setuphierarchyLevelRoutes(router *gin.RouterGroup, handler *handler.Hierarc
 	}
 }
 
-func setupEmployeeRouters(router *gin.RouterGroup, handler *handler.EmployeeHandler) {
-	employeeRouter := router.Group("/employee")
+func setupEmployeeRouters(adminRouter, userRouter *gin.RouterGroup, handler *handler.EmployeeHandler) {
+	adminEmployeeRouter := adminRouter.Group("/employee")
 	{
-		employeeRouter.GET("", handler.GetAllEmployees())
-		employeeRouter.POST("", handler.CreateEmployee())
-		employeeRouter.GET("/:id", handler.GetUserById())
-		employeeRouter.PUT("/:id", handler.UpdateEmployee())
-		employeeRouter.DELETE("/:id", handler.DeleteEmployee())
-		employeeRouter.GET("/export", handler.ExportEmployees())
+		adminEmployeeRouter.GET("", handler.GetAllEmployees())
+		adminEmployeeRouter.POST("", handler.CreateEmployee())
+		adminEmployeeRouter.GET("/:id", handler.GetUserById())
+		adminEmployeeRouter.PUT("/:id", handler.UpdateEmployee())
+		adminEmployeeRouter.DELETE("/:id", handler.DeleteEmployee())
+		adminEmployeeRouter.GET("/export", handler.ExportEmployees())
+	}
+
+	userEmployeeRouter := userRouter.Group("/employee")
+	{
+		userEmployeeRouter.GET("/personal", handler.GetPersonalInfById())
 	}
 }
 
-func setupDecisionRoutes(router *gin.RouterGroup, handler *handler.DecisionHandler) {
-	decisionGroup := router.Group("/decision")
+func setupDecisionRoutes(adminRouter *gin.RouterGroup, handler *handler.DecisionHandler) {
+	decisionGroup := adminRouter.Group("/decision")
 	decisionGroup.POST("", handler.CreateDecision())
 	decisionGroup.PUT("/:id", handler.UpdateDecision())
 	decisionGroup.DELETE("/:id", handler.DeleteDecision())
@@ -246,8 +274,8 @@ func setupDecisionRoutes(router *gin.RouterGroup, handler *handler.DecisionHandl
 	decisionGroup.GET("/export", handler.ExportDecision())
 }
 
-func setupContractRoutes(router *gin.RouterGroup, handler *handler.ContractHandler) {
-	contractGroup := router.Group("/contract")
+func setupContractRoutes(adminRouter *gin.RouterGroup, handler *handler.ContractHandler) {
+	contractGroup := adminRouter.Group("/contract")
 	contractGroup.POST("", handler.CreateContract())
 	contractGroup.PUT("/:id", handler.UpdateContract())
 	contractGroup.PUT("/:id/reapprove", handler.ReapproveContract())
@@ -258,8 +286,8 @@ func setupContractRoutes(router *gin.RouterGroup, handler *handler.ContractHandl
 	contractGroup.GET("/employee/:id", handler.GetContractByEmployeeID())
 }
 
-func setupDocumentTypeRoutes(r *gin.RouterGroup, h *handler.DocumentTypeHandler) {
-	group := r.Group("/documenttype")
+func setupDocumentTypeRoutes(adminRouter *gin.RouterGroup, h *handler.DocumentTypeHandler) {
+	group := adminRouter.Group("/documenttype")
 	{
 		group.POST("", h.CreateDocumentType())
 		group.PUT("/:id", h.UpdateDocumentType())
@@ -314,17 +342,25 @@ func setupWorkShiftRoutes(router *gin.RouterGroup, workShiftHandler *checkin.Wor
 	}
 }
 
-func setupAttandanceRecordRoutes(router *gin.RouterGroup, handler *checkin.AttendanceRecordHandler) {
-	attandanceRecordGroup := router.Group("/attendance-record")
-	attandanceRecordGroup.POST("", handler.CreateAttendanceRecord())
-	attandanceRecordGroup.GET("/:id", handler.GetAttendanceRecordByID())
-	attandanceRecordGroup.GET("/employee/:employeeId", handler.GetRecordsByEmployee())
-	attandanceRecordGroup.GET("/employee/:employeeId/date-range", handler.GetRequestsByDateRange())
-	attandanceRecordGroup.GET("/employee/:employeeId/total-request", handler.GetTotalReqOfOneEmployee())
-	attandanceRecordGroup.PUT("/status/:id", handler.UpdateStatusRecord())
-	attandanceRecordGroup.DELETE("/:id", handler.DeleteAttendanceRecord())
-	attandanceRecordGroup.GET("/history-record/:employee-id", handler.GetHistoryRecordByEmployee())
-	attandanceRecordGroup.POST("/history-record/manual", handler.CreateAttendanceRecordByAdmin())
+func setupAttandanceRecordRoutes(amdinRouter, userRouter *gin.RouterGroup, handler *checkin.AttendanceRecordHandler) {
+	adminGroup := amdinRouter.Group("/attendance-record")
+	{
+		adminGroup.POST("", handler.CreateAttendanceRecord())
+		adminGroup.GET("/:id", handler.GetAttendanceRecordByID())
+		adminGroup.GET("/employee/:employeeId", handler.GetRecordsByEmployee())
+		adminGroup.GET("/employee/:employeeId/date-range", handler.GetRequestsByDateRange())
+		adminGroup.GET("/employee/:employeeId/total-request", handler.GetTotalReqOfOneEmployee())
+		adminGroup.PUT("/status/:id", handler.UpdateStatusRecord())
+		adminGroup.DELETE("/:id", handler.DeleteAttendanceRecord())
+		adminGroup.GET("/history-record/:employee-id", handler.GetHistoryRecordByEmployee())
+		adminGroup.POST("/history-record/manual", handler.CreateAttendanceRecordByAdmin())
+	}
+	userGr := userRouter.Group("/attendance-record")
+	{
+		userGr.GET("/personal", handler.GetPersonalHistoryRecord())
+		userGr.GET("/:id/personal", handler.GetPersonalRecordDetailById())
+	}
+
 }
 
 func setupAllowanceRoutes(router *gin.RouterGroup, handler *handler.AllowanceHandler) {
@@ -350,19 +386,22 @@ func setupEmployeeDocumentRoutes(router *gin.RouterGroup, employeeDocumentHandle
 	}
 }
 
-func setupAttendanceCategory(router *gin.RouterGroup, attendanceCategoryHandler *checkin.AttendanceCategoryHandler) {
-	attendanceCategory := router.Group("/attendance-category")
+func setupAttendanceCategory(adminRouter, userRouter *gin.RouterGroup, attendanceCategoryHandler *checkin.AttendanceCategoryHandler) {
+	adminGr := adminRouter.Group("/attendance-category")
 	{
-		attendanceCategory.POST("", attendanceCategoryHandler.CreateAttendanceCategory())
-		attendanceCategory.GET("/:id", attendanceCategoryHandler.GetAttendanceCategory())
-		attendanceCategory.GET("", attendanceCategoryHandler.GetAllAttendanceCategories())
-		attendanceCategory.PUT("/:id", attendanceCategoryHandler.UpdateAttendanceCategory())
-		attendanceCategory.DELETE("/:id", attendanceCategoryHandler.DeleteAttendanceCategory())
-		attendanceCategory.GET("/office/:officeId", attendanceCategoryHandler.GetAttendanceCategoryByOfficeID())
+		adminGr.POST("", attendanceCategoryHandler.CreateAttendanceCategory())
+		adminGr.GET("/:id", attendanceCategoryHandler.GetAttendanceCategory())
+		adminGr.GET("", attendanceCategoryHandler.GetAllAttendanceCategories())
+		adminGr.PUT("/:id", attendanceCategoryHandler.UpdateAttendanceCategory())
+		adminGr.DELETE("/:id", attendanceCategoryHandler.DeleteAttendanceCategory())
+	}
+	userGr := userRouter.Group("/attendance-category")
+	{
+		userGr.GET("/office/:officeId", attendanceCategoryHandler.GetAttendanceCategoryByOfficeID())
 	}
 }
 
-func setupWorkSchedule(router *gin.RouterGroup, workScheduleHandler *checkin.WorkScheduleHandler) {
+func setupWorkScheduleRoutes(router *gin.RouterGroup, workScheduleHandler *checkin.WorkScheduleHandler) {
 	workSchedule := router.Group("/work-schedule")
 	{
 		workSchedule.POST("", workScheduleHandler.CreateWorkSchedule())
@@ -387,29 +426,42 @@ func setupWorkSchedule(router *gin.RouterGroup, workScheduleHandler *checkin.Wor
 	}
 }
 
-func setupShiftAllocation(router *gin.RouterGroup, shiftAllocationHandler *checkin.ShiftAllocationHandler) {
-	shiftAllocation := router.Group("/shift-allocation")
+func setupShiftAllocationRoutes(managerRouter *gin.RouterGroup, shiftAllocationHandler *checkin.ShiftAllocationHandler) {
+	shiftAllocation := managerRouter.Group("/shift-allocation")
 	{
-		shiftAllocation.GET("", shiftAllocationHandler.GetAllByHR())
+		shiftAllocation.GET("", shiftAllocationHandler.GetAll())
 	}
 }
 
-func setupTimesheetList(router *gin.RouterGroup, timesheetListHandler *checkin.TimesheetListHandler) {
-	timesheetList := router.Group("/timesheet-list")
+func setupTimesheetListRoutes(adminRouter *gin.RouterGroup, timesheetListHandler *checkin.TimesheetListHandler) {
+	adminGr := adminRouter.Group("/timesheet-list")
 	{
-		timesheetList.GET("/:id", timesheetListHandler.GetByID())
-		timesheetList.GET("", timesheetListHandler.List())
-		timesheetList.DELETE("/:id", timesheetListHandler.Delete())
-		timesheetList.POST("", timesheetListHandler.Create())
-		timesheetList.PUT("/:id", timesheetListHandler.Update())
-		timesheetList.PUT("/:id/locked", timesheetListHandler.LockedTimeSheet())
+		adminGr.GET("/:id", timesheetListHandler.GetByID())
+		adminGr.GET("", timesheetListHandler.List())
+		adminGr.DELETE("/:id", timesheetListHandler.Delete())
+		adminGr.POST("", timesheetListHandler.Create())
+		adminGr.PUT("/:id", timesheetListHandler.Update())
+		adminGr.PUT("/:id/locked", timesheetListHandler.LockedTimeSheet())
 	}
 }
 
-func setupTimesheet(router *gin.RouterGroup, timesheetHandler *checkin.TimesheetHandler) {
-	timesheet := router.Group("/timesheet")
+func setupTimesheetRoutes(adminRouter, userRouter *gin.RouterGroup, timesheetHandler *checkin.TimesheetHandler) {
+	adminGr := adminRouter.Group("/timesheet")
 	{
-		timesheet.GET("/personal", timesheetHandler.GetPersonalTimesheet())
-		timesheet.GET("/:id", timesheetHandler.CalculationTimeSheet())
+		adminGr.GET("/:id", timesheetHandler.CalculationTimeSheet())
+		adminGr.PUT("/:id", timesheetHandler.AdjustWorkDayManual())
+		adminGr.GET("/:id/reset", timesheetHandler.ResetWorkDayAdjustment())
+	}
+	userGr := userRouter.Group("/timesheet")
+	{
+		userGr.GET("/personal", timesheetHandler.GetPersonalTimesheet())
+	}
+
+}
+
+func setupRoleRoutes(router *gin.RouterGroup, roleHandler *handler.RoleHandler) {
+	role := router.Group("/role")
+	{
+		role.GET("", roleHandler.GetAllRole())
 	}
 }

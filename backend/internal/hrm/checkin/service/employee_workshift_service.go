@@ -31,8 +31,14 @@ func NewEmployeeWorkshiftService(
 	}
 }
 
-func (s *employeeWorkshiftService) GetByUserId(userId string) ([]model.EmployeeWorkshift, error) {
-	return s.repo.GetAllByEmployeeID(userId)
+func (s *employeeWorkshiftService) GetByUserIdAndMonthYear(ctx context.Context, userId string, month, year int) ([]model.EmployeeWorkshift, error) {
+	// Ngày bắt đầu là ngày 1 của tháng
+	startDate := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+
+	// Ngày kết thúc là ngày cuối tháng
+	endDate := startDate.AddDate(0, 1, -1)
+
+	return s.repo.GetEmployeeWorkShiftsByMonthYear(ctx, userId, startDate, endDate)
 }
 
 func (s *employeeWorkshiftService) GetAll() ([]model.EmployeeWorkshift, error) {
@@ -66,6 +72,22 @@ func (s *employeeWorkshiftService) Register(ctx context.Context, employeeID stri
 
 func (s *employeeWorkshiftService) Delete(id string) error {
 	return s.repo.Delete(id)
+}
+
+func (s *employeeWorkshiftService) CheckManagerPermission(ctx context.Context, managerID, employeeID string) (*model.WorkScheduleManager, error) {
+	record, err := s.scheduleRepo.CheckManagerPermission(ctx, managerID, employeeID)
+	if err != nil {
+		return nil, err
+	}
+	return record, nil
+}
+
+func (s *employeeWorkshiftService) DeleteByManager(idEmpShift string) error {
+	return s.repo.Delete(idEmpShift)
+}
+
+func (s *employeeWorkshiftService) DeletePersonalShift(id string, employeeID string) error {
+	return s.repo.DeletePersonalShift(id, employeeID)
 }
 
 func (s *employeeWorkshiftService) Update(employeeWorkshiftId string, newWorkshiftId string) error {

@@ -14,4 +14,5 @@ type TimesheetListInterface interface {
 	GetLastDecisionByCode(ctx context.Context) (string, error)
 	IsDuplicate(ctx context.Context, officeID string, month, year int, timesheetID string) (bool, error)
 	UpdateLocked(ctx context.Context, timesheet *model.TimeSheetList) error
+	GetTimeSheetByOfficeIDAndTime(officeID string, month, year int) (*model.TimeSheetList, error)
 }

@@ -55,12 +55,10 @@ func (s *attendanceRecordService) ValidateAttendanceRecordDistance(ctx context.C
 		return err
 	}
 
-	// Kiểm tra dữ liệu GPS
 	if record.Latitude == nil || record.Longitude == nil || office.Latitude == nil || office.Longitude == nil {
 		return errors.New("missing GPS data for location comparison")
 	}
 
-	// Tính khoảng cách và kiểm tra phạm vi (scope tính bằng mét)
 	withinScope := utils.IsWithinScope(
 		*record.Latitude,
 		*record.Longitude,
@@ -70,7 +68,6 @@ func (s *attendanceRecordService) ValidateAttendanceRecordDistance(ctx context.C
 	)
 
 	if !withinScope {
-		// Tính khoảng cách thực tế để hiển thị thông báo lỗi
 		distance := utils.HaversineDistance(
 			*record.Latitude,
 			*record.Longitude,
@@ -111,6 +108,10 @@ func (s *attendanceRecordService) DeleteAttendanceRecord(ctx context.Context, id
 
 func (s *attendanceRecordService) GetAttendanceRecordByID(ctx context.Context, id string) (*model.AttendanceRecord, error) {
 	return s.repo.GetByID(ctx, id)
+}
+
+func (s *attendanceRecordService) GetAttendanceRecordByIDPersonal(ctx context.Context, recordID, employeeID string) (*model.AttendanceRecord, error) {
+	return s.repo.GetByIDPersonal(ctx, recordID, employeeID)
 }
 
 func (s *attendanceRecordService) ListAttendanceRecordsByEmployee(ctx context.Context, employeeID string) ([]model.AttendanceRecord, error) {

@@ -4,9 +4,12 @@ import (
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	utils "erp/backend/pkg"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
+	"strconv"
 )
 
 type EmployeeWorkshiftHandler struct {
@@ -19,9 +22,10 @@ func NewEmployeeWorkshift(biz service_interface.EmployeeWorkshiftService) *Emplo
 	}
 }
 
-func (h *EmployeeWorkshiftHandler) Register() gin.HandlerFunc {
+func (h *EmployeeWorkshiftHandler) RegisterPersonal() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
+		employeeID := c.GetString("employeeId")
 		var req model.EmployeeWorkshift
 
 		// Parse incoming JSON body
@@ -32,19 +36,53 @@ func (h *EmployeeWorkshiftHandler) Register() gin.HandlerFunc {
 		}
 
 		// CreateElementOfTimesheetList the workshift
+		if err := h.biz.Register(ctx, employeeID, req.WorkShiftID, req.Date); err != nil {
+			utils.ResponseMessage(c, "Failed to register workshift: "+err.Error(), http.StatusBadRequest, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "RegisterPersonal workshift successfully", http.StatusOK, nil)
+	}
+}
+
+func (h *EmployeeWorkshiftHandler) Register() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		var req model.EmployeeWorkshift
+		// Parse incoming JSON body
+		if err := c.ShouldBindJSON(&req); err != nil {
+			utils.ResponseMessage(c, "Invalid input data", http.StatusBadRequest, nil)
+			fmt.Printf("error: %s", err.Error())
+			return
+		}
+
+		role := c.GetString("role")
+		managerID := c.GetString("employeeId")
+		if role == "manager" {
+			record, err := h.biz.CheckManagerPermission(ctx, managerID, req.EmployeeID)
+			if err != nil || errors.Is(err, gorm.ErrRecordNotFound) {
+				fmt.Printf("error: %s", err.Error())
+				utils.ResponseMessage(c, "Lỗi xác thực quyền thao tác của quản lý", http.StatusBadRequest, nil)
+				return
+			}
+			if !record.IsEditing {
+				utils.ResponseMessage(c, "Không có quyền thao tác chỉnh sửa dữ liệu", http.StatusForbidden, nil)
+			}
+		}
+
+		// CreateElementOfTimesheetList the workshift
 		if err := h.biz.Register(ctx, req.EmployeeID, req.WorkShiftID, req.Date); err != nil {
 			utils.ResponseMessage(c, "Failed to register workshift: "+err.Error(), http.StatusBadRequest, nil)
 			return
 		}
 
-		utils.ResponseMessage(c, "Register workshift successfully", http.StatusOK, nil)
+		utils.ResponseMessage(c, "RegisterPersonal workshift successfully", http.StatusOK, nil)
 	}
 }
 
 func (h *EmployeeWorkshiftHandler) Delete() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-
 		if err := h.biz.Delete(id); err != nil {
 			utils.ResponseMessage(c, "Failed to delete employee_workshift: "+err.Error(), http.StatusBadRequest, nil)
 			return
@@ -54,11 +92,92 @@ func (h *EmployeeWorkshiftHandler) Delete() gin.HandlerFunc {
 	}
 }
 
+func (h *EmployeeWorkshiftHandler) DeleteByManager() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		empWSId := c.Param("id")
+		role := c.GetString("role")
+		managerID := c.GetString("employeeId")
+		ctx := c.Request.Context()
+		if role == "manager" {
+			record, err := h.biz.CheckManagerPermission(ctx, managerID, empWSId)
+			if err != nil || errors.Is(err, gorm.ErrRecordNotFound) {
+				fmt.Printf("error: %s", err.Error())
+				utils.ResponseMessage(c, "Lỗi xác thực quyền thao tác của quản lý", http.StatusBadRequest, nil)
+				return
+			}
+			if !record.IsEditing {
+				utils.ResponseMessage(c, "Manager không có quyền chỉnh sửa", http.StatusForbidden, nil)
+				return
+			}
+		}
+		if err := h.biz.DeleteByManager(empWSId); err != nil {
+			utils.ResponseMessage(c, "Failed to delete employee_workshift: "+err.Error(), http.StatusBadRequest, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Delete emp_workshift by manager successfully", http.StatusOK, nil)
+	}
+}
+
+func (h *EmployeeWorkshiftHandler) DeletePersonalShift() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		employeeID := c.GetString("employeeId")
+
+		if err := h.biz.DeletePersonalShift(id, employeeID); err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				utils.ResponseMessage(c, "Không tìm thấy dữ liệu cần xóa", http.StatusNotFound, nil)
+				return
+			}
+			utils.ResponseMessage(c, "Failed to delete employee_workshift: "+err.Error(), http.StatusBadRequest, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Delete workshift personal successfully", http.StatusOK, nil)
+	}
+}
+
 func (h *EmployeeWorkshiftHandler) GetAllByEmployeeID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		employeeID := c.Param("employeeID")
-		result, err := h.biz.GetByUserId(employeeID)
-		// CreateElementOfTimesheetList the workshift
+		monthstr := c.Query("month")
+		yearstr := c.Query("year")
+
+		month, err := strconv.Atoi(monthstr)
+		if err != nil {
+			utils.ResponseMessage(c, "Invalid input data", http.StatusBadRequest, nil)
+		}
+		year, err := strconv.Atoi(yearstr)
+		if err != nil {
+			utils.ResponseMessage(c, "Invalid input data", http.StatusBadRequest, nil)
+		}
+
+		result, err := h.biz.GetByUserIdAndMonthYear(c.Request.Context(), employeeID, month, year)
+		if err != nil {
+			utils.ResponseMessage(c, "Failed to get workshift: "+err.Error(), http.StatusBadRequest, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Get workshift successfully", http.StatusOK, result)
+	}
+}
+
+func (h *EmployeeWorkshiftHandler) GetAllPersonal() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		employeeID := c.GetString("employeeId")
+		monthstr := c.Query("month")
+		yearstr := c.Query("year")
+
+		month, err := strconv.Atoi(monthstr)
+		if err != nil {
+			utils.ResponseMessage(c, "Invalid input data", http.StatusBadRequest, nil)
+		}
+		year, err := strconv.Atoi(yearstr)
+		if err != nil {
+			utils.ResponseMessage(c, "Invalid input data", http.StatusBadRequest, nil)
+		}
+
+		result, err := h.biz.GetByUserIdAndMonthYear(c.Request.Context(), employeeID, month, year)
 		if err != nil {
 			utils.ResponseMessage(c, "Failed to get workshift: "+err.Error(), http.StatusBadRequest, nil)
 			return

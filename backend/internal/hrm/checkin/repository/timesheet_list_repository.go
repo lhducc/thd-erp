@@ -4,6 +4,7 @@ import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
+	"errors"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -118,4 +119,19 @@ func (r *timesheetListRepo) IsDuplicate(ctx context.Context, officeID string, mo
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func (r *timesheetListRepo) GetTimeSheetByOfficeIDAndTime(officeID string, month, year int) (*model.TimeSheetList, error) {
+	var timesheet model.TimeSheetList
+	err := r.db.
+		Model(&model.TimeSheetList{}).
+		Where("office_id = ? AND month = ? AND year = ?", officeID, month, year).
+		First(&timesheet).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &timesheet, nil
 }

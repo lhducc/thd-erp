@@ -5,7 +5,7 @@ import (
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	hrm_model "erp/backend/internal/hrm/hr_profile/model"
-	utils "erp/backend/pkg"
+	utils "erp/backend/pkg/transaction"
 	"erp/backend/pkg/variable"
 	"errors"
 	"fmt"
@@ -315,4 +315,24 @@ func (r *workScheduleRepoImpl) GetListShiftRegister(ctx context.Context, schedul
 		return nil, err
 	}
 	return scheduleShifts, nil
+}
+
+func (r *workScheduleRepoImpl) CheckManagerPermission(ctx context.Context, managerID, employeeID string) (*model.WorkScheduleManager, error) {
+	var result model.WorkScheduleManager
+
+	err := r.db.WithContext(ctx).
+		Table("work_schedule_manager AS m1").
+		Joins("JOIN work_schedule ws ON ws.work_schedule_id = m1.work_schedule_id").
+		Joins("JOIN work_schedule_manager AS m2 ON m2.work_schedule_id = ws.work_schedule_id").
+		Where("m1.employee_id = ?", managerID).
+		Where("m2.employee_id = ?", employeeID).
+		Where("ws.is_deleted = false").
+		Select("m1.*").
+		First(&result).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }

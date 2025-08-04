@@ -5,6 +5,10 @@ import (
 	"errors"
 )
 
+type AdjustWorkDayReq struct {
+	AdjustedWorkDay float64 `json:"adjusted_work_day"`
+}
+
 type TimesheetDTO struct {
 	Name     string `json:"name"`
 	OfficeID string `json:"office_id"`

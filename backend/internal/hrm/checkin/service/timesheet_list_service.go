@@ -112,6 +112,11 @@ func (s *timesheetListService) createTimeSheetEmployee(ctx context.Context, time
 	if err != nil {
 		return false, err
 	}
+
+	if len(employees) == 0 {
+		return true, nil
+	}
+
 	var timesheets []*model.TimeSheet
 	for _, employee := range employees {
 		timesheet := model.TimeSheet{
@@ -125,10 +130,14 @@ func (s *timesheetListService) createTimeSheetEmployee(ctx context.Context, time
 		}
 		timesheets = append(timesheets, &timesheet)
 	}
-	err = s.timesheetRepo.Create(ctx, timesheets)
-	if err != nil {
-		return false, err
+
+	if len(timesheets) > 0 {
+		err = s.timesheetRepo.CreateTimeSheets(ctx, timesheets)
+		if err != nil {
+			return false, err
+		}
 	}
+
 	return true, nil
 }
 

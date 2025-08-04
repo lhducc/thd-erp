@@ -17,4 +17,5 @@ type AttendanceRecordService interface {
 	ValidateAttendanceRecordDistance(ctx context.Context, record *model.AttendanceRecord, category *model.AttendanceCategory) error
 	CheckCategoryExists(ctx context.Context, record *model.AttendanceRecord) (*model.AttendanceCategory, error)
 	GetHistoryRecordByEmployee(ctx context.Context, employeeID string, page int, limit int) ([]model.AttendanceRecord, error)
+	GetAttendanceRecordByIDPersonal(ctx context.Context, recordID, employeeID string) (*model.AttendanceRecord, error)
 }

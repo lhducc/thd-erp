@@ -45,6 +45,17 @@ func (r *employeeWorkShiftRepo) Delete(id string) error {
 	return nil
 }
 
+func (r *employeeWorkShiftRepo) DeletePersonalShift(id string, employeeID string) error {
+	result := r.db.Where("id = ? AND employee_id = ?", id, employeeID).Delete(&model.EmployeeWorkshift{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
 func (r *employeeWorkShiftRepo) GetAllByEmployeeID(employeeID string) ([]model.EmployeeWorkshift, error) {
 	var records []model.EmployeeWorkshift
 	result := r.db.Where("employee_id = ?", employeeID).
@@ -113,3 +124,17 @@ func (r *employeeWorkShiftRepo) GetEmployeeWorkShiftsByMonthYear(ctx context.Con
 
 	return workShifts, nil
 }
+
+func (r *employeeWorkShiftRepo) GetByID(id string) (*model.EmployeeWorkshift, error) {
+	var record model.EmployeeWorkshift
+	result := r.db.Where("id = ?", id).First(&record)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &record, nil
+}
+
+//func (r *employeeWorkShiftRepo) Save(assign []*model.EmployeeWorkshift) error {
+//	result := r.db.Save(assign)
+//	return result.Error
+//}

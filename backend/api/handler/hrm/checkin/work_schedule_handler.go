@@ -41,7 +41,7 @@ func (h *WorkScheduleHandler) CreateWorkSchedule() gin.HandlerFunc {
 		}
 
 		if err := h.service.CreateNewWorkSchedule(ctx, &workSchedule); err != nil {
-			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
+			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
 			return
 		}
 
@@ -125,7 +125,7 @@ func (h *WorkScheduleHandler) UpdateWorkScheduleAuto() gin.HandlerFunc {
 		wSchedule := dto.ConvertToWorkSchedule(&req)
 
 		if err := h.service.UpdateWorkScheduleAuto(ctx, &wSchedule, id); err != nil {
-			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
+			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
 			return
 		}
 
@@ -158,7 +158,7 @@ func (h *WorkScheduleHandler) UpdateWorkScheduleRegister() gin.HandlerFunc {
 		wSchedule := dto.ConvertToWorkSchedule(&req)
 
 		if err := h.service.UpdateWorkScheduleRegister(ctx, &wSchedule, id); err != nil {
-			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
+			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
 			return
 		}
 
@@ -178,7 +178,7 @@ func (h *WorkScheduleHandler) DeleteWorkScheduleAuto() gin.HandlerFunc {
 		}
 
 		if err := h.service.DeleteWorkScheduleAuto(ctx, id); err != nil {
-			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
+			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
 			return
 		}
 
@@ -241,7 +241,7 @@ func (h *WorkScheduleHandler) FetchWorkScheduleByID() gin.HandlerFunc {
 		}
 		result, err := h.service.GetWorkScheduleByID(ctx, id)
 		if err != nil {
-			utils.ResponseError(c, "Lỗi khi lấy dữ liệu", err, http.StatusBadRequest)
+			utils.ResponseError(c, "Lỗi khi lấy dữ liệu", err, http.StatusInternalServerError)
 			return
 		}
 		utils.ResponseMessage(c, "Lấy dữ liệu thành công", http.StatusOK, &result)
@@ -299,5 +299,31 @@ func (h *WorkScheduleHandler) DeleteManagerFromWorkScheduleRegister() gin.Handle
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "Quyền quản lý đã xóa khỏi lịch"})
+	}
+}
+
+func (h *WorkScheduleHandler) UpdateStatusAutoRecurring() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+
+		idParam := c.Param("id")
+		scheduleID, err := strconv.Atoi(idParam)
+		if err != nil {
+			utils.ResponseMessage(c, "ID không hợp lệ", http.StatusBadRequest, nil)
+			return
+		}
+
+		var req dto.AutoRecurringRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
+			return
+		}
+
+		if err := h.service.UpdateStatusRecuringSchedule(ctx, scheduleID, req.IsAutoRecurring); err != nil {
+			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Cập nhật trạn thái lặp thành công", http.StatusOK, nil)
 	}
 }

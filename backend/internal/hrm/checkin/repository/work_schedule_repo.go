@@ -336,3 +336,11 @@ func (r *workScheduleRepoImpl) CheckManagerPermission(ctx context.Context, manag
 
 	return &result, nil
 }
+
+func (r *workScheduleRepoImpl) UpdateStatusRecuringSchedule(ctx context.Context, scheduleID int, isAuto bool) error {
+	return r.db.WithContext(ctx).Model(&model.WorkSchedule{}).
+		Where("work_schedule_id = ?", scheduleID).
+		Updates(map[string]interface{}{
+			"is_auto_recurring": isAuto,
+		}).Error
+}

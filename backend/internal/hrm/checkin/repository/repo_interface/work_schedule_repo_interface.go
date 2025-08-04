@@ -19,4 +19,5 @@ type WorkScheduleRepo interface {
 	DeleteManagerFromWorkSchedule(ctx context.Context, managerID string, workScheduleID int) error
 	GetListShiftRegister(ctx context.Context, scheduleID *int) ([]model.WorkScheduleShift, error)
 	CheckManagerPermission(ctx context.Context, managerID, employeeID string) (*model.WorkScheduleManager, error)
+	UpdateStatusRecuringSchedule(ctx context.Context, scheduleID int, isAuto bool) error
 }

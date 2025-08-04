@@ -29,6 +29,10 @@ type ManagerAssignRequest struct {
 	IsEditing bool   `json:"is_editing"`
 }
 
+type AutoRecurringRequest struct {
+	IsAutoRecurring bool `json:"is_auto_recurring"`
+}
+
 func ConvertToWorkSchedule(req *WorkScheduleRequest) model.WorkSchedule {
 	return model.WorkSchedule{
 		WorkScheduleName: req.WorkScheduleName,

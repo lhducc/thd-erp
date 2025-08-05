@@ -359,3 +359,18 @@ func (s *UserStore) CheckExistEmployeeID(employeeID string) (bool, error) {
 	}
 	return false, nil
 }
+
+func (s *UserStore) GetUserByRoleID(roleID string) ([]model.ManagerResponse, error) {
+	var employees []model.ManagerResponse
+	err := s.db.
+		Model(&model.Employee{}).Table(model.Employee{}.TableName()).
+		Joins("JOIN account ON account.employee_id = employee.employee_id").
+		Where("account.role_id = ?", roleID).
+		Find(&employees).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return employees, nil
+}

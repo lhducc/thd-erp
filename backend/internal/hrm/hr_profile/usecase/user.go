@@ -29,6 +29,7 @@ type EmployeeRepo interface {
 	GetScheduleOfEmployee(employeeID string) (*model.Employee, error)
 	GetEmployeesByOfficeID(ctx context.Context, officeID string) ([]*model.Employee, error)
 	CheckExistEmployeeID(employeeID string) (bool, error)
+	GetUserByRoleID(roleID string) ([]model.ManagerResponse, error)
 }
 
 type AccountRepo interface {
@@ -257,4 +258,8 @@ func (e *EmployeeBiz) ExportEmployeeTest(selectedFields []string) ([]byte, strin
 	}
 
 	return exporter.Export(employeePtrs, selectedFields)
+}
+
+func (e *EmployeeBiz) GetUserByRoleID(roleID string) ([]model.ManagerResponse, error) {
+	return e.repo.GetUserByRoleID(roleID)
 }

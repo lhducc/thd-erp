@@ -21,6 +21,7 @@ type EmployeeBiz interface {
 	GetAllEmployees(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error)
 	GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error)
 	ExportEmployeeTest(selectedFields []string) ([]byte, string, error)
+	GetUserByRoleID(roleID string) ([]model.ManagerResponse, error)
 }
 
 type EmployeeHandler struct {
@@ -194,5 +195,17 @@ func (biz *EmployeeHandler) DeleteEmployee() gin.HandlerFunc {
 		}
 
 		utils.ResponseMessage(c, "Deleted", http.StatusOK, nil)
+	}
+}
+func (biz *EmployeeHandler) GetEmployeesByRoleID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		roleID := c.Query("roleID")
+		emps, err := biz.employeeBiz.GetUserByRoleID(roleID)
+		if err != nil {
+			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "List Users", http.StatusOK, &emps)
 	}
 }

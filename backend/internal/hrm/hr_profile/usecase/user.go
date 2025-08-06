@@ -8,19 +8,21 @@ import (
 	"erp/backend/internal/hrm/hr_profile/repository"
 	utils "erp/backend/pkg"
 	"erp/backend/pkg/mail"
+	"erp/backend/pkg/transaction"
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"strings"
 )
 
 type EmployeeRepo interface {
-	CreateEmployee(employee *model.Employee) error
-	UpdateEmployeeWithAccount(employee *model.Employee, accountID int64) error
+	CreateEmployee(tx *gorm.DB, employee *model.Employee) error
+	UpdateEmployeeWithAccount(tx *gorm.DB, employee *model.Employee, accountID int64) error
 	GetUserById(id string) (model.Employee, error)
 	GetAllEmployees() ([]model.Employee, error)
 	GetAllEmployeesPagination(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error)
 	GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error)
-	UpdateEmployee(id string, updatedEmployee model.Employee) error
+	UpdateEmployee(tx *gorm.DB, id string, updatedEmployee model.Employee) error
 	DeleteEmployee(id string) error
 	GetLastEmployeeByCode(emp *model.Employee) error
 	CheckExistEmployees(employeeIDs []string) ([]string, error)
@@ -33,7 +35,7 @@ type EmployeeRepo interface {
 }
 
 type AccountRepo interface {
-	CreateAccount(employee *model.Employee, hashedPassword, roleID string) (*model.Account, error)
+	CreateAccount(tx *gorm.DB, employee *model.Employee, hashedPassword, roleID string) (*model.Account, error)
 	GetAccount(ctx context.Context, id int64) (*model.Account, error)
 	GetAllAccount(ctx context.Context) ([]model.Account, error)
 	UpdateAccount(ctx context.Context, id string, data *model.Account) error
@@ -43,6 +45,7 @@ type AccountRepo interface {
 }
 
 type EmployeeBiz struct {
+	db                *gorm.DB
 	repo              EmployeeRepo
 	account           AccountRepo
 	timesheetRepo     repo_interface.TimeSheetRepoInterface
@@ -50,12 +53,13 @@ type EmployeeBiz struct {
 	departmentRepo    DepartmentRepo
 }
 
-func NewEmployeeBiz(store *repository.UserStore,
+func NewEmployeeBiz(db *gorm.DB, store *repository.UserStore,
 	account AccountRepo,
 	timesheetRepo repo_interface.TimeSheetRepoInterface,
 	timesheetListRepo repo_interface.TimesheetListInterface,
 	departmentRepo DepartmentRepo) *EmployeeBiz {
 	return &EmployeeBiz{
+		db:                db,
 		repo:              store,
 		account:           account,
 		timesheetRepo:     timesheetRepo,
@@ -73,67 +77,79 @@ func (s *EmployeeBiz) CreateEmployeeWithAccount(ctx context.Context, employee *m
 	if exists {
 		return errors.New("employee with id " + employee.EmployeeID + " already exists")
 	}
+	return transaction.WithTransaction(s.db, ctx, func(ctx context.Context, tx *gorm.DB) error {
 
-	if err := s.repo.CreateEmployee(employee); err != nil {
-		return err
-	}
+		if err := s.repo.CreateEmployee(tx, employee); err != nil {
+			return err
+		}
 
-	password, err := utils.GenerateRandomPassword(12)
-	if err != nil {
-		return err
-	}
+		password, err := utils.GenerateRandomPassword(12)
+		if err != nil {
+			return err
+		}
 
-	hashedPassword, err := utils.HashPassword(password)
-	if err != nil {
-		return err
-	}
+		hashedPassword, err := utils.HashPassword(password)
+		if err != nil {
+			return err
+		}
 
-	if strings.TrimSpace(roleID) == "" {
-		roleID = "employee"
-	}
-	account, err := s.account.CreateAccount(employee, hashedPassword, roleID)
-	if err != nil {
-		return err
-	}
+		if strings.TrimSpace(roleID) == "" {
+			roleID = "employee"
+		}
+		account, err := s.account.CreateAccount(tx, employee, hashedPassword, roleID)
+		if err != nil {
+			return err
+		}
 
-	if err := mail.SendEmailWithAccountInfo(employee.Email, employee.Fullname, password); err != nil {
-		return fmt.Errorf("tạo nhân viên thành công nhưng gửi email thất bại: %w", err)
-	}
+		if err := s.repo.UpdateEmployeeWithAccount(tx, employee, account.ID); err != nil {
+			return err
+		}
 
-	if err := s.repo.UpdateEmployeeWithAccount(employee, account.ID); err != nil {
-		return err
-	}
+		// add employee into timesheet
+		timeNow, err := utils.GetCurrentTimeHCMCity()
+		if err != nil {
+			return err
+		}
+		month := int(timeNow.Month())
+		year := int(timeNow.Year())
 
-	// add employee into timesheet
-	timeNow, err := utils.GetCurrentTimeHCMCity()
-	if err != nil {
-		return err
-	}
-	month := int(timeNow.Month())
-	year := int(timeNow.Year())
-
-	timesheetList, err := s.timesheetListRepo.GetTimeSheetByOfficeIDAndTime(employee.Department.OfficeID, month, year)
-	if timesheetList != nil {
 		department, err := s.departmentRepo.GetDepartment(ctx, employee.DepartmentID)
 		if err != nil {
-			return errors.New("Lỗi khi lấy dữ liệu Department")
+			return err
 		}
-		timesheet := checkin_model.TimeSheet{
-			TimeSheetListID: timesheetList.TimeSheetListID,
-			OfficeID:        department.OfficeID,
-			Month:           timesheetList.Month,
-			Year:            timesheetList.Year,
-			DepartmentID:    employee.DepartmentID,
-			EmployeeID:      employee.EmployeeID,
-			CreatedBy:       timesheetList.CreatedBy,
-		}
-		if err = s.timesheetRepo.CreateEmployeeTimeSheet(&timesheet); err != nil {
-			fmt.Printf(err.Error())
-			return errors.New("Lỗi trong quá trình thêm nhân viên vào bảng công")
-		}
-	}
 
-	return nil
+		timesheetList, err := s.timesheetListRepo.GetTimeSheetByOfficeIDAndTime(department.OfficeID, month, year)
+		if timesheetList != nil {
+			departmentID := employee.DepartmentID
+			fmt.Printf(departmentID)
+			if departmentID == "" {
+				return errors.New("giá trị mã phòng ban không hợp lệ")
+			}
+			department, err := s.departmentRepo.GetDepartment(ctx, departmentID)
+			if err != nil {
+				return errors.New("Lỗi khi lấy dữ liệu Department")
+			}
+			timesheet := checkin_model.TimeSheet{
+				TimeSheetListID: timesheetList.TimeSheetListID,
+				OfficeID:        department.OfficeID,
+				Month:           timesheetList.Month,
+				Year:            timesheetList.Year,
+				DepartmentID:    employee.DepartmentID,
+				EmployeeID:      employee.EmployeeID,
+				CreatedBy:       timesheetList.CreatedBy,
+			}
+			if err = s.timesheetRepo.CreateEmployeeTimeSheet(tx, &timesheet); err != nil {
+				fmt.Printf(err.Error())
+				return errors.New("Lỗi trong quá trình thêm nhân viên vào bảng công")
+			}
+		}
+
+		if err := mail.SendEmailWithAccountInfo(employee.Email, employee.Fullname, password); err != nil {
+			return fmt.Errorf("tạo nhân viên thành công nhưng gửi email thất bại: %w", err)
+		}
+
+		return nil
+	})
 }
 
 func (biz *EmployeeBiz) GetUserById(id string) (model.Employee, error) {
@@ -167,16 +183,62 @@ func (biz *EmployeeBiz) GetAllEmployeesByStatus(status string, page, pageSize in
 	return employees, nil
 }
 
-func (biz *EmployeeBiz) UpdateEmployee(id string, updatedEmployee model.Employee) error {
+func (biz *EmployeeBiz) UpdateEmployee(ctx context.Context, id string, updatedEmployee model.Employee) error {
 	if id == "" {
 		return errors.New("invalid employee ID")
 	}
 
-	if err := biz.repo.UpdateEmployee(id, updatedEmployee); err != nil {
-		return fmt.Errorf("failed to update employee: %w", err)
+	emp, err := biz.GetUserById(id)
+	if err != nil {
+		return err
 	}
+	return transaction.WithTransaction(biz.db, ctx, func(ctx context.Context, tx *gorm.DB) error {
+		if emp.DepartmentID != updatedEmployee.DepartmentID {
+			department, err := biz.departmentRepo.GetDepartment(ctx, updatedEmployee.DepartmentID)
+			if err != nil {
+				return err
+			}
 
-	return nil
+			timeNow, err := utils.GetCurrentTimeHCMCity()
+			if err != nil {
+				return err
+			}
+			month := int(timeNow.Month())
+			year := int(timeNow.Year())
+
+			timesheetList, err := biz.timesheetListRepo.GetTimeSheetByOfficeIDAndTime(department.OfficeID, month, year)
+			if timesheetList != nil {
+				departmentID := updatedEmployee.DepartmentID
+				if departmentID == "" {
+					return errors.New("giá trị mã phòng ban không hợp lệ")
+				}
+				department, err := biz.departmentRepo.GetDepartment(ctx, departmentID)
+				if err != nil {
+					return errors.New("Lỗi khi lấy dữ liệu Department")
+				}
+				timesheet := checkin_model.TimeSheet{
+					TimeSheetListID: timesheetList.TimeSheetListID,
+					OfficeID:        department.OfficeID,
+					Month:           timesheetList.Month,
+					Year:            timesheetList.Year,
+					DepartmentID:    updatedEmployee.DepartmentID,
+					EmployeeID:      updatedEmployee.EmployeeID,
+					CreatedBy:       timesheetList.CreatedBy,
+				}
+				if err = biz.timesheetRepo.CreateEmployeeTimeSheet(tx, &timesheet); err != nil {
+					fmt.Printf(err.Error())
+					return errors.New("Lỗi trong quá trình thêm nhân viên vào bảng công")
+				}
+			}
+
+		}
+
+		if err := biz.repo.UpdateEmployee(tx, id, updatedEmployee); err != nil {
+			return fmt.Errorf("failed to update employee: %w", err)
+		}
+
+		return nil
+	})
 }
 
 func (biz *EmployeeBiz) DeleteEmployee(id string) error {

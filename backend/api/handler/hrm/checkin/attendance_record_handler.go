@@ -85,6 +85,10 @@ func (h *AttendanceRecordHandler) CreateAttendanceRecord() gin.HandlerFunc {
 }
 
 func processImageIfRequired(c *gin.Context, record *model.AttendanceRecord, employeeID string) error {
+	const maxUploadSize = 10 << 20 // 10MB
+
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadSize)
+
 	file, header, err := c.Request.FormFile("image")
 	if err != nil {
 		return fmt.Errorf("missing image: %w", err)

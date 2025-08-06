@@ -23,8 +23,8 @@ func (t timesheetRepo) CreateTimeSheets(ctx context.Context, timesheets []*model
 	return t.db.WithContext(ctx).Create(timesheets).Error
 }
 
-func (t timesheetRepo) CreateEmployeeTimeSheet(timesheet *model.TimeSheet) error {
-	return t.db.Create(timesheet).Error
+func (t timesheetRepo) CreateEmployeeTimeSheet(tx *gorm.DB, timesheet *model.TimeSheet) error {
+	return tx.Create(timesheet).Error
 }
 
 func (r *timesheetRepo) FindByID(id int) (*model.TimeSheet, error) {
@@ -124,4 +124,23 @@ func (r *timesheetRepo) GetByID(ctx context.Context, timesheetID int) (*model.Ti
 
 func (r *timesheetRepo) Update(ctx context.Context, timesheet *model.TimeSheet) error {
 	return r.db.WithContext(ctx).Model(&model.TimeSheet{}).Updates(timesheet).Error
+}
+
+func (r *timesheetRepo) FindByEmployeeForExport(ctx context.Context, employeeID string, month, year int) (*model.TimeSheet, error) {
+	var ts model.TimeSheet
+	err := r.db.WithContext(ctx).
+		Where("employee_id = ? AND month = ? AND year = ?", employeeID, month, year).
+		Preload("Details", func(db *gorm.DB) *gorm.DB {
+			return db.Order("date ASC") // Sắp xếp details theo ngày
+		}).
+		Preload("Employee").
+		Preload("Employee.JobTitle.HierarchyLevel").
+		Preload("Office").
+		Preload("Department").
+		First(&ts).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &ts, err
 }

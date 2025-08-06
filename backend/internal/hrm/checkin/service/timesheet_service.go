@@ -5,8 +5,11 @@ import (
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
+	utils "erp/backend/pkg"
 	"erp/backend/pkg/pointer"
+	"erp/backend/pkg/variable"
 	"errors"
+	"fmt"
 	"log"
 	"math"
 	"sort"
@@ -469,4 +472,221 @@ func (t *timesheetServiceImp) ManualAdjustWorkDay(
 
 	// update detail
 	return t.tsDetailsRepo.UpdateTimeSheetDetail(ctx, detail)
+}
+
+func (b *timesheetServiceImp) ExportTimeSheet(ctx context.Context, timesheetListID string) ([]byte, string, error) {
+	timesheetList, err := b.tsListRepo.GetForExport(ctx, timesheetListID)
+	if err != nil {
+		return nil, "", fmt.Errorf("lỗi load dữ liệu: %w", err)
+	}
+	timesheets := timesheetList.Timesheets
+	year := timesheetList.Year
+	month := timesheetList.Month
+	exporter := utils.NewExcelExporter(fmt.Sprintf("Timesheet_%d_%02d", year, month))
+
+	// get localtime
+	timeNow, err := utils.GetCurrentTimeHCMCity()
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Các trường cố định
+	exporter.RegisterField("employee_id", "Mã MV", "employee_id",
+		func(item interface{}) any {
+			ts := item.(*model.TimeSheet)
+			if ts.EmployeeID != "" {
+				return ts.EmployeeID
+			}
+			return ""
+		})
+
+	exporter.RegisterField("fullname", "Họ và tên", "fullname",
+		func(item interface{}) any {
+			ts := item.(*model.TimeSheet)
+			if ts.Employee != nil && ts.Employee.Fullname != "" {
+				return ts.Employee.Fullname
+			}
+			return ""
+		})
+
+	exporter.RegisterField("office", "Văn phòng", "office",
+		func(item interface{}) any {
+			ts := item.(*model.TimeSheet)
+			if ts.Office != nil && ts.Office.Name != "" {
+				return ts.Office.Name
+			}
+			return ""
+		})
+
+	exporter.RegisterField("department", "Phòng ban", "department",
+		func(item interface{}) any {
+			ts := item.(*model.TimeSheet)
+			if ts.Department != nil && ts.Department.Name != "" {
+				return ts.Department.Name
+			}
+			return ""
+		})
+
+	exporter.RegisterField("jobTitle", "Chức vụ", "jobTitle",
+		func(item interface{}) any {
+			ts := item.(*model.TimeSheet)
+			if ts.Employee != nil && ts.Employee.JobTitle.JobTitle != "" {
+				return ts.Employee.JobTitle.JobTitle
+			}
+			return ""
+		})
+
+	exporter.RegisterField("worktype", "Worktype", "worktype",
+		func(item interface{}) any {
+			ts := item.(*model.TimeSheet)
+			if ts.Employee != nil && ts.Employee.WorkType != "" {
+				return ts.Employee.WorkType
+			}
+			return ""
+		})
+
+	// Tạo các cột cho từng ngày trong tháng
+	daysInMonth := time.Date(year, time.Month(month)+1, 0, 0, 0, 0, 0, timeNow.Location()).Day()
+	for day := 1; day <= daysInMonth; day++ {
+		// Capture day trong closure
+		currentDay := day
+		key := fmt.Sprintf("day_%02d", currentDay)
+		header := fmt.Sprintf("%02d/%02d/%d", currentDay, month, year)
+
+		exporter.RegisterField(key, header, key, func(item interface{}) any {
+			ts := item.(*model.TimeSheet)
+			if ts.Details == nil {
+				return ""
+			}
+
+			for _, d := range ts.Details {
+				if d.Date.Day() == currentDay &&
+					int(d.Date.Month()) == month &&
+					d.Date.Year() == year {
+					// Kiểm tra nếu có điều chỉnh thủ công
+					if d.IsManuallyAdjusted && d.WorkDaysAdjusted > 0 {
+						return fmt.Sprintf("%.2f", d.WorkDaysAdjusted)
+					}
+					// Nếu không có điều chỉnh, dùng WorkDays
+					if d.WorkDays > 0 {
+						return fmt.Sprintf("%.2f", d.WorkDays)
+					}
+					// Nếu là ngày nghỉ hoặc holiday
+					if d.IsHoliday {
+						return "H"
+					}
+					if d.IsWeekend && !d.IsWorkingDay {
+						return "W"
+					}
+					if d.IsAbsent {
+						return "X"
+					}
+					if d.LeaveType != nil {
+						switch *d.LeaveType {
+						case variable.LeaveTypeAnnual:
+							return "AL"
+						case variable.LeaveTypePersonal:
+							return "PL"
+						case variable.LeaveTypeBusinessTrip:
+							return "BT"
+						case variable.LeaveTypeRemoteWork:
+							return "RW"
+						case variable.LeaveTypeUnpaid:
+							return "UL"
+						default:
+							return "L"
+						}
+					}
+					return "0.00"
+				}
+			}
+			return ""
+		})
+	}
+
+	// Các trường tổng kết
+	exporter.RegisterField("total_work_days", "Tổng số công", "total_work_days",
+		func(item interface{}) any {
+			ts := item.(*model.TimeSheet)
+			return fmt.Sprintf("%.2f", ts.TotalWorkDays)
+		})
+
+	exporter.RegisterField("late_shifts", "Ca muộn", "late_shifts",
+		func(item interface{}) any {
+			ts := item.(*model.TimeSheet)
+			return ts.LateShifts
+		})
+
+	exporter.RegisterField("late_minutes", "Số phút muộn", "late_minutes",
+		func(item interface{}) any {
+			ts := item.(*model.TimeSheet)
+			return ts.TotalLateMinutes
+		})
+
+	// Thêm các trường thống kê nghỉ phép
+	exporter.RegisterField("annual_leave_days", "Nghỉ phép năm", "annual_leave_days",
+		func(item interface{}) any {
+			ts := item.(*model.TimeSheet)
+			if ts.AnnualLeaveDays > 0 {
+				return fmt.Sprintf("%.2f", ts.AnnualLeaveDays)
+			}
+			return ""
+		})
+
+	exporter.RegisterField("personal_leave_days", "Nghỉ phép cá nhân", "personal_leave_days",
+		func(item interface{}) any {
+			ts := item.(*model.TimeSheet)
+			if ts.PersonalLeaveDays > 0 {
+				return fmt.Sprintf("%.2f", ts.PersonalLeaveDays)
+			}
+			return ""
+		})
+
+	exporter.RegisterField("business_trip_days", "Công tác", "business_trip_days",
+		func(item interface{}) any {
+			ts := item.(*model.TimeSheet)
+			if ts.BusinessTripDays > 0 {
+				return fmt.Sprintf("%.2f", ts.BusinessTripDays)
+			}
+			return ""
+		})
+
+	exporter.RegisterField("remote_work_days", "Làm việc từ xa", "remote_work_days",
+		func(item interface{}) any {
+			ts := item.(*model.TimeSheet)
+			if ts.RemoteWorkDays > 0 {
+				return fmt.Sprintf("%.2f", ts.RemoteWorkDays)
+			}
+			return ""
+		})
+
+	// Chuyển đổi sang slice pointer
+	ptrs := make([]*model.TimeSheet, len(timesheets))
+	for i := range timesheets {
+		ptrs[i] = &timesheets[i]
+	}
+
+	// Tạo danh sách field theo thứ tự mong muốn
+	selected := []string{
+		"employee_id", "fullname", "office", "department", "jobTitle", "worktype",
+	}
+
+	// Thêm các ngày trong tháng
+	for day := 1; day <= daysInMonth; day++ {
+		selected = append(selected, fmt.Sprintf("day_%02d", day))
+	}
+
+	// Thêm các field tổng kết
+	selected = append(selected,
+		"total_work_days", "late_shifts", "late_minutes",
+		"annual_leave_days", "personal_leave_days",
+		"business_trip_days", "remote_work_days")
+
+	data, _, err := exporter.Export(ptrs, selected)
+	if err != nil {
+		return nil, "", fmt.Errorf("lỗi export excel: %w", err)
+	}
+
+	filename := fmt.Sprintf("timesheet_%d_%02d.xlsx", year, month)
+	return data, filename, nil
 }

@@ -10,4 +10,5 @@ type TimeSheetServiceInterface interface {
 	CalculatorTimeSheetList(ctx context.Context, timesheetListID string) error
 	ResetWorkDayAdjustment(ctx context.Context, timesheetDetailID int) error
 	ManualAdjustWorkDay(ctx context.Context, timesheetDetailID int, adjustedWorkDays float64, adjustedBy string) error
+	ExportTimeSheet(ctx context.Context, timesheetListID string) ([]byte, string, error)
 }

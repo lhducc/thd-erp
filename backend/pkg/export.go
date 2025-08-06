@@ -44,15 +44,21 @@ func (e *ExcelExporter) Export(items interface{}, selectedFields []string) ([]by
 	}
 
 	var fields []ExportField
-	for _, name := range selectedFields {
+	var missingFields []string
+	for i, name := range selectedFields {
 		if f, ok := e.Fields[name]; ok {
 			fields = append(fields, f)
+			fmt.Printf("Field %d: %s -> %s\n", i, name, f.Header) // Debug
+		} else {
+			missingFields = append(missingFields, name)
 		}
 	}
 
 	if len(fields) == 0 {
 		return nil, "", fmt.Errorf("không có trường nào hợp lệ để export")
 	}
+
+	fmt.Printf("Total fields to export: %d\n", len(fields)) // Debu
 
 	f := excelize.NewFile()
 	index, err := f.NewSheet(e.SheetName)
@@ -78,20 +84,60 @@ func (e *ExcelExporter) Export(items interface{}, selectedFields []string) ([]by
 	}
 
 	for i, field := range fields {
-		col := string(rune('A' + i))
+		col := columnName(i)
 		cell := fmt.Sprintf("%s1", col)
 		f.SetCellValue(e.SheetName, cell, field.Header)
 		f.SetCellStyle(e.SheetName, cell, cell, headerStyle)
 		f.SetColWidth(e.SheetName, col, col, 20)
+
+		fmt.Printf("Header col %s: %s\n", col, field.Header)
 	}
 
+	// set data rows
 	for i := 0; i < itemsValue.Len(); i++ {
 		item := itemsValue.Index(i).Interface()
 		row := i + 2
 		for j, field := range fields {
-			col := string(rune('A' + j))
+			col := columnName(j)
 			cell := fmt.Sprintf("%s%d", col, row)
-			f.SetCellValue(e.SheetName, cell, field.GetValue(item))
+
+			rawValue := field.GetValue(item)
+			var value interface{}
+
+			// Chuyển đổi tất cả giá trị về kiểu nguyên thủy
+			switch v := rawValue.(type) {
+			case time.Time:
+				value = v.Format("2006-01-02")
+			case *time.Time:
+				if v != nil {
+					value = v.Format("2006-01-02")
+				} else {
+					value = ""
+				}
+			case fmt.Stringer:
+				value = v.String()
+			case int, int8, int16, int32, int64,
+				uint, uint8, uint16, uint32, uint64,
+				float32, float64, string, bool, nil:
+				value = v
+			default:
+				// Xử lý các kiểu custom bằng reflection
+				rv := reflect.ValueOf(v)
+				switch rv.Kind() {
+				case reflect.Ptr:
+					if rv.IsNil() {
+						value = ""
+					} else {
+						value = rv.Elem().Interface()
+					}
+				case reflect.Struct:
+					value = fmt.Sprintf("%+v", v)
+				default:
+					value = fmt.Sprintf("%v", v)
+				}
+			}
+
+			f.SetCellValue(e.SheetName, cell, value)
 		}
 	}
 
@@ -128,4 +174,13 @@ func (er *ExcelReader) GetSheetName(idx int) string {
 // It's exported.
 func (er *ExcelReader) GetRows(sheetName string) ([][]string, error) {
 	return er.file.GetRows(sheetName)
+}
+
+func columnName(n int) string {
+	result := ""
+	for n >= 0 {
+		result = string('A'+(n%26)) + result
+		n = n/26 - 1
+	}
+	return result
 }

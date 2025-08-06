@@ -5,6 +5,7 @@ import (
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -134,4 +135,42 @@ func (r *timesheetListRepo) GetTimeSheetByOfficeIDAndTime(officeID string, month
 		return nil, err
 	}
 	return &timesheet, nil
+}
+
+func (r *timesheetListRepo) GetForExport(ctx context.Context, id string) (*model.TimeSheetList, error) {
+	var ts model.TimeSheetList
+	err := r.db.WithContext(ctx).
+		Preload("Office").
+		Preload("Timesheets", func(db *gorm.DB) *gorm.DB {
+			// Sắp xếp timesheet theo EmployeeID để đảm bảo thứ tự
+			return db.Order("employee_id ASC")
+		}).
+		Preload("Timesheets.Employee").
+		Preload("Timesheets.Office").
+		Preload("Timesheets.Employee.JobTitle").
+		Preload("Timesheets.Employee.Position").
+		Preload("Timesheets.Employee.JobTitle.HierarchyLevel").
+		Preload("Timesheets.Details", func(db *gorm.DB) *gorm.DB {
+			// Sắp xếp details theo ngày
+			return db.Order("date ASC")
+		}).
+		Preload("Timesheets.Department").
+		Preload("Timesheets.Details.WorkShift").
+		Preload("Timesheets.Details.CheckInRecord").
+		Preload("Timesheets.Details.CheckOutRecord").
+		Preload("Timesheets.Details.AdjustmentUser").
+		First(&ts, "timesheet_list_id = ?", id).Error
+	if err != nil {
+		return nil, fmt.Errorf("không tìm thấy timesheet list: %w", err)
+	}
+
+	// Set hierarchy level cho employee
+	for i := range ts.Timesheets {
+		if ts.Timesheets[i].Employee != nil &&
+			ts.Timesheets[i].Employee.JobTitle != nil {
+			ts.Timesheets[i].Employee.HierarchyLevel = ts.Timesheets[i].Employee.JobTitle.HierarchyLevel
+		}
+	}
+
+	return &ts, nil
 }

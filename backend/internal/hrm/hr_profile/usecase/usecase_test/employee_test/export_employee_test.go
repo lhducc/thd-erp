@@ -97,7 +97,7 @@ func (e *employeeBiz) ExportEmployeeTest(selectedFields []string) ([]byte, strin
 		selectedFields = []string{"employee_id", "fullname", "birthday", "gender", "phone", "email", "manager", "created_date"}
 	}
 
-	// Gọi hàm Export từ gói utils
+	// Gọi hàm ExportTimeSheet từ gói utils
 	return exporter.Export(itemsToExport, selectedFields)
 }
 
@@ -141,7 +141,7 @@ func TestExportEmployeeTest(t *testing.T) {
 		expectedDataRows  [][]any
 	}{
 		{
-			name:           "Export thành công - Các trường chọn lọc (Họ và tên, Email)",
+			name:           "ExportTimeSheet thành công - Các trường chọn lọc (Họ và tên, Email)",
 			selectedFields: []string{"fullname", "email"},
 			mockRepoSetup: func(m *MockEmployeeRepo) {
 				m.On("GetAllEmployees").Return(mockEmployees, nil)

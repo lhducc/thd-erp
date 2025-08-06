@@ -7,7 +7,7 @@ type Department struct {
 	Name        string    `gorm:"type:varchar(30);column:department_name" json:"department_name"`
 	Manager     string    `gorm:"type:varchar(8);column:manager" json:"manager"`
 	CreatedDate time.Time `gorm:"column:created_date" json:"created_date"`
-	OfficeID    string    `gorm:"type:varchar(6);column:office_id" json:"office_id"`
+	OfficeID    string    `gorm:"type:varchar(6);column:office_id;index" json:"office_id"`
 	Office      *Office   `gorm:"foreignKey:OfficeID;references:office_id" json:"office,omitempty"`
 }
 

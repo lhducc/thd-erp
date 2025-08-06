@@ -15,4 +15,5 @@ type TimesheetListInterface interface {
 	IsDuplicate(ctx context.Context, officeID string, month, year int, timesheetID string) (bool, error)
 	UpdateLocked(ctx context.Context, timesheet *model.TimeSheetList) error
 	GetTimeSheetByOfficeIDAndTime(officeID string, month, year int) (*model.TimeSheetList, error)
+	GetForExport(ctx context.Context, id string) (*model.TimeSheetList, error)
 }

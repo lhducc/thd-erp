@@ -108,3 +108,18 @@ func (h *TimesheetHandler) ResetWorkDayAdjustment() gin.HandlerFunc {
 		utils.ResponseMessage(c, "Reset thành công", http.StatusOK, nil)
 	}
 }
+
+func (h *TimesheetHandler) ExportTimesheetListByMonth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		timesheetListID := c.Param("timesheet-list-id")
+
+		data, filename, err := h.tsService.ExportTimeSheet(c, timesheetListID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.Header("Content-Description", "File Transfer")
+		c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+		c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", data)
+	}
+}

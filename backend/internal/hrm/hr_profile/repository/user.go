@@ -25,28 +25,14 @@ func (s *UserStore) recoverFromPanic(tx *gorm.DB) {
 	}
 }
 
-func (s *UserStore) CreateEmployee(employee *model.Employee) error {
-	tx := s.db.Begin()
-	if tx.Error != nil {
-		return errors.New("failed to start transaction")
-	}
-
-	s.recoverFromPanic(tx)
-
+func (s *UserStore) CreateEmployee(tx *gorm.DB, employee *model.Employee) error {
 	err := model.ValidateEmployeeReferences(tx, *employee)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("Lỗi tạo nhân viên: %w", err)
 	}
 
 	if err := tx.Create(employee).Error; err != nil {
-		tx.Rollback()
 		return fmt.Errorf("failed to create employee: %w", err)
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 	return nil
 }
@@ -152,30 +138,17 @@ func (s *UserStore) GetAllEmployeesPagination(page, pageSize int, filters map[st
 	return employees, totalRecords, nil
 }
 
-func (s *UserStore) UpdateEmployee(id string, updatedEmployee model.Employee) error {
-	tx := s.db.Begin()
-	if tx.Error != nil {
-		return errors.New("failed to start transaction")
-	}
-
-	defer s.recoverFromPanic(tx)
+func (s *UserStore) UpdateEmployee(tx *gorm.DB, id string, updatedEmployee model.Employee) error {
 
 	existingEmployee, err := s.GetUserById(id)
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 
 	model.UpdateEmployeeFields(&existingEmployee, updatedEmployee)
 
 	if err := tx.Save(&existingEmployee).Error; err != nil {
-		tx.Rollback()
 		return fmt.Errorf("failed to update employee: %w", err)
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return nil
@@ -225,24 +198,12 @@ func (s *UserStore) GetLastEmployeeByCode(emp *model.Employee) error {
 		First(emp).Error
 }
 
-func (s *UserStore) UpdateEmployeeWithAccount(employee *model.Employee, accountID int64) error {
-	tx := s.db.Begin()
-	if tx.Error != nil {
-		return errors.New("failed to start transaction")
-	}
-
-	s.recoverFromPanic(tx)
-
+func (s *UserStore) UpdateEmployeeWithAccount(tx *gorm.DB, employee *model.Employee, accountID int64) error {
 	employee.AccountID = &accountID
 	if err := tx.Save(employee).Error; err != nil {
-		tx.Rollback()
 		return fmt.Errorf("failed to update employee with account ID: %w", err)
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to commit transaction: %w", err)
-	}
 	return nil
 }
 

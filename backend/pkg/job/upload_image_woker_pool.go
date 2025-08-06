@@ -15,16 +15,13 @@ func InitWorkerPool(poolSize int) {
 	JobQueue = make(chan UploadJob, 1000)
 	FailedJobQueue = make(chan UploadJob, 100)
 
-	// Khởi tạo worker
 	for i := 0; i < poolSize; i++ {
 		go worker(i)
 	}
 
-	// Xử lý job thất bại
 	go handleFailedJobs()
 }
 
-// Worker chính
 func worker(id int) {
 	for job := range JobQueue {
 		var err error

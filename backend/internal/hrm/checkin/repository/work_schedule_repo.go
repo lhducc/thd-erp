@@ -285,7 +285,7 @@ func (r *workScheduleRepoImpl) DeleteManagerFromWorkSchedule(
 		First(&wsEmp).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return fmt.Errorf("Quản lý %s không tồn tại ở lịch tự động", managerID)
+		return fmt.Errorf("Quản lý %s không tồn tại ở lịch", managerID)
 	}
 
 	if err != nil {

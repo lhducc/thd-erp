@@ -18,21 +18,9 @@ func NewAccountStore(db *gorm.DB) *accountStore {
 	return &accountStore{db: db}
 }
 
-func (s *accountStore) CreateAccount(employee *hrmmodel.Employee, hashedPassword, roleID string) (*hrmmodel.Account, error) {
-	tx := s.db.Begin()
-	if tx.Error != nil {
-		return nil, errors.New("failed to start transaction")
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
+func (s *accountStore) CreateAccount(tx *gorm.DB, employee *hrmmodel.Employee, hashedPassword, roleID string) (*hrmmodel.Account, error) {
 	var role hrmmodel.Role
 	if err := tx.First(&role, "id = ?", roleID).Error; err != nil {
-		tx.Rollback()
 		return nil, fmt.Errorf("failed to get role %s: %w", roleID, err)
 	}
 
@@ -46,14 +34,9 @@ func (s *accountStore) CreateAccount(employee *hrmmodel.Employee, hashedPassword
 	}
 
 	if err := tx.Create(&account).Error; err != nil {
-		tx.Rollback()
 		return nil, fmt.Errorf("failed to create account: %w", err)
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
-	}
 	return &account, nil
 }
 

@@ -78,7 +78,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	departmentUsecase := usecase.NewDepartmentBiz(departmentRepo)
 	officeUsecase := usecase.NewOfficeBiz(officeRepo)
 	jobTitleUsecase := usecase.NewJobTitleBiz(jobTitleRepo, hierarchyLevelRepo)
-	employeeUsecase := usecase.NewEmployeeBiz(userRepo, accountManagementRepo, timesheetRepo, timesheetListRepo, departmentRepo)
+	employeeUsecase := usecase.NewEmployeeBiz(db, userRepo, accountManagementRepo, timesheetRepo, timesheetListRepo, departmentRepo)
 	contractUsecase := usecase.NewContractBiz(contractRepo, userRepo)
 	employeeDocumentUsecase := usecase.NewEmployeeDocumentBiz(employeeDocumentRepo)
 	positionUsecase := usecase.NewPositionBiz(positionRepo)
@@ -212,6 +212,7 @@ func setupDepartmentRoutes(router *gin.RouterGroup, handler *handler.DepartmentH
 		departmentRouter.GET("/:id", handler.GetDepartment())
 		departmentRouter.PUT("/:id", handler.UpdateDepartment())
 		departmentRouter.DELETE("/:id", handler.DeleteDepartment())
+		departmentRouter.GET("/office/:office-id", handler.GetDepartmentByOfficeID())
 	}
 }
 
@@ -413,7 +414,7 @@ func setupWorkScheduleRoutes(router *gin.RouterGroup, workScheduleHandler *check
 		workSchedule.GET("", workScheduleHandler.FetchListWorkScheduleAuto())
 		workSchedule.GET("/:id", workScheduleHandler.FetchWorkScheduleByID())
 		workSchedule.DELETE("/manager/:schedule-id", workScheduleHandler.DeleteManagerFromWorkScheduleAuto())
-		workSchedule.POST("/:id/recurring", workScheduleHandler.UpdateStatusAutoRecurring())
+		//workSchedule.PUT("/:id/recurring", workScheduleHandler.UpdateStatusAutoRecurring())
 	}
 	workScheduleRegister := router.Group("/work-schedule-register")
 	{
@@ -452,6 +453,7 @@ func setupTimesheetRoutes(adminRouter, userRouter *gin.RouterGroup, timesheetHan
 		adminGr.GET("/:id", timesheetHandler.CalculationTimeSheet())
 		adminGr.PUT("/:id", timesheetHandler.AdjustWorkDayManual())
 		adminGr.GET("/:id/reset", timesheetHandler.ResetWorkDayAdjustment())
+		adminGr.GET("/export/:timesheet-list-id", timesheetHandler.ExportTimesheetListByMonth())
 	}
 	userGr := userRouter.Group("/timesheet")
 	{

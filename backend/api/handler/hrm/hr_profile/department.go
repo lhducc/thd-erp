@@ -5,6 +5,7 @@ import (
 	"erp/backend/internal/hrm/hr_profile/model"
 	utils "erp/backend/pkg"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,6 +16,7 @@ type DepartmentBiz interface {
 	UpdateDepartment(ctx context.Context, id string, data *model.DepartmentCreate) error
 	DeleteDepartment(ctx context.Context, id string) error
 	GetAllDepartment(ctx context.Context) ([]model.Department, error)
+	GetDepartmentByOfficeID(officeID string) (*model.Department, error)
 }
 
 type DepartmentHandler struct {
@@ -96,5 +98,22 @@ func (handler *DepartmentHandler) DeleteDepartment() gin.HandlerFunc {
 		}
 
 		utils.ResponseMessage(c, "Xóa bộ phận thành công", http.StatusOK, nil)
+	}
+}
+
+func (handler *DepartmentHandler) GetDepartmentByOfficeID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		officeID := c.Param("office-id")
+		if strings.TrimSpace(officeID) == "" {
+			utils.ResponseMessage(c, "Mã văn phòng không hợp lệ", http.StatusInternalServerError, nil)
+			return
+		}
+		result, err := handler.departmentBiz.GetDepartmentByOfficeID(officeID)
+		if err != nil {
+			utils.ResponseMessage(c, "Lấy dữ liệu thất bại", http.StatusInternalServerError, nil)
+			return
+		}
+		utils.ResponseMessage(c, "Lấy Danh sách dữ liệu thành công", http.StatusOK, &result)
+
 	}
 }

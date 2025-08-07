@@ -70,10 +70,10 @@ func (h *AttendanceCategoryHandler) GetAttendanceCategory() gin.HandlerFunc {
 
 func (h *AttendanceCategoryHandler) GetAttendanceCategoryByOfficeID() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.Param("officeId")
+		employeeID := c.GetString("employeeId")
 		ctx := c.Request.Context()
 
-		categories, err := h.biz.ListAttendanceCategoriesByOffice(ctx, id)
+		categories, err := h.biz.ListAttendanceCategoriesByOffice(ctx, employeeID)
 		if err != nil {
 			utils.ResponseMessage(c, "Attendance category not found", http.StatusNotFound, nil)
 			return

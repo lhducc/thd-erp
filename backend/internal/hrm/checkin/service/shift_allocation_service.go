@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	checkin_model "erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
@@ -68,7 +69,7 @@ func (s *shiftAllocationService) GetListShiftAllocation(ctx context.Context, req
 	}
 
 	for _, employee := range employees {
-		var scheduleInfors []dto.ScheduleInfo
+		var scheduleInfors []checkin_model.WorkSchedule
 		var workShiftTimelines []dto.WorkShiftTimeline
 
 		if employee.ScheduleID != nil {
@@ -77,8 +78,7 @@ func (s *shiftAllocationService) GetListShiftAllocation(ctx context.Context, req
 				return nil, errors.New("Lỗi hệ thống, lỗi khi truy vấn lịch làm việc thuộc nhân viên")
 			}
 			if scheduleInfor != nil {
-				shiftEmp := dto.ConvertToScheduleInfor(scheduleInfor)
-				scheduleInfors = append(scheduleInfors, *shiftEmp)
+				scheduleInfors = append(scheduleInfors, *scheduleInfor)
 			}
 		}
 

@@ -108,7 +108,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 
 	//checkin service
 	attendanceRecordService := checkinService.NewAttendanceRecordService(attendanceRecordRepo, categoryRepo, officeRepo)
-	attendanceCategoryService := checkinService.NewAttendanceCategoryService(categoryRepo)
+	attendanceCategoryService := checkinService.NewAttendanceCategoryService(categoryRepo, userRepo)
 	workShiftService := checkinService.NewWorkShiftService(workShiftRepo)
 	employeeWorkShiftService := checkinService.NewEmployeeWorkshiftService(employeeWorkShiftRepo, userRepo, workShiftRepo, workScheduleRepo)
 	workScheduleService := checkinService.NewWorkScheduleService(workScheduleRepo, userRepo)
@@ -400,7 +400,7 @@ func setupAttendanceCategory(adminRouter, userRouter *gin.RouterGroup, attendanc
 	}
 	userGr := userRouter.Group("/attendance-category")
 	{
-		userGr.GET("/office/:officeId", attendanceCategoryHandler.GetAttendanceCategoryByOfficeID())
+		userGr.GET("/office", attendanceCategoryHandler.GetAttendanceCategoryByOfficeID())
 	}
 }
 
@@ -450,7 +450,7 @@ func setupTimesheetListRoutes(adminRouter *gin.RouterGroup, timesheetListHandler
 func setupTimesheetRoutes(adminRouter, userRouter *gin.RouterGroup, timesheetHandler *checkin.TimesheetHandler) {
 	adminGr := adminRouter.Group("/timesheet")
 	{
-		adminGr.GET("/:id", timesheetHandler.CalculationTimeSheet())
+		adminGr.GET("/timesheet-list/:id", timesheetHandler.CalculationTimeSheet())
 		adminGr.PUT("/:id", timesheetHandler.AdjustWorkDayManual())
 		adminGr.GET("/:id/reset", timesheetHandler.ResetWorkDayAdjustment())
 		adminGr.GET("/export/:timesheet-list-id", timesheetHandler.ExportTimesheetListByMonth())

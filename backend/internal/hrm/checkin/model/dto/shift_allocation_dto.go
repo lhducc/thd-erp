@@ -8,21 +8,13 @@ import (
 )
 
 type EmployeeScheduleResponse struct {
-	EmployeeID     string              `json:"employee_id"`
-	Fullname       string              `json:"full_name"`
-	DepartmentName string              `json:"department_name"`
-	Schedules      []ScheduleInfo      `json:"schedules"`
-	WorkShifts     []WorkShiftTimeline `json:"work_shifts"`
+	EmployeeID     string               `json:"employee_id"`
+	Fullname       string               `json:"full_name"`
+	DepartmentName string               `json:"department_name"`
+	Schedules      []model.WorkSchedule `json:"schedules"`
+	WorkShifts     []WorkShiftTimeline  `json:"work_shifts"`
 }
 
-func ConvertToScheduleInfor(ws *model.WorkSchedule) *ScheduleInfo {
-	return &ScheduleInfo{
-		ScheduleID:      ws.WorkScheduleID,
-		ScheduleName:    ws.WorkScheduleName,
-		IsScheduleAuto:  ws.IsScheduleAuto,
-		IsAutoRecurring: ws.IsAutoRecurring,
-	}
-}
 func ConvertToTimeLine(ew *model.EmployeeWorkshift) *WorkShiftTimeline {
 	return &WorkShiftTimeline{
 		WorkShiftID:   ew.WorkShiftID,
@@ -31,13 +23,6 @@ func ConvertToTimeLine(ew *model.EmployeeWorkshift) *WorkShiftTimeline {
 		StartTime:     ew.WorkShift.StartTime,
 		EndTime:       ew.WorkShift.EndTime,
 	}
-}
-
-type ScheduleInfo struct {
-	ScheduleID      int    `json:"work_schedule_id"`
-	ScheduleName    string `json:"work_schedule_name"`
-	IsScheduleAuto  bool   `gorm:"column:is_schedule_auto;default:false" json:"is_schedule_auto"`
-	IsAutoRecurring bool   `gorm:"column:is_auto_recurring;default:false" json:"is_auto_recurring"`
 }
 
 type WorkShiftTimeline struct {

@@ -5,15 +5,19 @@ import (
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
+	"erp/backend/internal/hrm/hr_profile/repository"
 	"errors"
 )
 
 type attendanceCategoryService struct {
-	repo repo_interface.AttendanceCategoryRepository
+	repo         repo_interface.AttendanceCategoryRepository
+	employeeRepo *repository.UserStore
 }
 
-func NewAttendanceCategoryService(repo repo_interface.AttendanceCategoryRepository) service_interface.AttendanceCategoryService {
-	return &attendanceCategoryService{repo: repo}
+func NewAttendanceCategoryService(repo repo_interface.AttendanceCategoryRepository, employeeRepo *repository.UserStore,
+) service_interface.AttendanceCategoryService {
+	return &attendanceCategoryService{repo: repo,
+		employeeRepo: employeeRepo}
 }
 
 func (s *attendanceCategoryService) CreateAttendanceCategory(ctx context.Context, category *model.AttendanceCategory) error {
@@ -62,8 +66,15 @@ func (s *attendanceCategoryService) GetAttendanceCategoryByID(ctx context.Contex
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *attendanceCategoryService) ListAttendanceCategoriesByOffice(ctx context.Context, officeID string) ([]model.AttendanceCategory, error) {
-	return s.repo.ListByOffice(ctx, officeID)
+func (s *attendanceCategoryService) ListAttendanceCategoriesByOffice(ctx context.Context, employeeID string) ([]model.AttendanceCategory, error) {
+	employee, err := s.employeeRepo.GetUserById(employeeID)
+	if err != nil {
+		return nil, err
+	}
+	if employee.Department.OfficeID == "" {
+		return nil, nil
+	}
+	return s.repo.ListByOffice(ctx, employee.Department.OfficeID)
 }
 
 func (s *attendanceCategoryService) ListAllAttendanceCategories(ctx context.Context) ([]model.AttendanceCategory, error) {

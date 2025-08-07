@@ -11,6 +11,6 @@ type AttendanceCategoryService interface {
 	UpdateAttendanceCategory(ctx context.Context, category *model.AttendanceCategory) error
 	DeleteAttendanceCategory(ctx context.Context, id string) error
 	GetAttendanceCategoryByID(ctx context.Context, id string) (*model.AttendanceCategory, error)
-	ListAttendanceCategoriesByOffice(ctx context.Context, officeID string) ([]model.AttendanceCategory, error)
+	ListAttendanceCategoriesByOffice(ctx context.Context, employeeID string) ([]model.AttendanceCategory, error)
 	ListAllAttendanceCategories(ctx context.Context) ([]model.AttendanceCategory, error)
 }

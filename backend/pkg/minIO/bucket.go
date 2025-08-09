@@ -6,6 +6,8 @@ import (
 	"github.com/minio/minio-go/v7/pkg/lifecycle"
 	"log"
 	"mime/multipart"
+	"os"
+	"strings"
 	"time"
 
 	"erp/backend/config"
@@ -84,6 +86,10 @@ func GeneratePresignedURL(
 		return "", fmt.Errorf("generate presigned URL failed: %w", err)
 	}
 
+	if os.Getenv("APP_ENV") == "docker" {
+		finalURL := strings.Replace(url.String(), os.Getenv("MINIO_ENDPOINT"), os.Getenv("MINIO_PUBLIC_ENDPOINT"), 1)
+		return finalURL, nil
+	}
 	return url.String(), nil
 }
 
@@ -107,7 +113,6 @@ func SetupLifecycle(minioClient *minio.Client, bucketName Bucket, lifeTimeDay in
 		},
 	}
 
-	// Thiết lập lifecycle cho bucket
 	err := minioClient.SetBucketLifecycle(ctx, bucketNameStr, cfg)
 	if err != nil {
 		return err

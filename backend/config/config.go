@@ -61,14 +61,23 @@ func LoadConfig() {
 }
 
 func LoadEnv() {
-	envPath := filepath.Join("..", ".env")
-
-	if err := godotenv.Load(envPath); err != nil {
-		log.Printf("Không tìm thấy file .env tại %s: %v", envPath, err)
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Không tìm thấy file .env hoặc lỗi khi load.")
 	} else {
-		log.Printf("Đã load file .env từ: %s", envPath)
+		log.Println(".env file loaded")
 	}
 }
+
+//func LoadEnv() {
+//	envPath := filepath.Join("..", ".env")
+//
+//	if err := godotenv.Load(envPath); err != nil {
+//		log.Printf("Không tìm thấy file .env tại %s: %v", envPath, err)
+//	} else {
+//		log.Printf("Đã load file .env từ: %s", envPath)
+//	}
+//}
 
 //func LoadConfig() {
 //	// Load biến môi trường từ file .env ở thư mục cha

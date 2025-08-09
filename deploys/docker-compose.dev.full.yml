@@ -8,8 +8,8 @@ services:
       - "5173:5173"
     env_file:
       - ../.env
-    volumes:
-      - ../frontend:/app
+#    volumes:
+#      - ../frontend:/app
       
   backend:
     container_name: erp-backend

@@ -96,10 +96,10 @@ func processImageIfRequired(c *gin.Context, record *model.AttendanceRecord, empl
 	defer file.Close()
 
 	fileName := uuid.New().String()
-	imageName := utils.GenerateImageName(employeeID, record.Timestamp, header.Filename)
+	imageName := utils.GenerateImageName(employeeID, record.Timestamp, fileName)
 	record.ImageName = imageName
 
-	job.EnqueueUploadJob(file, employeeID, header, record.Timestamp, fileName)
+	job.EnqueueUploadJob(file, employeeID, header, record.Timestamp, imageName)
 	return nil
 }
 
@@ -122,6 +122,10 @@ func (h *AttendanceRecordHandler) GetAttendanceRecordByID() gin.HandlerFunc {
 		}
 
 		url, err := minIO.GeneratePresignedURL(c, minIO.AttendanceBucket, record.ImageName, 15*time.Minute)
+		if err != nil {
+			utils.ResponseMessage(c, "Failed to generate presigned URL", http.StatusInternalServerError, nil)
+			return
+		}
 		record.ImageURL = url
 
 		utils.ResponseSuccess(c, "Attendance record found", http.StatusOK, &record)

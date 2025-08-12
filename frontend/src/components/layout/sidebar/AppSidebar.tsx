@@ -6,13 +6,15 @@ import type {ReactNode} from "react";
 const SIDEBAR_COMPONENTS: Record<string, ReactNode> = {
     admin: <HRSidebar/>,
     HR: <HRSidebar/>,
-    Client: <ClientSidebar/>,
+    employee: <ClientSidebar/>,
 };
 
 const AppSidebar = () => {
     const {currentUser} = useAuth();
+console.log(currentUser);
+
     if (!currentUser) return null;
-    return <>{SIDEBAR_COMPONENTS[currentUser.roles]}</>;
+    return <>{SIDEBAR_COMPONENTS[currentUser.role]}</>;
 };
 
 

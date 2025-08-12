@@ -1,9 +1,15 @@
 services:
   frontend:
     container_name: erp-frontend
-    image: $FE_CONTAINER_IMAGE:$CONTAINER_TAG
+    # image: ${FE_CONTAINER_IMAGE:-192.168.1.76:5001/product/erp/erp/frontend}:${CONTAINER_TAG:-latest}
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=https://192.168.1.58:8443/api/v1
     ports:
       - "80:80"
+      - "443:443"
     env_file:
       - ../.env
     depends_on:
@@ -12,29 +18,40 @@ services:
 
   backend:
     container_name: erp-backend
-    image: $BE_CONTAINER_IMAGE:$CONTAINER_TAG
+    # image: ${BE_CONTAINER_IMAGE:-192.168.1.76:5001/product/erp/erp/backend}:${CONTAINER_TAG:-latest}
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
+      - "8443:8443"  # Add HTTPS port for backend
     env_file:
       - ../.env
     depends_on:
-      - postgres
-      - minio
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     restart: unless-stopped
 
   postgres:
-    image: 10.57.70.41:5001/product/erp/erp/postgres:15-alpine
+    image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
     container_name: erp-postgres
     ports:
       - "5432:5432"
     env_file:
       - ../.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
     volumes:
       - pgdata:/var/lib/postgresql/data
 
   minio:
-    image: 10.57.70.41:5001/product/erp/erp/minio:latest
+    image: 192.168.1.76:5001/product/erp/erp/minio:latest
     container_name: erp-minio
     command: server --console-address ":9001" /data
     env_file:
@@ -42,6 +59,11 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
     volumes:
       - minio_data:/data
     restart: unless-stopped

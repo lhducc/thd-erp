@@ -30,11 +30,24 @@ func main() {
 		c.JSON(200, gin.H{"message": "Hello, World!"})
 	})
 
-	log.Println("Server running at :8080")
+	// Start HTTP server on port 8080
+	go func() {
+		log.Println("HTTP Server running at :8080")
+		if err := r.Run(":8080"); err != nil {
+			log.Printf("HTTP server failed: %v", err)
+		}
+	}()
 
-	err = r.Run(":8080")
-	if err != nil {
-		log.Fatalf("failed to run server: %v", err)
+	// Start HTTPS server on port 8443 if SSL is enabled
+	if config.AppConfig.Server.SSL {
+		log.Println("HTTPS Server running at :8443")
+		err = r.RunTLS(":8443", "/app/ssl/server.crt", "/app/ssl/server.key")
+		if err != nil {
+			log.Fatalf("HTTPS server failed: %v", err)
+		}
+	} else {
+		// If SSL is disabled, just run HTTP server and wait
+		select {}
 	}
 
 }

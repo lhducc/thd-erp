@@ -50,19 +50,15 @@ services:
     restart: unless-stopped
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # Mount SSL certificates for Postgres
-      - ../ssl/thd.erp.com.crt:/var/lib/postgresql/server.crt:ro
-      - ../ssl/thd.erp.com.key:/var/lib/postgresql/server.key:ro
-      - ../ssl/rootCA.crt:/var/lib/postgresql/root.crt:ro
-      # Mount custom Postgres configuration files
-      - ../postgres/postgresql.conf:/etc/postgresql/postgresql.conf
-      - ../postgres/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
-    environment:
-      # Enable SSL in Postgres (ensure postgresql.conf and pg_hba.conf are set for SSL)
-      POSTGRES_SSL_CERT: /var/lib/postgresql/server.crt
-      POSTGRES_SSL_KEY: /var/lib/postgresql/server.key
-      POSTGRES_SSL_ROOT_CERT: /var/lib/postgresql/root.crt
+      # Mount SSL certificates for Postgres (commented out for initial setup)
+      # - ../ssl/thd.erp.com.crt:/var/lib/postgresql/server.crt:ro
+      # - ../ssl/thd.erp.com.key:/var/lib/postgresql/server.key:ro
+      # - ../ssl/rootCA.crt:/var/lib/postgresql/root.crt:ro
+      # Mount custom Postgres configuration files (commented out for initial setup)
+      # - ../postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+      # - ../postgres/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
     # You must also update postgresql.conf and pg_hba.conf to enable SSL (not shown here)
+    # SSL environment variables commented out for initial setup
 
   minio:
     image: 192.168.1.76:5001/product/erp/erp/minio:latest

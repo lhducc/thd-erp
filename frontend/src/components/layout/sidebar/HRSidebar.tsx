@@ -51,47 +51,47 @@ const HRSidebar = ({...props}: ComponentProps<typeof Sidebar>) => {
             child: [
                 {
                     name: "Quản lý ca làm việc",
-                    icon: null,
                     url: PATH.WORKSHIFT,
                 },
                 {
                     name: "Lịch làm việc",
-                    icon: null,
-                    url: PATH.WORK_SCHEDULE,
+                    child: [
+                        {
+                            name: "Lịch làm việc đăng ký",
+                            url: PATH.WORK_SCHEDULE_REGISTER,
+                        },
+                        {
+                            name: "Lịch làm việc tự động",
+                            url: PATH.WORK_SCHEDULE,
+                        }
+                    ]
                 },
                 {
                     name: "Bản phân ca",
-                    icon: null,
                     url: PATH.ROTA,
                 },
                 {
-                    name: "Lịch làm việc đăng ký",
-                    icon: null,
-                    url: PATH.WORK_SCHEDULE_REGISTER,
+                  name: "Bảng công",
+                    url: PATH.TIMESHEET
                 },
                 {
                     name: "Thiết lập chấm công",
-                    icon: null,
+
+
                     url: PATH.ATTENDANCE_MANAGEMENT,
                 },
                 {
-                    name: "Thiết lập đăng ký ca",
-                    icon: null,
-                    url: PATH.SETUP_WORKSHIFT,
-                },
-                {
                     name: "Quản lý chấm công",
-                    icon: null,
+
+
                     url: PATH.ATTENDANCE_MANAGEMENT,
                     child: [
                         {
                             name: "Phê duyệt chấm công",
-                            icon: null,
                             url: PATH.APPROVE_ATTENDANCE,
                         },
                         {
-                            name: "Xem lịch sử chấm công",
-                            icon: null,
+                            name: "Lịch sử chấm công",
                             url: PATH.ATTENDANT_HISTORY,
                         },
                     ]

@@ -10,6 +10,7 @@ import {Link} from "react-router-dom";
 import {deleteWorkshiftSchedule} from "@/apis/work-schedule.api.ts";
 import {useWorkSchedule} from "@/query/useWorkSchedule.ts";
 import PATH from "@/constants/Path.ts";
+import {map} from "zod";
 
 const WorkScheduleAuto = () => {
     const {
@@ -18,7 +19,7 @@ const WorkScheduleAuto = () => {
         refetch: refetchSchedule,
     } = useWorkSchedule();
 
-    const { mutateAsync: deleteSchedule } = useMutation({
+    const {mutateAsync: deleteSchedule} = useMutation({
         mutationFn: (id: number) => deleteWorkshiftSchedule(id),
         onSuccess: () => {
             refetchSchedule();
@@ -45,11 +46,21 @@ const WorkScheduleAuto = () => {
         {
             accessorKey: "manager",
             header: "Quản lý",
+            cell: ({row}) => {
+                const managers = row.original.managers
+                return (
+                    <div>
+                        {managers.map((manager) => (
+                            <p>{manager.manager.full_name}</p>
+                        ))}
+                    </div>
+                )
+            }
         },
         {
             accessorKey: "status",
             header: "Trạng thái áp dụng",
-            cell: ({ row }) => {
+            cell: ({row}) => {
                 const workSchedule = row.original;
 
                 const convert = workSchedule.status === "active" ? "Đang áp dụng" : "Không áp dụng"
@@ -64,7 +75,7 @@ const WorkScheduleAuto = () => {
         {
             id: "actions",
             header: "Thao tác",
-            cell: ({ row }) => {
+            cell: ({row}) => {
                 return (
                     <div className="flex gap-4">
                         {/*<CreateOfficeForm*/}
@@ -78,15 +89,15 @@ const WorkScheduleAuto = () => {
                         {/*    refetch={refetchSchedule}*/}
                         {/*/>*/}
                         <Link to={`${row.original.work_schedule_id}`}>
-                            <EditIcon />
+                            <EditIcon/>
                         </Link>
-                        <Button>
-                            <ViewIcon />
-                        </Button>
-                        <ConfirmDelete deleteFn={() => deleteSchedule(row.original.work_schedule_id)} />
+                        {/*<Button>*/}
+                        {/*    <ViewIcon />*/}
+                        {/*</Button>*/}
                         <Link to={`${row.original.work_schedule_id}/setting`}>
-                            <SettingsIcon />
+                            <SettingsIcon/>
                         </Link>
+                        <ConfirmDelete deleteFn={() => deleteSchedule(row.original.work_schedule_id)}/>
                     </div>
                 );
             },
@@ -107,7 +118,7 @@ const WorkScheduleAuto = () => {
                 columns={columns}
                 data={schedule || []}
                 isLoading={pendingSchedule}
-                title="Lịch làm việc"
+                title="Lịch làm việc tự động"
                 buttonCreate={button}
                 keyFilter="work_schedule_name"
             />

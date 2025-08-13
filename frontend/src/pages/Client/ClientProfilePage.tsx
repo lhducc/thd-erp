@@ -14,15 +14,13 @@ const ClientProfilePage = () => {
     const employeeId = currentUser?.user_id;
 
     const {
-        data: employeeResponse,
+        data: employee,
         isLoading,
     } = useQuery({
         queryKey: ["employee", employeeId],
         queryFn: () => getEmployeeByIdApi(employeeId!),
         enabled: !!employeeId,
     });
-
-    const employee = employeeResponse?.data;
 
     return (
         <div>

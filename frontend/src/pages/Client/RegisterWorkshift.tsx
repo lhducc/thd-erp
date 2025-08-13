@@ -275,12 +275,12 @@ const RegisterWorkshift = () => {
                                 <div className="mt-1 text-xs">
                                     {workshift ? (
                                         <div className="bg-blue-100 text-blue-800 p-1 rounded text-center">
-                                            {getWorkshiftName(workshift.work_shift_id)}
+                                            {getWorkshiftName(workshift.workshift_id)}
                                             {!isPast && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        handleDelete(workshift.ID);
+                                                        handleDelete(workshift?.id);
                                                     }}
                                                     className="text-red-500 text-xs ml-1"
                                                 >

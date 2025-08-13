@@ -3,10 +3,8 @@ import {getWorkSchedule, getWorkScheduleById} from "@/apis/work-schedule.api.ts"
 
 export const useWorkSchedule = () =>
     useQuery({
-        queryKey: ["work-schedule"],
+        queryKey: ["work-schedules"],
         queryFn: getWorkSchedule,
-        gcTime: 0,
-        staleTime: 0,
     });
 
 export const useWorkScheduleById = (id?: string) =>

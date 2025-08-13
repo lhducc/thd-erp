@@ -6,20 +6,21 @@ import {Input} from "@/components/ui/input.tsx";
 import {useState} from "react";
 import {useMutation} from "@tanstack/react-query";
 import {toast} from "sonner";
-import {WorkDayEnum, type WorkShift, type WorkShiftRequest} from "@/types/Workshift.ts";
+import {type Workshift, type WorkShiftRequest} from "@/types/workshift.ts";
 import {useForm} from "react-hook-form";
 import {z} from "zod";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
 import {Switch} from "@/components/ui/switch.tsx";
-import {TimeOfDayEnum} from "@/types/Workshift.ts";
+import {TimeOfDayEnum} from "@/types/workshift.ts";
 import {createWorkshiftApi, updateWorkshiftApi} from "@/apis/workshift.api.ts";
+import {DialogDescription} from "@radix-ui/react-dialog";
 
 type Props = {
     editBtn?: React.ReactNode;
-    data?: WorkShift;
+    data?: Workshift;
     type?: "edit" | "view";
-    refetch?: Function;
+    refetch?: () => void;
 };
 
 export const formSchema = z.object({
@@ -34,7 +35,7 @@ export const formSchema = z.object({
     break_start: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/, "Định dạng thời gian không hợp lệ (HH:mm:ss)").optional().or(z.literal("")),
     break_end: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/, "Định dạng thời gian không hợp lệ (HH:mm:ss)").optional().or(z.literal("")),
     work_hours: z.number().min(0.1, "Số giờ làm việc phải lớn hơn 0"),
-    work_day: z.nativeEnum(WorkDayEnum),
+    work_day: z.number().min(0),
     coef_normal_day: z.number().min(0.1, "Hệ số phải lớn hơn 0"),
     coef_weekend: z.number().min(0.1, "Hệ số phải lớn hơn 0"),
     coef_holiday: z.number().min(0.1, "Hệ số phải lớn hơn 0"),
@@ -70,7 +71,7 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
             break_start: data?.break_start || "",
             break_end: data?.break_end || "",
             work_hours: data?.work_hours || 8,
-            work_day: data?.work_day || WorkDayEnum.FullDay,
+            work_day: data?.work_day || 1,
             coef_normal_day: data?.coef_normal_day || 1.0,
             coef_weekend: data?.coef_weekend || 1.5,
             coef_holiday: data?.coef_holiday || 2.0,
@@ -121,6 +122,7 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
 
         const payload: WorkShiftRequest = {
             ...values,
+            work_day: Number(values.work_day) || 1,
             checkin_from: values.checkin_from || null,
             checkin_to: values.checkin_to || null,
             checkout_from: values.checkout_from || null,
@@ -150,7 +152,7 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger>
+            <DialogTrigger asChild>
                 {editBtn ? (
                     editBtn
                 ) : (
@@ -169,6 +171,9 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                     ) : (
                         <DialogTitle>Tạo ca làm việc</DialogTitle>
                     )}
+                    <DialogDescription>
+                        This is a description of the dialog content.
+                    </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -502,9 +507,9 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value={WorkDayEnum.FullDay}>{WorkDayEnum.FullDay}</SelectItem>
-                                                    <SelectItem value={WorkDayEnum.HaftDay}>{WorkDayEnum.HaftDay}</SelectItem>
-                                                    <SelectItem value={WorkDayEnum.NoWork}>{WorkDayEnum.NoWork}</SelectItem>
+                                                    <SelectItem value={1}>1</SelectItem>
+                                                    <SelectItem value={0.5}>0.5</SelectItem>
+                                                    <SelectItem value={0}>0</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage/>

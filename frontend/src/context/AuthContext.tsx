@@ -22,9 +22,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}: AuthProvid
             if (access_token != null) {
                 try {
                     const user = jwtDecode<User>(access_token);
-                    if (user.full_name == "Hoang Bao") {
-                        user.roles = "Client"
-                    }
+                        // user.role = "Client"
                     setCurrentUser(user);
                     redirect("/sign-in")
                     return;

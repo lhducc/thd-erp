@@ -99,6 +99,7 @@ export type Employee = {
     phone_number: string;
     email: string;
     account_id: number;
+    current_address: string;
     position_id: string;
     job_title_id: string;
     status: string;

@@ -33,6 +33,7 @@ services:
       minio:
         condition: service_healthy
     restart: unless-stopped
+  # Note: Backend must be configured to connect to Postgres and MinIO using SSL/TLS (see below)
 
   postgres:
     image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
@@ -49,6 +50,16 @@ services:
     restart: unless-stopped
     volumes:
       - pgdata:/var/lib/postgresql/data
+      # Mount SSL certificates for Postgres
+      - ../ssl/thd.erp.com.crt:/var/lib/postgresql/server.crt:ro
+      - ../ssl/thd.erp.com.key:/var/lib/postgresql/server.key:ro
+      - ../ssl/rootCA.crt:/var/lib/postgresql/root.crt:ro
+    environment:
+      # Enable SSL in Postgres (ensure postgresql.conf and pg_hba.conf are set for SSL)
+      POSTGRES_SSL_CERT: /var/lib/postgresql/server.crt
+      POSTGRES_SSL_KEY: /var/lib/postgresql/server.key
+      POSTGRES_SSL_ROOT_CERT: /var/lib/postgresql/root.crt
+    # You must also update postgresql.conf and pg_hba.conf to enable SSL (not shown here)
 
   minio:
     image: 192.168.1.76:5001/product/erp/erp/minio:latest
@@ -59,13 +70,19 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    environment:
+      # Enable HTTPS for MinIO
+      MINIO_SERVER_URL: https://localhost:9000
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
+      test: ["CMD", "curl", "-kf", "https://localhost:9000/minio/health/ready"]
       interval: 30s
       timeout: 20s
       retries: 3
     volumes:
       - minio_data:/data
+      # Mount SSL certificates for MinIO (must be named public.crt and private.key)
+      - ../ssl/thd.erp.com.crt:/root/.minio/certs/public.crt:ro
+      - ../ssl/thd.erp.com.key:/root/.minio/certs/private.key:ro
     restart: unless-stopped
 
 volumes:

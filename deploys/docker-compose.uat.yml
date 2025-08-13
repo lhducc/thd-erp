@@ -55,8 +55,8 @@ services:
       - ../ssl/thd.erp.com.key:/var/lib/postgresql/server.key:ro
       - ../ssl/rootCA.crt:/var/lib/postgresql/root.crt:ro
       # Mount custom Postgres configuration files
-      - ../postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
-      - ../postgres/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf:ro
+      - ../postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ../postgres/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
     environment:
       # Enable SSL in Postgres (ensure postgresql.conf and pg_hba.conf are set for SSL)
       POSTGRES_SSL_CERT: /var/lib/postgresql/server.crt

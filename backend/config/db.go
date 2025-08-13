@@ -19,9 +19,9 @@ func ConnectPostgres() {
 	if err != nil {
 		log.Fatal("Không thể kết nối PostgreSQL:", err)
 	}
-	if err := createEnums(db); err != nil {
-		log.Fatalf("Không thể tạo ENUM: %v", err)
-	}
+	// if err := createEnums(db); err != nil {
+	// 	log.Fatalf("Không thể tạo ENUM: %v", err)
+	// }
 	errT := AutoMigrate(db)
 	if errT != nil {
 		fmt.Print(errT)

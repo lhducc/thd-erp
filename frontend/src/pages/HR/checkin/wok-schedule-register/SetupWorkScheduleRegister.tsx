@@ -19,6 +19,7 @@ import {useQueryWorkshift} from "@/query/workshift.query.ts";
 import {useWorkScheduleRegisterById} from "@/query/useWorkScheduleRegister.ts";
 import {WorkshiftScheduler} from "@/components/WeekScheduleSelector.tsx";
 import PATH from "@/constants/Path.ts";
+import Loading from "@/components/Loading.tsx";
 
 const formSchema = z.object({
     name: z.string().min(1, "Tên lịch không được để trống"),
@@ -41,19 +42,18 @@ const SetupWorkScheduleRegister = () => {
         },
     });
     const {data: workSchedule, isLoading: pendingWorkSchedule} = useQuery(useWorkScheduleRegisterById(id))
-    const { data: offices, isPending: pendingOffices } = useOffice()
-    const { data: workshifts, isPending: pendingWorkshifts } = useQueryWorkshift()
-
+    const { data: offices, isLoading: pendingOffices } = useOffice()
+    const { data: workshifts, isLoading: pendingWorkshifts } = useQueryWorkshift()
     const navigate = useNavigate();
 
     // Set form values when workSchedule data is loaded (edit mode)
     useEffect(() => {
-        if (workSchedule && isEditMode) {
+        if (isEditMode && workSchedule && offices && !pendingOffices) {
             form.reset({
-                name: workSchedule.work_schedule_register_name,
+                name: workSchedule.work_schedule_name,
                 office: workSchedule.office_id,
                 start_date: workSchedule.effective_date.split('T')[0],
-                end_date: workSchedule.expiration_date.split('T')[0]
+                end_date: workSchedule.expiration_date.split('T')[0],
             });
 
             // Convert weekdays data to WeekdaySelection format
@@ -64,7 +64,7 @@ const SetupWorkScheduleRegister = () => {
             }));
             setWeekdays(initialWeekdays);
         }
-    }, [workSchedule, isEditMode, form]);
+    }, [workSchedule, isEditMode, form, offices, pendingOffices]);
 
     const registerMutation = useMutation({
         mutationFn: isEditMode ?
@@ -76,6 +76,7 @@ const SetupWorkScheduleRegister = () => {
                 form.reset();
                 setWeekdays([]);
             }
+            navigate("/setup-work-schedule-register")
         },
         onError: (error) => {
             toast.error(isEditMode ? "Cập nhật lịch làm việc thất bại" : "Đăng ký lịch làm việc thất bại");
@@ -90,7 +91,7 @@ const SetupWorkScheduleRegister = () => {
         }
 
         const payload = {
-            work_schedule_register_name: values.name,
+            work_schedule_name: values.name,
             office_id: values.office,
             effective_date: new Date(values.start_date).toISOString(),
             expiration_date: new Date(values.end_date).toISOString(),
@@ -108,19 +109,9 @@ const SetupWorkScheduleRegister = () => {
         setWeekdays(selections);
     };
 
-    if (pendingWorkSchedule && isEditMode) {
+    if (pendingWorkSchedule && isEditMode && pendingOffices && pendingWorkshifts) {
         return (
-            <div className="container mx-auto py-6">
-                <Skeleton className="h-10 w-1/3 mb-4" />
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                        <Skeleton className="h-[400px] w-full" />
-                    </div>
-                    <div className="space-y-4">
-                        <Skeleton className="h-[400px] w-full" />
-                    </div>
-                </div>
-            </div>
+            <Loading />
         );
     }
 
@@ -172,7 +163,8 @@ const SetupWorkScheduleRegister = () => {
                                         <FormField
                                             control={form.control}
                                             name="office"
-                                            render={({ field }) => (
+                                            render={({ field }) => {
+                                                return(
                                                 <FormItem>
                                                     <FormLabel>Văn phòng</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value}>
@@ -203,7 +195,7 @@ const SetupWorkScheduleRegister = () => {
                                                     </Select>
                                                     <FormMessage />
                                                 </FormItem>
-                                            )}
+                                                )}}
                                         />
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -5,11 +5,13 @@ export const useWorkScheduleRegister = () =>
     useQuery({
         queryKey: ["workScheduleRegister"],
         queryFn: getAllWorkScheduleRegister,
+        gcTime: Infinity,
+        staleTime: Infinity,
     });
 
-export const useWorkScheduleRegisterById  = (id: string) =>
+export const useWorkScheduleRegisterById  = (id?: string) =>
     queryOptions({
-        queryKey: ["workScheduleRegisterById", {id}],
+        queryKey: ["workScheduleRegisterById", id],
         queryFn: () => getWorkScheduleRegisterById(id),
         enabled: !!id
     })

@@ -1,8 +1,8 @@
-import {type WorkShift, type WorkShiftRequest} from "@/types/Workshift.ts";
+import {type Workshift, type WorkShiftRequest} from "@/types/workshift.ts";
 import api from "@/apis/api.ts";
 import type {EmployeeWorkshift} from "@/types/employee-workshift.ts";
 
-export const getAllWorkshiftApi = async (): Promise<WorkShift[]> => {
+export const getAllWorkshiftApi = async (): Promise<Workshift[]> => {
     try {
         const response = await api.get("/workshifts");
         return response.data.data
@@ -12,7 +12,7 @@ export const getAllWorkshiftApi = async (): Promise<WorkShift[]> => {
     }
 };
 
-export const createWorkshiftApi = async (payload: Omit<WorkShiftRequest, 'workshift_id'>): Promise<WorkShift> => {
+export const createWorkshiftApi = async (payload: Omit<WorkShiftRequest, 'workshift_id'>): Promise<Workshift> => {
     try {
         const response = await api.post("/workshifts", payload);
         return response.data.data
@@ -22,7 +22,7 @@ export const createWorkshiftApi = async (payload: Omit<WorkShiftRequest, 'worksh
     }
 };
 
-export const updateWorkshiftApi = async (id: string, payload: WorkShiftRequest): Promise<WorkShift> => {
+export const updateWorkshiftApi = async (id: string, payload: WorkShiftRequest): Promise<Workshift> => {
     try {
         const response = await api.put(`/workshifts/${id}`, payload);
         return response.data.data
@@ -44,13 +44,18 @@ export const deleteWorkshiftApi = async (id: string): Promise<void> => {
 
 export const registerEmployeeWorkshiftApi = async (
     employee_id: string,
-    work_shift_id: string,
+    workshift_id: string,
     date: string // Expected format: "YYYY-MM-DD"
 ): Promise<EmployeeWorkshift> => {
     try {
+        console.log({
+            employee_id,
+            workshift_id,
+            date: new Date(date).toISOString() // Convert to ISO string
+        })
         const response = await api.post("/employee-workshifts", {
             employee_id,
-            work_shift_id,
+            workshift_id,
             date: new Date(date).toISOString() // Convert to ISO string
         });
         return response.data.data;

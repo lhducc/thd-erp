@@ -15,6 +15,7 @@ const PATH = {
   CONTRACT: "/contract",
   DECISION: "/decision",
   INSURANCE: "/insurance",
+  APPROVE: "/approve",
   DOCUMENT_DETAIL: "/documentDetail",
   DETAIL_DECISION: "/detail_decision",
   SHIFT_MANAGEMENT: "/shift_management",
@@ -24,8 +25,8 @@ const PATH = {
   // HR Checkin
   WORKSHIFT: "/workshift",
   ATTENDANCE_MANAGEMENT: "/attendance-management",
-  SETUP_WORKSHIFT: "/setup-workshift",
   APPROVE_ATTENDANCE: "/approve-attendant",
+  TIMESHEET: "/timesheet",
   ATTENDANT_HISTORY: "/attendant-history",
   WORK_SCHEDULE: "/setup-work-schedule",
   WORK_SCHEDULE_REGISTER: "/setup-work-schedule-register",

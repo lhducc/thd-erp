@@ -1,3 +1,5 @@
+import type {ManagerPermission} from "@/types/employee.ts";
+
 export type WorkSchedule = {
     work_schedule_id: number;
     work_schedule_name: string;
@@ -9,6 +11,7 @@ export type WorkSchedule = {
     status: string;
     created_at: string; // ISO date string
     is_deleted: boolean;
+    managers: ManagerPermission[];
     office: Office;
 };
 
@@ -67,7 +70,7 @@ export type WorkScheduleResponse = {
     status: string;
     created_at: string;
     is_deleted: boolean;
-    managers: ScheduleAssignment[];
+    managers: ManagerPermission[];
     employees: ScheduleAssignment[];
     weekdays: Weekday[];
     office: Office;

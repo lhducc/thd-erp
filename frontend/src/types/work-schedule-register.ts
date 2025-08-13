@@ -1,9 +1,9 @@
-import type {WorkShift} from "@/types/Workshift.ts";
+import type {Workshift} from "@/types/workshift.ts";
 import type {Employee, Office} from "@/types/index.ts";
 
 export type WorkScheduleRegister = {
-    work_schedule_register_id: number;
-    work_schedule_register_name: string;
+    work_schedule_id: number;
+    work_schedule_name: string;
     office_id: string;
     effective_date: string; // ISO date string
     expiration_date: string; // ISO date string
@@ -39,5 +39,5 @@ type WorkScheduleRegisterShift = {
     week_day: string;
     workshift_id: string;
     order: number;
-    work_shift: WorkShift;
+    work_shift: Workshift;
 };

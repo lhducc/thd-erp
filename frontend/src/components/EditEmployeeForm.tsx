@@ -3,7 +3,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { z } from "zod";
@@ -19,10 +18,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { updateEmployeeApi } from "@/apis/profile.api";
-import { useState } from "react";
+import type {Employee} from "@/types";
 
-
-const formSchema = z.object({
+const employee = z.object({
   full_name: z.string().nonempty("Vui lòng nhập họ và tên"),
   birth_date: z.string().nonempty("Vui lòng nhập ngày sinh"),
   gender: z.string().nonempty("Vui lòng chọn giới tính"),
@@ -35,23 +33,6 @@ const formSchema = z.object({
   department: z.string().nonempty("Vui lòng chọn phòng ban"),
   manager: z.string().nonempty("Vui lòng nhập tên quản lý trực tiếp"),
 });
-export interface Employee {
-  employee_id: string;
-  full_name: string;
-  birthday: string;
-  gender: string;
-  work_type: string;
-  phone_number: string;
-  email: string;
-  account_id: number;
-  position_id: string;
-  job_title_id: string;
-  status: string;
-  manager_id: string;
-  created_date: string;
-  office?: string;
-  department?: string;
-}
 
 type Props = {
   open: boolean;
@@ -61,9 +42,9 @@ type Props = {
 };
 
 const EditEmployeeForm = ({ open, setOpen, data, refetchEmployee }: Props) => {
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    console.log("EditEmployeeForm");
+  const form = useForm<z.infer<typeof employee>>({
+    resolver: zodResolver(employee),
     defaultValues: {
       full_name: data.full_name, 
       birth_date: data.birthday, 
@@ -71,7 +52,7 @@ const EditEmployeeForm = ({ open, setOpen, data, refetchEmployee }: Props) => {
       phone: data.phone_number, 
       email: data.email, 
       position: data.position_id, 
-      current_address: data.office || "", 
+      current_address: data.current_address || "",
       start_date: data.created_date, 
       office: data.office || "", 
       department: data.department || "", 
@@ -87,7 +68,7 @@ const EditEmployeeForm = ({ open, setOpen, data, refetchEmployee }: Props) => {
         gender: values.gender,
         phone_number: values.phone,
         email: values.email,
-        work_type: "TTS", 
+        work_type: values.work_type,
         position_id: values.position, 
         job_title_id: "CV0002",
         status: "active", 

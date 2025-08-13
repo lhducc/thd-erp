@@ -13,7 +13,8 @@ import {toast} from "sonner";
 const AttendanceManagementPage = () => {
     const {data: attendanceSetting, isLoading: pendingAttendances, refetch: refetchAttendances} = useQuery({
         queryKey: ["attendanceSettings"],
-        queryFn: getAllAttendanceManagementAPI
+        queryFn: getAllAttendanceManagementAPI,
+        staleTime: 50000
     });
 
     const { mutateAsync: deleteAttendanceSetting } = useMutation({

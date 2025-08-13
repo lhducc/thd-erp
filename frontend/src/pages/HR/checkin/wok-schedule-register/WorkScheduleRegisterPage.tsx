@@ -4,14 +4,14 @@ import {deleteWorkshiftSchedule} from "@/apis/work-schedule.api.ts";
 import {toast} from "sonner";
 import type {ColumnDef} from "@tanstack/react-table";
 import {Link} from "react-router-dom";
-import {EditIcon, SettingsIcon, ViewIcon} from "lucide-react";
+import {EditIcon, SettingsIcon} from "lucide-react";
 import {Button} from "@/components/ui/button.tsx";
 import ConfirmDelete from "@/components/ConfirmDelete.tsx";
 import DataTable from "@/components/DataTable.tsx";
 import type {WorkScheduleRegister} from "@/types/work-schedule-register.ts";
 import PATH from "@/constants/Path.ts";
 
-const WorkScheduleRegister = () => {
+const WorkScheduleRegisterPage = () => {
     const {data: schedule, isPending: pendingSchedule, refetch: refetchSchedule} = useWorkScheduleRegister()
 
     const {mutateAsync: deleteSchedule} = useMutation({
@@ -27,11 +27,11 @@ const WorkScheduleRegister = () => {
 
     const columns: ColumnDef<WorkScheduleRegister>[] = [
         {
-            accessorKey: "work_schedule_register_id",
+            accessorKey: "work_schedule_id",
             header: "STT",
         },
         {
-            accessorKey: "work_schedule_register_name",
+            accessorKey: "work_schedule_name",
             header: "Tên lịch làm việc",
         },
         {
@@ -39,8 +39,17 @@ const WorkScheduleRegister = () => {
             header: "Văn phòng",
         },
         {
-            accessorKey: "manager",
             header: "Quản lý",
+            cell: ({ row }) => {
+                const managers = row.original.managers
+                return (
+                    <div className={`flex flex-col space-y-2`}>
+                        {managers.map((manager) => (
+                            <p>{manager.manager.full_name}</p>
+                        ))}
+                    </div>
+                )
+            }
         },
         {
             accessorKey: "status",
@@ -63,16 +72,13 @@ const WorkScheduleRegister = () => {
             cell: ({row}) => {
                 return (
                     <div className="flex gap-4">
-                        <Link to={`${row.original.work_schedule_register_id}`}>
+                        <Link to={`${row.original.work_schedule_id}`}>
                             <EditIcon/>
                         </Link>
-                        <Button>
-                            <ViewIcon/>
-                        </Button>
-                        <ConfirmDelete deleteFn={() => deleteSchedule(row.original.work_schedule_register_id)}/>
-                        <Link to={`${row.original.work_schedule_register_id}/setting`}>
+                        <Link to={`${row.original.work_schedule_id}/setting`}>
                             <SettingsIcon/>
                         </Link>
+                        <ConfirmDelete deleteFn={() => deleteSchedule(row.original.work_schedule_id)}/>
                     </div>
                 );
             },
@@ -93,7 +99,7 @@ const WorkScheduleRegister = () => {
                 columns={columns}
                 data={schedule || []}
                 isLoading={pendingSchedule}
-                title="Lịch làm việc"
+                title="Lịch làm việc đăng ký"
                 buttonCreate={button}
                 keyFilter="work_schedule_name"
             />
@@ -101,4 +107,4 @@ const WorkScheduleRegister = () => {
     );
 };
 
-export default WorkScheduleRegister;
+export default WorkScheduleRegisterPage;

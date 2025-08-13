@@ -1,8 +1,8 @@
 import {useAuth} from "@/context/AuthContext.tsx";
-import type {ReactNode} from "react";
-import HRProfilePage from "@/pages/HR/HRProfilePage.tsx";
-import ClientProfilePage from "@/pages/Client/ClientProfilePage.tsx";
+import {lazy, type ReactNode} from "react";
 
+const HRProfilePage = lazy(() => import("@/pages/HR/profile/index.tsx"))
+const ClientProfilePage = lazy(() => import("@/pages/Client/ClientProfilePage.tsx"))
 const PROFILE_COMPONENTS: Record<string, ReactNode> = {
     admin: <HRProfilePage/>,
     HR: <HRProfilePage/>,
@@ -12,7 +12,7 @@ const PROFILE_COMPONENTS: Record<string, ReactNode> = {
 const ProfilePage = () => {
     const {currentUser} = useAuth();
     if (!currentUser) return null;
-    return <>{PROFILE_COMPONENTS[currentUser.roles]}</>;
+    return <>{PROFILE_COMPONENTS[currentUser.role]}</>;
 };
 
 

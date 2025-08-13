@@ -32,7 +32,7 @@ const AppNavbar = () => {
                 <div className={`flex gap-5`}>
                     <div className="flex flex-col items-end justify-end">
                         <p className="md:text-[20px] font-semibold w-[150px] md:w-full truncate">{currentUser?.full_name}</p>
-                        <p className="md:text-[14px] text-[10px] font-semibold">{currentUser?.roles}</p>
+                        <p className="md:text-[14px] text-[10px] font-semibold">{currentUser?.role}</p>
                     </div>
                     <div className="relative" ref={dropdownRef}>
                         <button

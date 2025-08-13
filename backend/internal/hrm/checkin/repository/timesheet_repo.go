@@ -6,9 +6,10 @@ import (
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"errors"
 	"fmt"
+	"time"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"time"
 )
 
 type timesheetRepo struct {
@@ -40,6 +41,10 @@ func (r *timesheetRepo) FindByEmployeeAndMonth(ctx context.Context, employeeID s
 	err := r.db.WithContext(ctx).
 		Where("employee_id = ? AND month = ? AND year = ?", employeeID, month, year).
 		Preload("Details").
+		Preload("Details").
+		Preload("Details.CheckOutRecord").
+		Preload("Details.CheckInRecord.AttendanceCategory").
+		Preload("Details.CheckOutRecord.").
 		First(&ts).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil

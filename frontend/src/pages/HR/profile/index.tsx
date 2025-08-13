@@ -1,34 +1,35 @@
-import {useMutation, useQuery} from "@tanstack/react-query";
+import {useMutation} from "@tanstack/react-query";
 import {toast} from "sonner";
-import {Button} from "@/components/ui/button";
+import {Button} from "@/components/ui/button.tsx";
 import {SquarePen} from "lucide-react";
-import {getAllEmployeesApi, deleteEmployeeApi} from "@/apis/profile.api";
-import ConfirmDelete from "@/components/ConfirmDelete";
-import DataTable from "@/components/DataTable";
-import Loading from "@/components/Loading";
-import {useEffect, useRef, useState} from "react";
-import CreateEmployeeForm from "@/components/CreateEmployeeForm";
-import EditEmployeeForm from "@/components/EditEmployeeForm";
+import {deleteEmployeeApi} from "@/apis/profile.api.ts";
+import ConfirmDelete from "@/components/ConfirmDelete.tsx";
+import DataTable from "@/components/DataTable.tsx";
+import Loading from "@/components/Loading.tsx";
+import {lazy, useEffect, useRef, useState} from "react";
+import CreateEmployeeForm from "@/components/CreateEmployeeForm.tsx";
 import type {Employee} from "@/types";
 import type {ColumnDef} from "@tanstack/react-table";
-import {exportEmployeeExcelApi} from '@/apis/profile.api';
+import {exportEmployeeExcelApi} from '@/apis/profile.api.ts';
 import {Link} from "react-router-dom";
-import {useAllEmployee} from "@/query/useEmployee.ts";
+import {useGetAllEmployee} from "@/query/employee.query.ts";
 
-const EmployeePage = () => {
+const EditEmployeeForm = lazy(() => import("@/components/EditEmployeeForm.tsx"));
+
+const HRProfilePage = () => {
     const [open, setOpen] = useState(false);
     const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
     const [activeTab, setActiveTab] = useState("hoat-dong");
 
-    const {data: employees, isLoading: pendingGetEmployees, refetch: refetchEmployee} = useAllEmployee()
+    const {data: employees, isLoading: pendingGetEmployees, refetch: refetchEmployee} = useGetAllEmployee()
 
     const {mutate: deleteEmployee} = useMutation({
         mutationFn: deleteEmployeeApi,
-        onSuccess: () => {
-            refetchEmployee();
+        onSuccess: async () => {
+            await refetchEmployee();
             toast.success("Xóa nhân viên thành công");
         },
-        onError: (error: any) => {
+        onError: (error) => {
             toast.error(error.message);
         },
     });
@@ -265,7 +266,6 @@ const EmployeePage = () => {
     };
 
     if (pendingGetEmployees) return <Loading/>;
-
     return (
         <>
             <DataTable
@@ -288,4 +288,4 @@ const EmployeePage = () => {
     );
 };
 
-export default EmployeePage;
+export default HRProfilePage;

@@ -1,75 +1,124 @@
+import { lazy, Suspense } from "react";
 import PATH from "@/constants/Path.ts";
-import OfficePage from "@/pages/HR/setting/OfficePage.tsx";
-import DepartmentPage from "@/pages/HR/setting/DepartmentPage.tsx";
-import PositionPage from "@/pages/HR/setting/PositionPage.tsx";
-import JobTitlePage from "@/pages/HR/setting/JobTitlePage.tsx";
-import SetupWorkScheduleRegister from "@/pages/HR/checkin/wok-schedule-register/SetupWorkScheduleRegister.tsx";
-import SettingWorkScheduleRegister from "@/pages/HR/checkin/wok-schedule-register/SettingWorkScheduleRegister..tsx";
-import HierarchyLevelPage from "@/pages/HR/setting/HierarchyLevelPage.tsx";
-import SettingContractPage from "@/pages/HR/setting/SettingContractPage.tsx";
-import SettingDecisionPage from "@/pages/HR/setting/SettingDecisionPage.tsx";
-import AllowancePage from "@/pages/HR/setting/AllowancePage.tsx";
-import EmployeeDocumentPage from "@/pages/HR/setting/EmployeeDocumentPage.tsx";
-import InsuranceInformationPage from "@/pages/InsuranceInformationPage.tsx";
-import WorkshiftPage from "@/pages/HR/checkin/WorkshiftPage.tsx";
-import CreateShiftPage from "@/pages/CreateShiftPage.js";
-import ShiftDetailPage from "@/pages/ShiftDetailPage.js";
+import Loading from "@/components/Loading.tsx";
+
+const OfficePage = lazy(() => import("@/pages/HR/setting/OfficePage.tsx"));
+const DepartmentPage = lazy(() => import("@/pages/HR/setting/DepartmentPage.tsx"));
+const PositionPage = lazy(() => import("@/pages/HR/setting/PositionPage.tsx"));
+const JobTitlePage = lazy(() => import("@/pages/HR/setting/JobTitlePage.tsx"));
+const HierarchyLevelPage = lazy(() => import("@/pages/HR/setting/HierarchyLevelPage.tsx"));
+const SettingContractPage = lazy(() => import("@/pages/HR/setting/SettingContractPage.tsx"));
+const SettingDecisionPage = lazy(() => import("@/pages/HR/setting/SettingDecisionPage.tsx"));
+const AllowancePage = lazy(() => import("@/pages/HR/setting/AllowancePage.tsx"));
+const EmployeeDocumentPage = lazy(() => import("@/pages/HR/setting/EmployeeDocumentPage.tsx"));
+const InsuranceInformationPage = lazy(() => import("@/pages/InsuranceInformationPage.tsx"));
+const WorkshiftPage = lazy(() => import("@/pages/HR/checkin/workshift"));
+const CreateShiftPage = lazy(() => import("@/pages/CreateShiftPage.js"));
+const ShiftDetailPage = lazy(() => import("@/pages/ShiftDetailPage.js"));
 
 export const settingRoutes = [
     {
         path: PATH.SETTING_OFFICE,
-        element: <OfficePage/>,
+        element: (
+            <Suspense fallback={<Loading />}>
+                <OfficePage />
+            </Suspense>
+        ),
     },
     {
         path: PATH.SETTING_DEPARTMENT,
-        element: <DepartmentPage/>,
+        element: (
+            <Suspense fallback={<Loading />}>
+                <DepartmentPage />
+            </Suspense>
+        ),
     },
     {
         path: PATH.SETTING_POSITION,
-        element: <PositionPage/>,
+        element: (
+            <Suspense fallback={<Loading />}>
+                <PositionPage />
+            </Suspense>
+        ),
     },
     {
         path: PATH.SETTING_JOB_TITLE,
-        element: <JobTitlePage/>,
+        element: (
+            <Suspense fallback={<Loading />}>
+                <JobTitlePage />
+            </Suspense>
+        ),
     },
     {
         path: PATH.SETTING_HIERARCHY_LEVEL,
-        element: <HierarchyLevelPage/>,
+        element: (
+            <Suspense fallback={<Loading />}>
+                <HierarchyLevelPage />
+            </Suspense>
+        ),
     },
     {
         path: PATH.SETTING_CONTRACT,
-        element: <SettingContractPage/>,
+        element: (
+            <Suspense fallback={<Loading />}>
+                <SettingContractPage />
+            </Suspense>
+        ),
     },
     {
         path: PATH.SETTING_DECISION,
-        element: <SettingDecisionPage/>,
+        element: (
+            <Suspense fallback={<Loading />}>
+                <SettingDecisionPage />
+            </Suspense>
+        ),
     },
     {
         path: PATH.SETTING_ALLOWANCE,
-        element: <AllowancePage/>,
+        element: (
+            <Suspense fallback={<Loading />}>
+                <AllowancePage />
+            </Suspense>
+        ),
     },
     {
         path: PATH.SETTING_EMPLOYEE_DOCUMENT,
-        element: <EmployeeDocumentPage/>,
+        element: (
+            <Suspense fallback={<Loading />}>
+                <EmployeeDocumentPage />
+            </Suspense>
+        ),
     },
     {
         path: PATH.INSURANCE,
-        element: <InsuranceInformationPage/>,
+        element: (
+            <Suspense fallback={<Loading />}>
+                <InsuranceInformationPage />
+            </Suspense>
+        ),
     },
     {
         path: PATH.WORKSHIFT,
-        element: <WorkshiftPage/>,
+        element: (
+            <Suspense fallback={<Loading />}>
+                <WorkshiftPage />
+            </Suspense>
+        ),
     },
-    // {
-    //     path: PATH.SHIFT_MANAGEMENT,
-    //     element: <ShiftManagement/>,
-    // },
     {
         path: PATH.CREATESHIFT,
-        element: <CreateShiftPage/>,
+        element: (
+            <Suspense fallback={<Loading />}>
+                <CreateShiftPage />
+            </Suspense>
+        ),
     },
     {
         path: PATH.SHIFTDETAILPAGE,
-        element: <ShiftDetailPage/>,
+        element: (
+            <Suspense fallback={<Loading />}>
+                <ShiftDetailPage />
+            </Suspense>
+        ),
     },
 ];

@@ -2,6 +2,8 @@ package config
 
 import (
 	"erp/backend/internal/hrm/hr_profile/model"
+	checkin_model	"erp/backend/internal/hrm/checkin/model"
+
 	"fmt"
 	"log"
 	"time"
@@ -19,9 +21,9 @@ func ConnectPostgres() {
 	if err != nil {
 		log.Fatal("Không thể kết nối PostgreSQL:", err)
 	}
-	// if err := createEnums(db); err != nil {
-	// 	log.Fatalf("Không thể tạo ENUM: %v", err)
-	// }
+	if err := createEnums(db); err != nil {
+		log.Fatalf("Không thể tạo ENUM: %v", err)
+	}
 	errT := AutoMigrate(db)
 	if errT != nil {
 		fmt.Print(errT)
@@ -191,38 +193,33 @@ func GetDB() *gorm.DB {
 func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
 	&model.Role{},
-	&officemodel.Office{},
-	&model.EmployeeWorkshift{},
-	&model.WorkshiftRule{},
-	&hrmmodel.Position{},
-	&hrmmodel.Department{},
-	&hrmmodel.Office{},
-	&hrmmodel.JobTitle{},
-	&model.WorkShifts{},
-	&model.EmployeeWorkshift{},
-	&hrmmodel.EmployeeDocumentType{},
-	&hrmmodel.Employee{},
-	&hrmmodel.ContractType{},
-	&hrmmodel.Contract{},
-	&hrmmodel.DecisionType{},
-	&hrmmodel.Decision{},
-	&hrmmodel.DecisionEmployee{},
-	&hrmmodel.Insurance{},
-	&model.Holiday{},
-	&model.AllowedWorkingSchedule{},
-	&model.WorkShifts{},
-	&hrmmodel.Allowance{},
+	&model.Office{},
+	&checkin_model.EmployeeWorkshift{},
+
+	&model.Position{},
+	&model.Department{},
+	&model.JobTitle{},
+	&checkin_model.WorkShifts{},
+	&checkin_model.EmployeeWorkshift{},
+	&model.EmployeeDocumentType{},
+	&model.Employee{},
+	&model.ContractType{},
 	&model.Contract{},
+	&model.DecisionType{},
+	&model.Decision{},
+	&model.DecisionEmployee{},
+	&model.Insurance{},
 	&model.Allowance{},
+	&model.Contract{},
 	&model.ContractAllowance{},
-	&model.AttendanceCategory{},
-	&model.AttendanceRecord{},
-	&model.WorkSchedule{},
-	&model.WorkScheduleShift{},
-	&model.WorkScheduleManager{},
-	&model.TimeSheetList{},
-	&model.TimeSheet{},
-	&model.TimeSheetDetail{},
+	&checkin_model.AttendanceCategory{},
+	&checkin_model.AttendanceRecord{},
+	&checkin_model.WorkSchedule{},
+	&checkin_model.WorkScheduleShift{},
+	&checkin_model.WorkScheduleManager{},
+	&checkin_model.TimeSheetList{},
+	&checkin_model.TimeSheet{},
+	&checkin_model.TimeSheetDetail{},
 	)
 	fmt.Println("Migration complete")
 

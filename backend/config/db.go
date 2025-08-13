@@ -192,7 +192,7 @@ func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
 	&model.Role{},
 	&officemodel.Office{},
-	model.EmployeeWorkshift{},
+	&model.EmployeeWorkshift{},
 	&model.WorkshiftRule{},
 	&hrmmodel.Position{},
 	&hrmmodel.Department{},

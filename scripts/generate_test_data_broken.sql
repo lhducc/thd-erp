@@ -1,7 +1,43 @@
 -- Script to create random test data for ERP system
 -- Run this script in PostgreSQL to generate sample users and related data
 
--- Create extension for random data generation
+-- Create extension for random daDO $$
+DECLARE
+   -- Generate accounts for some employees
+DO $$
+DECLARE
+    emp RECORD;
+    login_email TEXT;
+    hashed_password TEXT;
+    new_account_id BIGINT;
+BEGIN
+    -- Create accounts for first 20 employees
+    FOR emp IN (SELECT employee_id, full_name, email FROM employee LIMIT 20) LOOP
+        login_email := lower(replace(replace(emp.full_name, ' ', '.'), 'đ', 'd')) || '@company.vn';
+        hashed_password := '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'; -- password: "password123"
+        
+        INSERT INTO account (login_mail, password, first_login, role_id, employee_id, created_date)
+        VALUES (login_email, hashed_password, true, 'employee', emp.employee_id, NOW())
+        RETURNING id INTO new_account_id;
+        
+        -- Update employee with account_id
+        UPDATE employee SET account_id = new_account_id WHERE employee_id = emp.employee_id;
+    END LOOP;in_email TEXT;
+    hashed_password TEXT;
+    new_account_id BIGINT;
+BEGIN
+    -- Create accounts for first 20 employees
+    FOR emp IN (SELECT employee_id, full_name, email FROM employee LIMIT 20) LOOP
+        login_email := lower(replace(replace(emp.full_name, ' ', '.'), 'đ', 'd')) || '@company.vn';
+        hashed_password := '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'; -- password: "password123"
+        
+        INSERT INTO account (login_mail, password, first_login, role_id, employee_id, created_date)
+        VALUES (login_email, hashed_password, true, 'employee', emp.employee_id, NOW())
+        RETURNING id INTO new_account_id;
+        
+        -- Update employee with account_id
+        UPDATE employee SET account_id = new_account_id WHERE employee_id = emp.employee_id;
+    END LOOP;ot exists
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Function to generate random Vietnamese names
@@ -13,50 +49,36 @@ DECLARE
     ];
     last_names TEXT[] := ARRAY[
         'Văn Hùng', 'Thị Lan', 'Đức Minh', 'Thị Hoa', 'Văn Nam', 'Thị Mai', 'Đức Anh', 'Thị Linh',
-        'Quang Minh', 'Thị Thu', 'Văn Đức', 'Thị Nga', 'Quang Huy', 'Thị Thủy', 'Văn Tuấn',
-        'Thị Vân', 'Đức Long', 'Thị Hằng', 'Văn Phong', 'Thị Trang', 'Quang Đại', 'Thị Hương'
+        'Văn Tuấn', 'Thị Nga', 'Đức Long', 'Thị Thu', 'Văn Khoa', 'Thị Dung', 'Đức Tài', 'Thị Hương',
+        'Văn Phong', 'Thị Nhung', 'Đức Bình', 'Thị Vân', 'Văn Đạt', 'Thị Trang', 'Đức Thiện', 'Thị Ly'
     ];
-    first_name TEXT;
-    last_name TEXT;
 BEGIN
-    first_name := first_names[floor(random() * array_length(first_names, 1) + 1)];
-    last_name := last_names[floor(random() * array_length(last_names, 1) + 1)];
-    RETURN first_name || ' ' || last_name;
+    RETURN first_names[floor(random() * array_length(first_names, 1) + 1)] || ' ' ||
+           last_names[floor(random() * array_length(last_names, 1) + 1)];
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to generate random phone numbers
+-- Function to generate random phone number (shorter format)
 CREATE OR REPLACE FUNCTION random_phone() RETURNS TEXT AS $$
 BEGIN
-    RETURN '0' || (floor(random() * 9) + 1)::TEXT || 
-           lpad((floor(random() * 100000000))::TEXT, 8, '0');
+    RETURN '09' || (10000000 + floor(random() * 90000000))::text;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Function to generate random email
-CREATE OR REPLACE FUNCTION random_email(full_name TEXT) RETURNS TEXT AS $$
+CREATE OR REPLACE FUNCTION random_email(base_name TEXT) RETURNS TEXT AS $$
 BEGIN
-    RETURN lower(replace(replace(full_name, ' ', '.'), 'đ', 'd')) || 
-           floor(random() * 1000)::TEXT || '@email.com';
+    RETURN lower(replace(replace(replace(base_name, ' ', '.'), 'ă', 'a'), 'ê', 'e')) || 
+           floor(random() * 1000)::text || '@company.vn';
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to generate random birthday
-CREATE OR REPLACE FUNCTION random_birthday() RETURNS DATE AS $$
+-- Function to generate random date between two dates
+CREATE OR REPLACE FUNCTION random_date_between(start_date DATE, end_date DATE) RETURNS DATE AS $$
 BEGIN
-    RETURN '1980-01-01'::DATE + (floor(random() * 15000))::INTEGER;
+    RETURN start_date + (random() * (end_date - start_date))::int;
 END;
 $$ LANGUAGE plpgsql;
-
--- Clear existing test data (keep schema)
-DELETE FROM account WHERE employee_id IS NOT NULL;
-DELETE FROM decision_employee;
-DELETE FROM contract;
-DELETE FROM employee;
-DELETE FROM jobtitle;
-DELETE FROM position;
-DELETE FROM department;
-DELETE FROM office;
 
 -- Insert sample offices
 INSERT INTO office (office_id, office_name, phone_number, address, latitude, longitude, created_date)
@@ -88,32 +110,34 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert sample positions
-INSERT INTO position (position_id, position_name, description, created_date, hierarchy_level_id)
+INSERT INTO position (position_id, position_name, created_date)
 VALUES 
-    ('POS001', 'Nhân viên', 'Nhân viên cơ bản', NOW(), 'LV001'),
-    ('POS002', 'Nhân viên Senior', 'Nhân viên có kinh nghiệm', NOW(), 'LV001'),
-    ('POS003', 'Trưởng nhóm', 'Quản lý nhóm nhỏ', NOW(), 'LV002'),
-    ('POS004', 'Phó trưởng phòng', 'Phụ trách một phần công việc phòng', NOW(), 'LV002'),
-    ('POS005', 'Trưởng phòng', 'Quản lý toàn bộ phòng ban', NOW(), 'LV003'),
-    ('POS006', 'Phó giám đốc', 'Hỗ trợ giám đốc', NOW(), 'LV004'),
-    ('POS007', 'Giám đốc', 'Quản lý toàn công ty', NOW(), 'LV005'),
-    ('POS008', 'Chuyên viên', 'Chuyên gia trong lĩnh vực', NOW(), 'LV001')
+    ('POS001', 'Nhân viên IT', NOW()),
+    ('POS002', 'Nhân viên HR', NOW()),
+    ('POS003', 'Nhân viên Tài chính', NOW()),
+    ('POS004', 'Nhân viên Marketing', NOW()),
+    ('POS005', 'Nhân viên Kinh doanh', NOW()),
+    ('POS006', 'Trưởng phòng IT', NOW()),
+    ('POS007', 'Trưởng phòng HR', NOW()),
+    ('POS008', 'Trưởng phòng Tài chính', NOW()),
+    ('POS009', 'Giám đốc', NOW())
 ON CONFLICT (position_id) DO NOTHING;
 
 -- Insert sample job titles
-INSERT INTO jobtitle (job_title_id, job_title_name, description, created_date)
+INSERT INTO jobtitle (job_title_id, job_title, created_date, hierarchy_level_id)
 VALUES 
-    ('JT001', 'Lập trình viên', 'Phát triển phần mềm', NOW()),
-    ('JT002', 'Nhân viên nhân sự', 'Quản lý nhân sự', NOW()),
-    ('JT003', 'Kế toán', 'Quản lý tài chính', NOW()),
-    ('JT004', 'Marketing', 'Tiếp thị sản phẩm', NOW()),
-    ('JT005', 'Kinh doanh', 'Bán hàng và phát triển khách hàng', NOW()),
-    ('JT006', 'Vận hành', 'Quản lý hoạt động', NOW()),
-    ('JT007', 'Thiết kế', 'Thiết kế đồ họa', NOW()),
-    ('JT008', 'Tester', 'Kiểm thử phần mềm', NOW())
+    ('JT001', 'Lập trình viên', NOW(), 'LV001'),
+    ('JT002', 'Chuyên viên HR', NOW(), 'LV001'),
+    ('JT003', 'Kế toán viên', NOW(), 'LV001'),
+    ('JT004', 'Chuyên viên Marketing', NOW(), 'LV001'),
+    ('JT005', 'Nhân viên Kinh doanh', NOW(), 'LV001'),
+    ('JT006', 'Team Lead IT', NOW(), 'LV002'),
+    ('JT007', 'Trưởng phòng HR', NOW(), 'LV003'),
+    ('JT008', 'Trưởng phòng Tài chính', NOW(), 'LV003'),
+    ('JT009', 'Giám đốc điều hành', NOW(), 'LV005')
 ON CONFLICT (job_title_id) DO NOTHING;
 
--- Generate 50 random employees
+-- Generate random employees
 DO $$
 DECLARE
     i INTEGER;
@@ -140,15 +164,15 @@ DECLARE
         'Quận Đống Đa, Hà Nội',
         'Quận 1, TP.HCM',
         'Quận 3, TP.HCM',
-        'Quận 5, TP.HCM',
-        'Quận Hải Châu, Đà Nẵng',
-        'Quận Thanh Khê, Đà Nẵng'
+        'Quận 7, TP.HCM',
+        'Hải Châu, Đà Nẵng',
+        'Thanh Khê, Đà Nẵng'
     ];
 BEGIN
     FOR i IN 1..50 LOOP
-        emp_id := 'EMP' || lpad(i::TEXT, 5, '0');
+        emp_id := 'EMP' || LPAD(i::text, 5, '0');
         full_name := random_vietnamese_name();
-        birthday := random_birthday();
+        birthday := random_date_between('1980-01-01'::date, '2000-12-31'::date);
         gender := genders[floor(random() * array_length(genders, 1) + 1)];
         work_type := work_types[floor(random() * array_length(work_types, 1) + 1)];
         phone := random_phone();
@@ -176,7 +200,7 @@ DECLARE
     emp RECORD;
     login_email TEXT;
     hashed_password TEXT;
-    new_account_id BIGINT;
+    account_id BIGINT;
 BEGIN
     -- Create accounts for first 20 employees
     FOR emp IN (SELECT employee_id, full_name, email FROM employee LIMIT 20) LOOP
@@ -185,10 +209,10 @@ BEGIN
         
         INSERT INTO account (login_mail, password, first_login, role_id, employee_id, created_date)
         VALUES (login_email, hashed_password, true, 'employee', emp.employee_id, NOW())
-        RETURNING id INTO new_account_id;
+        RETURNING id INTO account_id;
         
-        -- Update employee with account_id
-        UPDATE employee SET account_id = new_account_id WHERE employee_id = emp.employee_id;
+        -- Update employee with account_id (use qualified column name to avoid ambiguity)
+        UPDATE employee SET employee.account_id = account_id WHERE employee_id = emp.employee_id;
     END LOOP;
     
     -- Create some manager accounts
@@ -212,20 +236,18 @@ BEGIN
         LIMIT 1;
         
         IF manager_emp_id IS NOT NULL THEN
-            UPDATE department 
-            SET manager = manager_emp_id 
-            WHERE department_id = dept.department_id;
+            UPDATE department SET manager = manager_emp_id WHERE department_id = dept.department_id;
         END IF;
     END LOOP;
 END $$;
 
--- Clean up functions
-DROP FUNCTION random_vietnamese_name();
-DROP FUNCTION random_phone();
-DROP FUNCTION random_email(TEXT);
-DROP FUNCTION random_birthday();
+-- Clean up temporary functions
+DROP FUNCTION IF EXISTS random_vietnamese_name();
+DROP FUNCTION IF EXISTS random_phone();
+DROP FUNCTION IF EXISTS random_email(TEXT);
+DROP FUNCTION IF EXISTS random_date_between(DATE, DATE);
 
--- Show summary
+-- Display summary
 SELECT 
     'Data Generation Complete!' as status,
     (SELECT COUNT(*) FROM office) as offices_created,
@@ -235,14 +257,16 @@ SELECT
     (SELECT COUNT(*) FROM employee) as employees_created,
     (SELECT COUNT(*) FROM account) as accounts_created;
 
--- Show sample data
+-- Display sample data
 SELECT 'Sample Employees:' as info;
 SELECT employee_id, full_name, gender, work_type, department_id, status 
 FROM employee 
-LIMIT 5;
+ORDER BY employee_id 
+LIMIT 10;
 
 SELECT 'Sample Accounts:' as info;
-SELECT account_id, login_mail, role_id, employee_id, full_name 
+SELECT a.id as account_id, a.login_mail, a.role_id, a.employee_id, e.full_name
 FROM account a
-LEFT JOIN employee e ON a.employee_id = e.employee_id
-LIMIT 5;
+JOIN employee e ON a.employee_id = e.employee_id
+ORDER BY a.id
+LIMIT 10;

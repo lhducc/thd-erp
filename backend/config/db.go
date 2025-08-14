@@ -1,11 +1,8 @@
 package config
 
 import (
-	"erp/backend/internal/hrm/hr_profile/model"
-
 	"fmt"
 	"log"
-	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -23,11 +20,8 @@ func ConnectPostgres() {
 	// Database schema is now created manually using SQL scripts
 	// ENUM types are created by the schema script
 	// AutoMigrate is disabled - tables are created from scratch
+	// Default roles are created by the schema script
 	
-	if err := createDefaultRoles(db); err != nil {
-		log.Fatalf("Không thể tạo role mặc định: %v", err)
-	}
-
 	fmt.Println("Đã kết nối PostgreSQL!")
 	DB = db
 
@@ -233,6 +227,9 @@ func GetDB() *gorm.DB {
 	return DB
 }
 
+// DEPRECATED: Default roles are now created by SQL schema scripts
+// This function is kept for reference but not used
+/*
 func createDefaultRoles(db *gorm.DB) error {
 	defaultRoles := []string{"admin", "manager", "employee"}
 
@@ -254,3 +251,4 @@ func createDefaultRoles(db *gorm.DB) error {
 	}
 	return nil
 }
+*/

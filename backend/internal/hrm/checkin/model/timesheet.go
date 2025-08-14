@@ -49,12 +49,12 @@ type TimeSheet struct {
 	//IsDeleted bool `gorm:"column:is_deleted;type:boolean;default:false" json:"is_deleted"`
 
 	// Relationships
-	Employee   *model.EmployeeInforResponse `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"employee,omitempty"`
-	Office     *model.Office                `gorm:"foreignKey:OfficeID;references:ID" json:"office,omitempty"`
-	Department *model.Department            `gorm:"foreignKey:DepartmentID;references:ID" json:"department,omitempty"`
-	Details    []TimeSheetDetail            `gorm:"foreignKey:TimeSheetID;references:TimeSheetID;constraint:OnDelete:CASCADE" json:"details,omitempty"`
-	Creator    *model.ManagerResponse       `gorm:"foreignKey:CreatedBy;references:EmployeeID" json:"creator,omitempty"`
-	Updater    *model.ManagerResponse       `gorm:"foreignKey:UpdatedBy;references:EmployeeID" json:"updater,omitempty"`
+	Employee   *model.Employee        `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"employee,omitempty"`
+	Office     *model.Office          `gorm:"foreignKey:OfficeID;references:ID" json:"office,omitempty"`
+	Department *model.Department      `gorm:"foreignKey:DepartmentID;references:ID" json:"department,omitempty"`
+	Details    []TimeSheetDetail      `gorm:"foreignKey:TimeSheetID;references:TimeSheetID;constraint:OnDelete:CASCADE" json:"details,omitempty"`
+	Creator    *model.ManagerResponse `gorm:"foreignKey:CreatedBy;references:EmployeeID" json:"creator,omitempty"`
+	Updater    *model.ManagerResponse `gorm:"foreignKey:UpdatedBy;references:EmployeeID" json:"updater,omitempty"`
 	//Approver   *model.ManagerResponse `gorm:"foreignKey:ApprovedBy;references:EmployeeID" json:"approver,omitempty"`
 }
 

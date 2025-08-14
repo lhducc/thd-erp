@@ -6,7 +6,8 @@ services:
       context: ../frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=https://192.168.1.58:8443/api/v1
+        # - VITE_API_URL=https://192.168.1.58:8443/api/v1
+        - VITE_API_URL=https://localhost:8443/api/v1
     ports:
       - "80:80"
       - "443:443"
@@ -36,7 +37,8 @@ services:
   # Note: Backend must be configured to connect to Postgres and MinIO using SSL/TLS (see below)
 
   postgres:
-    image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
+    # image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpin
+    image: postgres:15-alpine
     container_name: erp-postgres
     ports:
       - "5432:5432"
@@ -61,7 +63,8 @@ services:
     # SSL environment variables commented out for initial setup
 
   minio:
-    image: 192.168.1.76:5001/product/erp/erp/minio:latest
+    # image: 192.168.1.76:5001/product/erp/erp/minio:latest
+    image: minio/minio:latest
     container_name: erp-minio
     command: server --console-address ":9001" /data
     env_file:

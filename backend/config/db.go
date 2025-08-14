@@ -6,8 +6,9 @@ import (
 	"erp/backend/internal/hrm/hr_profile/model"
 	"fmt"
 	"log"
-
 	"time"
+
+	"gorm.io/gorm/schema"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -18,7 +19,10 @@ var DB *gorm.DB
 func ConnectPostgres() {
 	dsn := AppConfig.Postgres.DBSource
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true, // ⟵ TẮT tạo FK khi AutoMigrate
+		NamingStrategy:                           schema.NamingStrategy{},
+	})
 	if err != nil {
 		log.Fatal("Không thể kết nối PostgreSQL:", err)
 	}
@@ -32,6 +36,7 @@ func ConnectPostgres() {
 	if err := AutoMigrate(db); err != nil {
 		log.Fatal("Không thể tự động migrate:", err)
 	}
+	CreateAllContraints(db)
 
 	// Create default roles after tables are created
 	if err := createDefaultRoles(db); err != nil {
@@ -211,8 +216,8 @@ func createEnums(db *gorm.DB) error {
 
 // AutoMigrate creates all database tables
 func AutoMigrate(db *gorm.DB) error {
-	// Migrate models in dependency order to avoid foreign key issues
-	err := db.AutoMigrate(
+	// First pass - create tables without relationships to avoid circular dependencies
+	err := db.Set("gorm:auto_preload", false).AutoMigrate(
 		// Basic lookup tables first (no dependencies)
 		&model.Role{},
 		&model.Office{},
@@ -220,22 +225,16 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.HierarchyLevel{},
 		&model.EmployeeDocumentType{},
 		&model.ContractType{},
-		// DecisionType has no dependencies
 		&model.DecisionType{},
 		&model.Insurance{},
 		&model.Allowance{},
-
-		// Department depends on Office
 		&model.Department{},
-
-		// JobTitle depends on HierarchyLevel
 		&model.JobTitle{},
-
-		// Employee depends on Position, JobTitle, Department
+		&model.Contract{},
 		&model.Employee{},
-
-		// Account depends on Employee and Role
 		&model.Account{},
+		&model.Decision{},
+		&model.DecisionEmployee{},
 
 		// Checkin models
 		&checkin_model.WorkShifts{},
@@ -243,14 +242,9 @@ func AutoMigrate(db *gorm.DB) error {
 		&checkin_model.AttendanceCategory{},
 		&checkin_model.AttendanceRecord{},
 
-		// Contract models (after Employee)
-		&model.Contract{},
+		// Contract models
 		&model.ContractAllowance{},
 		&model.EmployeeDocument{},
-
-		// Decision depends on DecisionType and Employee (both already migrated)
-		&model.Decision{},
-		&model.DecisionEmployee{},
 
 		// Work schedule models
 		&checkin_model.WorkSchedule{},
@@ -295,4 +289,97 @@ func createDefaultRoles(db *gorm.DB) error {
 		}
 	}
 	return nil
+}
+
+func CreateAllContraints(db *gorm.DB) {
+	db.Migrator().CreateConstraint(&model.Role{}, "Accounts")
+	db.Migrator().CreateConstraint(&model.HierarchyLevel{}, "JobTitles")
+	db.Migrator().CreateConstraint(&model.Department{}, "Office")
+	db.Migrator().CreateConstraint(&model.
+		JobTitle{}, "HierarchyLevel")
+	db.Migrator().CreateConstraint(&model.
+		Contract{}, "ContractType")
+	db.Migrator().CreateConstraint(&model.
+		Contract{}, "Employee")
+	db.Migrator().CreateConstraint(&model.
+		Contract{}, "Allowances")
+	db.Migrator().CreateConstraint(&model.
+		Employee{}, "Position")
+	db.Migrator().CreateConstraint(&model.
+		Employee{}, "JobTitle")
+	db.Migrator().CreateConstraint(&model.
+		Employee{}, "Manager")
+	db.Migrator().CreateConstraint(&model.
+		Employee{}, "Department")
+	db.Migrator().CreateConstraint(&model.
+		Employee{}, "Contracts")
+	db.Migrator().CreateConstraint(&model.
+		Employee{}, "Decisions")
+	db.Migrator().CreateConstraint(&model.
+		Account{}, "Role")
+	db.Migrator().CreateConstraint(&model.
+		Account{}, "Employee")
+	db.Migrator().CreateConstraint(&model.
+		Decision{}, "Employees")
+	db.Migrator().CreateConstraint(&model.
+		Decision{}, "DecisionType")
+	db.Migrator().CreateConstraint(&checkin_model.
+		WorkShifts{}, "Creator")
+	db.Migrator().CreateConstraint(&checkin_model.
+		EmployeeWorkshift{}, "WorkShift")
+	db.Migrator().CreateConstraint(&checkin_model.
+		AttendanceCategory{}, "Office")
+	db.Migrator().CreateConstraint(&checkin_model.
+		AttendanceRecord{}, "Employee")
+	db.Migrator().CreateConstraint(&checkin_model.
+		AttendanceRecord{}, "Office")
+	db.Migrator().CreateConstraint(&checkin_model.
+		AttendanceRecord{}, "CreateByInfo")
+	db.Migrator().CreateConstraint(&checkin_model.
+		AttendanceRecord{}, "AttendanceCategory")
+	db.Migrator().CreateConstraint(&model.
+		EmployeeDocument{}, "DocumentType")
+	db.Migrator().CreateConstraint(&model.
+		EmployeeDocument{}, "Employee")
+	db.Migrator().CreateConstraint(&checkin_model.
+		WorkSchedule{}, "Managers")
+	db.Migrator().CreateConstraint(&checkin_model.
+		WorkSchedule{}, "Weekdays")
+	db.Migrator().CreateConstraint(&checkin_model.
+		WorkSchedule{}, "Office")
+	db.Migrator().CreateConstraint(&checkin_model.
+		WorkScheduleShift{}, "WorkShift")
+	db.Migrator().CreateConstraint(&checkin_model.
+		WorkScheduleManager{}, "Employee")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheetList{}, "Office")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheetList{}, "Timesheets")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheetList{}, "Creator")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheetList{}, "Updater")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheetList{}, "LockedUser")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheet{}, "Employee")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheet{}, "Office")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheet{}, "Department")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheet{}, "Details")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheet{}, "Creator")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheet{}, "Updater")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheetDetail{}, "WorkShift")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheetDetail{}, "CheckInRecord")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheetDetail{}, "CheckOutRecord")
+	db.Migrator().CreateConstraint(&checkin_model.
+		TimeSheetDetail{}, "AdjustmentUser")
+
 }

@@ -40,11 +40,11 @@ type TimeSheetList struct {
 	//IsDeleted bool       `gorm:"column:is_deleted;type:boolean;default:false" json:"is_deleted"`
 
 	// Relationships
-	Office     *model.Office          `gorm:"foreignKey:OfficeID;references:ID" json:"office,omitempty"`
-	Timesheets []TimeSheet            `gorm:"foreignKey:TimeSheetListID;references:TimeSheetListID;constraint:OnDelete:CASCADE" json:"timesheets,omitempty"`
-	Creator    *model.ManagerResponse `gorm:"foreignKey:CreatedBy;references:EmployeeID" json:"creator,omitempty"`
-	Updater    *model.ManagerResponse `gorm:"foreignKey:UpdatedBy;references:EmployeeID" json:"updater,omitempty"`
-	LockedUser *model.ManagerResponse `gorm:"foreignKey:LockedBy;references:EmployeeID" json:"locked_user,omitempty"`
+	Office     *model.Office   `gorm:"foreignKey:OfficeID;references:ID" json:"office,omitempty"`
+	Timesheets []TimeSheet     `gorm:"foreignKey:TimeSheetListID;references:TimeSheetListID;constraint:OnDelete:CASCADE" json:"timesheets,omitempty"`
+	Creator    *model.Employee `gorm:"foreignKey:CreatedBy;references:EmployeeID" json:"creator,omitempty"`
+	Updater    *model.Employee `gorm:"foreignKey:UpdatedBy;references:EmployeeID" json:"updater,omitempty"`
+	LockedUser *model.Employee `gorm:"foreignKey:LockedBy;references:EmployeeID" json:"locked_user,omitempty"`
 }
 
 func (TimeSheetList) TableName() string {

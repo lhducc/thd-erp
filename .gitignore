@@ -6,6 +6,7 @@
 *.dylib
 *.test
 *.out
+ssl/
 # vendor/
 go.work
 *tmp/*

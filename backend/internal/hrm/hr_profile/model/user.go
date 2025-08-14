@@ -41,11 +41,11 @@ type Employee struct {
 	CreatedDate  time.Time `gorm:"column:created_date;autoCreateTime" json:"created_date"`
 	ScheduleID   *int      `gorm:"column:schedule_id" json:"schedule_id"`
 
-	Account    *Account          `gorm:"foreignKey:AccountID;references:ID" json:"-"`
-	Position   *Position         `gorm:"foreignKey:PositionID;references:ID" json:"position,omitempty"`
-	JobTitle   *JobTitle `gorm:"foreignKey:JobTitleID;references:JobTitleID" json:"job_title,omitempty"`
-	Manager    *ManagerResponse  `gorm:"foreignKey:ManagerID;references:EmployeeID" json:"manager,omitempty"`
-	Department *Department       `gorm:"foreignKey:DepartmentID;references:ID" json:"department,omitempty"`
+	// Account    *Account          `gorm:"foreignKey:AccountID;references:ID" json:"-"`
+	Position   *Position   `gorm:"foreignKey:PositionID;references:ID" json:"position,omitempty"`
+	JobTitle   *JobTitle   `gorm:"foreignKey:JobTitleID;references:JobTitleID" json:"job_title,omitempty"`
+	Manager    *Employee   `gorm:"foreignKey:ManagerID;references:EmployeeID" json:"manager,omitempty"`
+	Department *Department `gorm:"foreignKey:DepartmentID;references:ID" json:"department,omitempty"`
 
 	Contracts []Contract `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"contracts,omitempty"`
 	Decisions []Decision `gorm:"many2many:decision_employees;joinForeignKey:EmployeeID;joinReferences:DecisionID" json:"decisions,omitempty"`

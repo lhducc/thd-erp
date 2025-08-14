@@ -22,10 +22,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to generate random phone number
+-- Function to generate random phone number (shorter format)
 CREATE OR REPLACE FUNCTION random_phone() RETURNS TEXT AS $$
 BEGIN
-    RETURN '+84' || (900000000 + floor(random() * 100000000))::text;
+    RETURN '09' || (10000000 + floor(random() * 90000000))::text;
 END;
 $$ LANGUAGE plpgsql;
 

@@ -39,3 +39,28 @@ export type Employee = {
     department: Department;
     Decisions: Decision[];
 };
+
+export type EmployeeNameAndRole = {
+    employee_id: string;
+    full_name: string;
+}
+
+export interface ManagerPermission {
+    employee_id: string;
+    full_name: string;
+    is_reading: boolean;
+    is_editing: boolean;
+    manager: {
+        full_name: string;
+    }
+}
+
+export interface AssignParams {
+    id: string;
+    payload: {
+        work_schedule_id: number;
+        managers: ManagerPermission[]; // Changed from manager_ids
+        employee_ids: string[];
+    };
+}
+

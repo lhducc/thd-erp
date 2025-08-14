@@ -1,12 +1,12 @@
 import type {ColumnDef} from "@tanstack/react-table";
 import more from '../../../assets/more.svg'
 import DataTable from "@/components/DataTable.tsx";
-import {useAllEmployee} from "@/query/useEmployee.ts";
+import {useGetAllEmployee} from "@/query/employee.query.ts";
 import type {Employee} from "@/types/employee.ts";
 import {Link} from "react-router-dom";
 
-const AttendantHistory = () => {
-    const {data: employees, isLoading: pendingGetEmployees, refetch: refetchEmployee} = useAllEmployee()
+const ManagementAttendantHistory = () => {
+    const {data: employees, isLoading: pendingGetEmployees} = useGetAllEmployee()
     const columns: ColumnDef<Employee>[] = [
         {
             accessorKey: "employee_id",
@@ -19,13 +19,16 @@ const AttendantHistory = () => {
         {
             accessorKey: "department.office.office_name",
             header: "Văn phòng",
-        },{
+        },
+        {
             accessorKey: "department.department_name",
             header: "Phòng ban",
-        },{
+        },
+        {
             accessorKey: "job_title.job_title",
             header: "Chức danh",
-        },{
+        },
+        {
             accessorKey: "position.position_name",
             header: "Cấp bậc",
         },
@@ -58,4 +61,4 @@ const AttendantHistory = () => {
     );
 };
 
-export default AttendantHistory;
+export default ManagementAttendantHistory;

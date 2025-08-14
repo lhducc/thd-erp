@@ -33,7 +33,7 @@ const HRDocumentPage = () => {
       refetchEmployee();
       toast.success("Xóa nhân viên thành công");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(error.message);
     },
   });

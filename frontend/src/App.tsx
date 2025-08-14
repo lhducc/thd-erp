@@ -1,21 +1,33 @@
-import {useRoutes} from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { useRoutes } from "react-router-dom";
 import PATH from "@/constants/Path";
-import SignInPage from "@/pages/HR/auth/SignInPage.tsx";
-import FirstChangePasswordPage from "@/pages/FirstChangePasswordPage";
-import {hrRoutes} from "@/routes/hr.tsx";
+import Loading from "@/components/Loading";
+
+const SignInPage = lazy(() => import("@/pages/HR/auth/SignInPage"));
+const FirstChangePasswordPage = lazy(() => import("@/pages/FirstChangePasswordPage"));
+
+import { hrRoutes } from "@/routes/hr";
 
 const App = () => {
     return useRoutes([
         {
             path: PATH.SIGN_IN,
-            element: <SignInPage/>,
+            element: (
+                <Suspense fallback={<Loading />}>
+                    <SignInPage />
+                </Suspense>
+            ),
         },
         {
             path: PATH.FIRST_CHANGE_PASSWORD,
-            element: <FirstChangePasswordPage/>,
+            element: (
+                <Suspense fallback={<Loading />}>
+                    <FirstChangePasswordPage />
+                </Suspense>
+            ),
         },
         ...hrRoutes
-    ])
-}
+    ]);
+};
 
 export default App;

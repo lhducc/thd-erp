@@ -6,10 +6,10 @@ import { Clock, CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatTime } from "@/lib/utils.ts";
 import type { WeekdaySelection } from "@/types/work-schedule.ts";
-import type { WorkShift } from "@/types/Workshift.ts";
+import type { Workshift } from "@/types/workshift.ts";
 
 type WorkshiftSchedulerProps = {
-    workshifts: WorkShift[];
+    workshifts: Workshift[];
     onSelectionChange: (selections: WeekdaySelection[]) => void;
     initialSelections?: WeekdaySelection[];
 };

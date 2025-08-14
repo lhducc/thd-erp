@@ -1,5 +1,6 @@
 import type { PayloadEmployee, Employee } from "@/types";
 import api from "./api";
+import type {EmployeeNameAndRole} from "@/types/employee.ts";
 
 export const createEmployeeApi = async (payload: PayloadEmployee) => {
   try {
@@ -106,3 +107,8 @@ export const exportEmployeeExcelApi = async (): Promise<File> => {
     }
   }
 };
+
+export const getEmployeeByRoleNameApi = async (roleName: string): Promise<EmployeeNameAndRole[]> => {
+  const response = await api.get(`/employee/user?roleID=${roleName}`);
+  return response.data.data;
+}

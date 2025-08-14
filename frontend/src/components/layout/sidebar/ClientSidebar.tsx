@@ -14,7 +14,7 @@ import {
     House,
     Users,
     ReceiptText,
-    Calendar,
+    Calendar, CalendarRange,
 } from "lucide-react";
 import PATH from "@/constants/Path.ts";
 import { Link } from "react-router-dom";
@@ -40,6 +40,11 @@ const ClientSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
             name: "Lịch làm việc",
             url: "register-workshift",
             icon: Calendar,
+        },
+        {
+            name: "Bảng công cá nhân",
+            url: PATH.ATTENDANT_HISTORY,
+            icon: CalendarRange,
         },
     ];
 

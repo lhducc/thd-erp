@@ -19,6 +19,7 @@ import { signInApi } from "@/apis/signIn.api.ts";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import Loading from "@/components/Loading";
 
 const formSchema = z.object({
   email: z.string().email("Email không hợp lệ."),
@@ -106,8 +107,8 @@ const SignInPage = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
-                Đăng nhập
+              <Button type="submit" className={`w-full`} disabled={isPending}>
+                {!isPending ? "Đăng nhập" : <Loading />}
               </Button>
             </form>
           </Form>

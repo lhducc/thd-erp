@@ -1,9 +1,3 @@
-export enum WorkDayEnum {
-    FullDay = "1",
-    HaftDay = "0.5",
-    NoWork = "0",
-}
-
 export enum TimeOfDayEnum {
     Morning = "Sáng",
     Afternoon = "Trưa",
@@ -11,7 +5,7 @@ export enum TimeOfDayEnum {
     AllDay = "Cả ngày",
 }
 
-export type WorkShift = {
+export type Workshift = {
     workshift_id: string;
     workshift_name: string;
     start_time: string;           // dạng 'HH:mm:ss'
@@ -24,7 +18,7 @@ export type WorkShift = {
     break_start?: string | null;
     break_end?: string | null;
     work_hours: string;
-    work_day: WorkDayEnum;
+    work_day: number;
     coef_normal_day: number;
     coef_weekend: number;
     coef_holiday: number;

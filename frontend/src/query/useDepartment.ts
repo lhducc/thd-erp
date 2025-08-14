@@ -5,4 +5,5 @@ export const useDepartment = () =>
     useQuery({
         queryKey: ["departments"],
         queryFn: getAllDepartmentsApi,
+        staleTime: 1000 * 60 * 5,
     });

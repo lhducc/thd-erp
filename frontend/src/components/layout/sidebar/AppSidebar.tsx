@@ -11,8 +11,7 @@ const SIDEBAR_COMPONENTS: Record<string, ReactNode> = {
 
 const AppSidebar = () => {
     const {currentUser} = useAuth();
-console.log(currentUser);
-
+    console.log(currentUser)
     if (!currentUser) return null;
     return <>{SIDEBAR_COMPONENTS[currentUser.role]}</>;
 };

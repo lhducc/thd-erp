@@ -1,22 +1,22 @@
-import {Link, useParams} from "react-router-dom";
-import {useAllEmployee, useGetEmployeeById} from "@/query/useEmployee.ts";
+import {useParams} from "react-router-dom";
+import {useGetEmployeeById} from "@/query/employee.query.ts";
 import Loading from "@/components/Loading.tsx";
 import DataTable from "@/components/DataTable.tsx";
 import type {ColumnDef} from "@tanstack/react-table";
-import type {Employee} from "@/types/employee.ts";
-import more from "@/assets/more.svg";
-import {formatDate} from "date-fns";
-import {Button} from "@/components/ui/button.tsx";
+import {useGetAttendanceRecordByEmployeeId} from "@/query/attendance-record.query.ts";
+import type {AttendanceRecord} from "@/types/attendance.ts";
+import {formatDate, getTimeFromTimestamp} from "@/lib/utils.ts";
+import ReviewImage from "@/components/ReviewImage.tsx";
+import {CreateAttendant} from "@/components/attendance/CreateAttendance.tsx";
 
 const AttendantHistoryDetail = () => {
     const { id } = useParams<{ id: string }>();
 
     const { data: employee, isPending, isError } = useGetEmployeeById(id ?? "");
-    console.log(employee);
-    const { data: attendant, isPending: isPendingAttendant, isError: isErrorAttendant } = useAllEmployee();
+    const { data: attendant, isPending: isPendingAttendant, isError: isErrorAttendant, refetch: refreshAttendance } = useGetAttendanceRecordByEmployeeId(id || "");
 
     if (isPending) return <Loading />;
-    if (isError || !employee) return <p>Không thể tải dữ liệu. Vui lòng thử lại.</p>;
+    if (isError || isErrorAttendant) return <p>Không thể tải dữ liệu. Vui lòng thử lại.</p>;
 
     const InfoSection = (
         <div className="p-6 rounded-md">
@@ -50,47 +50,45 @@ const AttendantHistoryDetail = () => {
         </div>
     );
 
-    const columns: ColumnDef<Employee>[] = [
+    const columns: ColumnDef<AttendanceRecord>[] = [
         {
-            accessorKey: "employee_id",
-            header: "Mã NV",
+            accessorKey: "timestamp",
+            header: "Ngày",
+            cell: ({row}) => formatDate(row.original.timestamp)
         },
         {
-            accessorKey: "full_name",
-            header: "Tên nhân viên",
+            accessorKey: "timestamp",
+            header: "Giờ chấm công",
+            cell: ({row}) => getTimeFromTimestamp(row.original.timestamp)
         },
         {
-            accessorKey: "department.office.office_name",
-            header: "Văn phòng",
-        },{
+            accessorKey: "AttendanceCategory.attendance_category_name",
+            header: "Hình thức chấm công",
+        },
+        {
             accessorKey: "department.department_name",
-            header: "Phòng ban",
-        },{
-            accessorKey: "job_title.job_title",
-            header: "Chức danh",
-        },{
-            accessorKey: "position.position_name",
-            header: "Cấp bậc",
+            header: "Vị trí",
         },
         {
-            accessorKey: "is_gps",
-            header: "Xem chi tiết",
+            accessorKey: "image_URL",
+            header: "xem hình ảnh chấm công",
             cell: ({row}) => {
-                const data = row.original
+                const url = row.original.image_URL
                 return(
-                    <div className={`flex justify-center items-center`}>
-                        <Link to={`${data.employee_id}`}>
-                            <img className={`w-[25px] h-[25px]`} src={more} alt=""/>
-                        </Link>
-                    </div>
+                    <>
+                        {   url !== ""  ?
+                            <ReviewImage url={url} /> :
+                            "Trống"
+                        }
+                    </>
                 )
-            },
+            }
+        },
+        {
+            accessorKey: "create_by_info.full_name",
+            header: "Người tạo",
         },
     ];
-
-    const createAttendant = (
-        <Button value={`Tạo chấm công`} />
-    )
 
     return (
         <>
@@ -100,8 +98,8 @@ const AttendantHistoryDetail = () => {
                 isLoading={isPendingAttendant}
                 navLink={InfoSection}
                 title="Bảng lịch sử chấm công chi tiết"
-                buttonCreate={createAttendant}
-                // keyFilter="full_name"
+                buttonCreate={<CreateAttendant employeeId={id || ""} refresh={refreshAttendance} />}
+                keyFilter="timestamp"
             />
         </>
     );

@@ -2,12 +2,15 @@ package config
 
 import (
 	// checkin_model "erp/backend/internal/hrm/checkin/model"
+	checkin_model "erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/hr_profile/model"
 	"fmt"
 	"log"
-	"erp/backend/internal/hrm/hr_profile/model"
+
+	"time"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"time"
 )
 
 var DB *gorm.DB
@@ -28,7 +31,7 @@ func ConnectPostgres() {
 		log.Fatal("Không thể tự động migrate:", errT)
 	}
 
-	if err := createDefaultRoles(db); err != nil { 
+	if err := createDefaultRoles(db); err != nil {
 		log.Fatal("Không thể tạo vai trò mặc định:", err)
 	}
 
@@ -193,34 +196,34 @@ func ConnectPostgres() {
 
 func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
-		// &model.Role{},
-		// &model.Office{},
-		// &model.Position{},
-		// &model.Department{},
-		// &model.EmployeeDocumentType{},
-		// &model.ContractType{},
-		// &model.DecisionType{},
-		// &model.Insurance{},
-		// &model.Allowance{},
+		&model.Role{},
+		&model.Office{},
+		&model.Position{},
+		&model.Department{},
+		&model.EmployeeDocumentType{},
+		&model.ContractType{},
+		&model.DecisionType{},
+		&model.Insurance{},
+		&model.Allowance{},
 
-		// // Create Employee table before JobTitle since JobTitle references Employee
-		// &model.Employee{},
-		// &model.JobTitle{},
+		// Create Employee table before JobTitle since JobTitle references Employee
+		&model.Employee{},
+		&model.JobTitle{},
 
-		// &checkin_model.EmployeeWorkshift{},
-		// &checkin_model.WorkShifts{},
-		// // &model.Contract{},
-		// // &model.Decision{},
-		// // &model.DecisionEmployee{},
-		// // &model.ContractAllowance{},
-		// &checkin_model.AttendanceCategory{},
-		// &checkin_model.AttendanceRecord{},
-		// &checkin_model.WorkSchedule{},
-		// &checkin_model.WorkScheduleShift{},
-		// &checkin_model.WorkScheduleManager{},
-		// //&checkin_model.TimeSheetList{},
-		// &checkin_model.TimeSheet{},
-		// &checkin_model.TimeSheetDetail{},
+		&checkin_model.EmployeeWorkshift{},
+		&checkin_model.WorkShifts{},
+		&model.Contract{},
+		&model.Decision{},
+		&model.DecisionEmployee{},
+		&model.ContractAllowance{},
+		&checkin_model.AttendanceCategory{},
+		&checkin_model.AttendanceRecord{},
+		&checkin_model.WorkSchedule{},
+		&checkin_model.WorkScheduleShift{},
+		&checkin_model.WorkScheduleManager{},
+		&checkin_model.TimeSheetList{},
+		&checkin_model.TimeSheet{},
+		&checkin_model.TimeSheetDetail{},
 	)
 	fmt.Println("Migration complete")
 
@@ -259,4 +262,3 @@ func createDefaultRoles(db *gorm.DB) error {
 	}
 	return nil
 }
-

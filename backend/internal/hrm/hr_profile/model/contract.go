@@ -16,6 +16,7 @@ type Contract struct {
 	ContractType   *ContractType `gorm:"foreignKey:ContractTypeId;references:ContractTypeID" json:"contract_type_info,omitempty"`
 	ApproveStatus  string        `gorm:"type:approve_status_enum;column:approve_status" json:"approve_status"`
 	EmployeeID     string        `gorm:"type:varchar(8);column:employee_id" json:"employee_id"`
+	
 	Employee       *Employee     `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"employee_info"`
 	Allowances     []*Allowance  `gorm:"many2many:contract_allowances;joinForeignKey:ContractID;joinReferences:AllowanceID" json:"allowances,omitempty"`
 }

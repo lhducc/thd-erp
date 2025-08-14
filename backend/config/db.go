@@ -21,7 +21,7 @@ func ConnectPostgres() {
 	// ENUM types are created by the schema script
 	// AutoMigrate is disabled - tables are created from scratch
 	// Default roles are created by the schema script
-	
+
 	fmt.Println("Đã kết nối PostgreSQL!")
 	DB = db
 
@@ -193,11 +193,11 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.DecisionType{},
 		&model.Insurance{},
 		&model.Allowance{},
-		
+
 		// Create Employee table before JobTitle since JobTitle references Employee
 		&model.Employee{},
 		&model.JobTitle{},
-		
+
 		&checkin_model.EmployeeWorkshift{},
 		&checkin_model.WorkShifts{},
 		&model.Contract{},

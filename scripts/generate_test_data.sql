@@ -1,18 +1,7 @@
 -- Script to create random test data for ERP system
--- Run this script in PostgreSQL to g-- Insert sample positions
-INSERT INTO position (position_id, position_name, created_date)
-VALUES 
-    ('POS001', 'Nhân viên', NOW()),
-    ('POS002', 'Nhân viên cao cấp', NOW()),
-    ('POS003', 'Trưởng nhóm', NOW()),
-    ('POS004', 'Phó trưởng phòng', NOW()),
-    ('POS005', 'Trưởng phòng', NOW()),
-    ('POS006', 'Phó giám đốc', NOW()),
-    ('POS007', 'Giám đốc', NOW()),
-    ('POS008', 'Chuyên viên', NOW())
-ON CONFLICT (position_id) DO NOTHING;
+-- Run this script in PostgreSQL to generate sample users and related data
 
--- Create extension for random data generation
+-- Create extension for random data generation if not exists
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Function to generate random Vietnamese names
@@ -148,16 +137,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Clear existing test data (keep schema)
-DELETE FROM account WHERE employee_id IS NOT NULL;
-DELETE FROM decision_employees;
-DELETE FROM contract;
-DELETE FROM employee;
-DELETE FROM jobtitle;
-DELETE FROM position;
-DELETE FROM department;
-DELETE FROM office;
-
 -- Insert sample offices
 INSERT INTO office (office_id, office_name, phone_number, address, latitude, longitude, created_date)
 VALUES 
@@ -187,140 +166,171 @@ VALUES
     ('LV005', 'Giám đốc', 5, NOW())
 ON CONFLICT (id) DO NOTHING;
 
--- Insert sample job titles
-INSERT INTO jobtitle (job_title_id, job_title, created_date)
+-- Insert sample positions
+INSERT INTO position (position_id, position_name, created_date)
 VALUES 
-    ('JT001', 'Lập trình viên', NOW()),
-    ('JT002', 'Nhân viên nhân sự', NOW()),
-    ('JT003', 'Kế toán', NOW()),
-    ('JT004', 'Marketing', NOW()),
-    ('JT005', 'Kinh doanh', NOW()),
-    ('JT006', 'Vận hành', NOW()),
-    ('JT007', 'Thiết kế', NOW()),
-    ('JT008', 'Tester', NOW())
+    ('POS001', 'Nhân viên', NOW()),
+    ('POS002', 'Nhân viên cao cấp', NOW()),
+    ('POS003', 'Trưởng nhóm', NOW()),
+    ('POS004', 'Phó trưởng phòng', NOW()),
+    ('POS005', 'Trưởng phòng', NOW()),
+    ('POS006', 'Phó giám đốc', NOW()),
+    ('POS007', 'Giám đốc', NOW()),
+    ('POS008', 'Chuyên viên', NOW())
+ON CONFLICT (position_id) DO NOTHING;
+
+-- Insert sample job titles
+INSERT INTO jobtitle (job_title_id, job_title, created_date, hierarchy_level_id)
+VALUES 
+    ('JT001', 'Lập trình viên', NOW(), 'LV001'),
+    ('JT002', 'Chuyên viên HR', NOW(), 'LV001'),
+    ('JT003', 'Kế toán viên', NOW(), 'LV001'),
+    ('JT004', 'Chuyên viên Marketing', NOW(), 'LV001'),
+    ('JT005', 'Nhân viên Kinh doanh', NOW(), 'LV001'),
+    ('JT006', 'Team Lead IT', NOW(), 'LV002'),
+    ('JT007', 'Trưởng phòng HR', NOW(), 'LV003'),
+    ('JT008', 'Trưởng phòng Tài chính', NOW(), 'LV003'),
+    ('JT009', 'Giám đốc điều hành', NOW(), 'LV005')
 ON CONFLICT (job_title_id) DO NOTHING;
 
--- Generate 50 random employees
-DO $$
-DECLARE
-    i INTEGER;
-    emp_id TEXT;
-    full_name TEXT;
-    birthday DATE;
-    gender TEXT;
-    work_type TEXT;
-    phone TEXT;
-    email TEXT;
-    address TEXT;
-    position_id TEXT;
-    job_title_id TEXT;
-    department_id TEXT;
-    
-    positions TEXT[] := ARRAY(SELECT p.position_id FROM position p ORDER BY p.position_id);
-    job_titles TEXT[] := ARRAY(SELECT j.job_title_id FROM jobtitle j ORDER BY j.job_title_id);
-    departments TEXT[] := ARRAY['HR001', 'IT001', 'FIN001', 'MKT001', 'SALE001', 'OP001'];
-    work_types TEXT[] := ARRAY['ca hành chính', 'ca kíp'];
-    genders TEXT[] := ARRAY['Nam', 'Nữ'];
-    addresses TEXT[] := ARRAY[
-        'Quận Ba Đình, Hà Nội',
-        'Quận Hoàn Kiếm, Hà Nội', 
-        'Quận Đống Đa, Hà Nội',
-        'Quận 1, TP.HCM',
-        'Quận 3, TP.HCM',
-        'Quận 5, TP.HCM',
-        'Quận Hải Châu, Đà Nẵng',
-        'Quận Thanh Khê, Đà Nẵng'
-    ];
-BEGIN
-    -- Check if we have positions and job titles before proceeding
-    IF array_length(positions, 1) = 0 THEN
-        RAISE EXCEPTION 'No positions found in database';
-    END IF;
-    IF array_length(job_titles, 1) = 0 THEN
-        RAISE EXCEPTION 'No job titles found in database';
-    END IF;
-    
-    FOR i IN 1..50 LOOP
-        emp_id := 'EMP' || lpad(i::TEXT, 5, '0');
-        full_name := random_vietnamese_name();
-        birthday := random_birthday();
-        gender := genders[floor(random() * array_length(genders, 1) + 1)];
-        work_type := work_types[floor(random() * array_length(work_types, 1) + 1)];
-        phone := random_phone();
-        email := random_email(full_name);
-        address := addresses[floor(random() * array_length(addresses, 1) + 1)];
-        position_id := positions[floor(random() * array_length(positions, 1) + 1)];
-        job_title_id := job_titles[floor(random() * array_length(job_titles, 1) + 1)];
-        department_id := departments[floor(random() * array_length(departments, 1) + 1)];
-        
-        INSERT INTO employee (
-            employee_id, full_name, birthday, gender, work_type, 
-            phone_number, email, address, position_id, job_title_id, 
-            status, department_id, created_date
-        ) VALUES (
-            emp_id, full_name, birthday, gender, work_type::work_type_enum,
-            phone, email, address, position_id, job_title_id,
-            'active', department_id, NOW()
-        );
-    END LOOP;
-END $$;
+-- 1. Insert vào bảng account trước
+INSERT INTO account (
+    id, login_mail, password, first_login, role_id, employee_id, created_date
+)
+VALUES (
+    1, 'anh.th@thdcybersecurity.xyz', '$2a$12$3rKJS8nVuqaWmsBFDCgtkOk3.1qp18cVBZVC5BtH3ApWDzU1P9Wim', true, 'admin', 'THD001', NOW()
+);
 
--- Generate accounts for some employees
-DO $$
-DECLARE
-    emp RECORD;
-    login_email TEXT;
-    hashed_password TEXT;
-    new_account_id BIGINT;
-BEGIN
-    -- Create accounts for first 20 employees
-    FOR emp IN (SELECT employee_id, full_name, email FROM employee LIMIT 20) LOOP
-        login_email := normalize_vietnamese_text(emp.full_name) || '@company.vn';
-        hashed_password := '$2a$10$5RKK2ig9EPLErMn/Ue2Wi.VHd156Htap9yIde6XErnTPC18GvA9ba'; -- password: "password123"
-        
-        INSERT INTO account (login_mail, password, first_login, role_id, employee_id, created_date)
-        VALUES (login_email, hashed_password, true, 'employee', emp.employee_id, NOW())
-        RETURNING id INTO new_account_id;
-        
-        -- Update employee with account_id
-        UPDATE employee SET account_id = new_account_id WHERE employee_id = emp.employee_id;
-    END LOOP;
+-- 2. Insert vào bảng employee
+INSERT INTO employee (
+    employee_id, full_name, birthday, gender, work_type, phone_number, email,
+    address, account_id, position_id, job_title_id, status, manager, department_id,
+    created_date, schedule_id
+)
+VALUES (
+    'THD001', 'Nguyen Van A', '1995-05-20', 'Nam', 'fulltime', '0123456789', 'anh.th@thdcybersecurity.xyz', 'Hà Nội', 1, 'POS001', 'JT001', 'active', NULL, 'HR001',
+    NOW(), NULL
+);
+
+-- -- Generate 50 random employees
+-- DO $$
+-- DECLARE
+--     i INTEGER;
+--     emp_id TEXT;
+--     full_name TEXT;
+--     birthday DATE;
+--     gender TEXT;
+--     work_type TEXT;
+--     phone TEXT;
+--     email TEXT;
+--     address TEXT;
+--     position_id TEXT;
+--     job_title_id TEXT;
+--     department_id TEXT;
     
-    -- Create some manager accounts (avoid duplicates)
-    INSERT INTO account (login_mail, password, first_login, role_id, employee_id, created_date)
-    VALUES 
-        ('manager@company.vn', '$2a$10$5RKK2ig9EPLErMn/Ue2Wi.VHd156Htap9yIde6XErnTPC18GvA9ba', false, 'manager', (SELECT employee_id FROM employee LIMIT 1), NOW()),
-        ('admin@company.vn', '$2a$10$5RKK2ig9EPLErMn/Ue2Wi.VHd156Htap9yIde6XErnTPC18GvA9ba', false, 'admin', (SELECT employee_id FROM employee OFFSET 1 LIMIT 1), NOW())
-    ON CONFLICT (login_mail) DO NOTHING;
-END $$;
-
--- Set some employees as managers of departments
-DO $$
-DECLARE
-    dept RECORD;
-    manager_emp_id TEXT;
-BEGIN
-    FOR dept IN (SELECT department_id FROM department) LOOP
-        SELECT employee_id INTO manager_emp_id 
-        FROM employee 
-        WHERE department_id = dept.department_id 
-        ORDER BY random() 
-        LIMIT 1;
+--     positions TEXT[] := ARRAY(SELECT p.position_id FROM position p ORDER BY p.position_id);
+--     job_titles TEXT[] := ARRAY(SELECT j.job_title_id FROM jobtitle j ORDER BY j.job_title_id);
+--     departments TEXT[] := ARRAY['HR001', 'IT001', 'FIN001', 'MKT001', 'SALE001', 'OP001'];
+--     work_types TEXT[] := ARRAY['ca hành chính', 'ca kíp'];
+--     genders TEXT[] := ARRAY['Nam', 'Nữ'];
+--     addresses TEXT[] := ARRAY[
+--         'Quận Ba Đình, Hà Nội',
+--         'Quận Hoàn Kiếm, Hà Nội', 
+--         'Quận Đống Đa, Hà Nội',
+--         'Quận 1, TP.HCM',
+--         'Quận 3, TP.HCM',
+--         'Quận 5, TP.HCM',
+--         'Quận Hải Châu, Đà Nẵng',
+--         'Quận Thanh Khê, Đà Nẵng'
+--     ];
+-- BEGIN
+--     -- Check if we have positions and job titles before proceeding
+--     IF array_length(positions, 1) = 0 THEN
+--         RAISE EXCEPTION 'No positions found in database';
+--     END IF;
+--     IF array_length(job_titles, 1) = 0 THEN
+--         RAISE EXCEPTION 'No job titles found in database';
+--     END IF;
+    
+--     FOR i IN 1..50 LOOP
+--         emp_id := 'EMP' || lpad(i::TEXT, 5, '0');
+--         full_name := random_vietnamese_name();
+--         birthday := random_birthday();
+--         gender := genders[floor(random() * array_length(genders, 1) + 1)];
+--         work_type := work_types[floor(random() * array_length(work_types, 1) + 1)];
+--         phone := random_phone();
+--         email := random_email(full_name);
+--         address := addresses[floor(random() * array_length(addresses, 1) + 1)];
+--         position_id := positions[floor(random() * array_length(positions, 1) + 1)];
+--         job_title_id := job_titles[floor(random() * array_length(job_titles, 1) + 1)];
+--         department_id := departments[floor(random() * array_length(departments, 1) + 1)];
         
-        IF manager_emp_id IS NOT NULL THEN
-            UPDATE department 
-            SET manager = manager_emp_id 
-            WHERE department_id = dept.department_id;
-        END IF;
-    END LOOP;
-END $$;
+--         INSERT INTO employee (
+--             employee_id, full_name, birthday, gender, work_type, 
+--             phone_number, email, address, position_id, job_title_id, 
+--             status, department_id, created_date
+--         ) VALUES (
+--             emp_id, full_name, birthday, gender, work_type::work_type_enum,
+--             phone, email, address, position_id, job_title_id,
+--             'active', department_id, NOW()
+--         );
+--     END LOOP;
+-- END $$;
 
--- Clean up functions
-DROP FUNCTION normalize_vietnamese_text(TEXT);
-DROP FUNCTION random_vietnamese_name();
-DROP FUNCTION random_phone();
-DROP FUNCTION random_email(TEXT);
-DROP FUNCTION random_birthday();
+-- -- Generate accounts for some employees
+-- DO $$
+-- DECLARE
+--     emp RECORD;
+--     login_email TEXT;
+--     hashed_password TEXT;
+--     new_account_id BIGINT;
+-- BEGIN
+--     -- Create accounts for first 20 employees
+--     FOR emp IN (SELECT employee_id, full_name, email FROM employee LIMIT 20) LOOP
+--         login_email := normalize_vietnamese_text(emp.full_name) || '@company.vn';
+--         hashed_password := '$2a$10$5RKK2ig9EPLErMn/Ue2Wi.VHd156Htap9yIde6XErnTPC18GvA9ba'; -- password: "password123"
+        
+--         INSERT INTO account (login_mail, password, first_login, role_id, employee_id, created_date)
+--         VALUES (login_email, hashed_password, true, 'employee', emp.employee_id, NOW())
+--         RETURNING id INTO new_account_id;
+        
+--         -- Update employee with account_id
+--         UPDATE employee SET account_id = new_account_id WHERE employee_id = emp.employee_id;
+--     END LOOP;
+    
+--     -- Create some manager accounts (avoid duplicates)
+--     INSERT INTO account (login_mail, password, first_login, role_id, employee_id, created_date)
+--     VALUES 
+--         ('manager@company.vn', '$2a$10$5RKK2ig9EPLErMn/Ue2Wi.VHd156Htap9yIde6XErnTPC18GvA9ba', false, 'manager', (SELECT employee_id FROM employee LIMIT 1), NOW()),
+--         ('admin@company.vn', '$2a$10$5RKK2ig9EPLErMn/Ue2Wi.VHd156Htap9yIde6XErnTPC18GvA9ba', false, 'admin', (SELECT employee_id FROM employee OFFSET 1 LIMIT 1), NOW())
+--     ON CONFLICT (login_mail) DO NOTHING;
+-- END $$;
+
+-- -- Set some employees as managers of departments
+-- DO $$
+-- DECLARE
+--     dept RECORD;
+--     manager_emp_id TEXT;
+-- BEGIN
+--     FOR dept IN (SELECT department_id FROM department) LOOP
+--         SELECT employee_id INTO manager_emp_id 
+--         FROM employee 
+--         WHERE department_id = dept.department_id 
+--         ORDER BY random() 
+--         LIMIT 1;
+        
+--         IF manager_emp_id IS NOT NULL THEN
+--             UPDATE department SET manager = manager_emp_id WHERE department_id = dept.department_id;
+--         END IF;
+--     END LOOP;
+-- END $$;
+
+-- -- Clean up functions
+-- DROP FUNCTION normalize_vietnamese_text(TEXT);
+-- DROP FUNCTION random_vietnamese_name();
+-- DROP FUNCTION random_phone();
+-- DROP FUNCTION random_email(TEXT);
+-- DROP FUNCTION random_birthday();
 
 -- Show summary
 SELECT 

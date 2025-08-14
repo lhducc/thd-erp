@@ -127,8 +127,8 @@ DECLARE
     job_title_id TEXT;
     department_id TEXT;
     
-    positions TEXT[] := ARRAY['POS001', 'POS002', 'POS003', 'POS004', 'POS005', 'POS006', 'POS007', 'POS008'];
-    job_titles TEXT[] := ARRAY['JT001', 'JT002', 'JT003', 'JT004', 'JT005', 'JT006', 'JT007', 'JT008'];
+    positions TEXT[] := ARRAY(SELECT p.position_id FROM position p ORDER BY p.position_id);
+    job_titles TEXT[] := ARRAY(SELECT j.job_title_id FROM jobtitle j ORDER BY j.job_title_id);
     departments TEXT[] := ARRAY['HR001', 'IT001', 'FIN001', 'MKT001', 'SALE001', 'OP001'];
     work_types TEXT[] := ARRAY['ca hành chính', 'ca kíp'];
     genders TEXT[] := ARRAY['Nam', 'Nữ'];
@@ -143,6 +143,14 @@ DECLARE
         'Quận Thanh Khê, Đà Nẵng'
     ];
 BEGIN
+    -- Check if we have positions and job titles before proceeding
+    IF array_length(positions, 1) = 0 THEN
+        RAISE EXCEPTION 'No positions found in database';
+    END IF;
+    IF array_length(job_titles, 1) = 0 THEN
+        RAISE EXCEPTION 'No job titles found in database';
+    END IF;
+    
     FOR i IN 1..50 LOOP
         emp_id := 'EMP' || lpad(i::TEXT, 5, '0');
         full_name := random_vietnamese_name();

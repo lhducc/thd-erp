@@ -1,7 +1,25 @@
 -- Script to create random test data for ERP system
 -- Run this script in PostgreSQL to generate sample users and related data
 
--- Create extension for random data generation if not exists
+-- Create extension for random daDO $$
+DECLARE
+    emp RECORD;
+    login_email TEXT;
+    hashed_password TEXT;
+    new_account_id BIGINT;
+BEGIN
+    -- Create accounts for first 20 employees
+    FOR emp IN (SELECT employee_id, full_name, email FROM employee LIMIT 20) LOOP
+        login_email := lower(replace(replace(emp.full_name, ' ', '.'), 'đ', 'd')) || '@company.vn';
+        hashed_password := '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'; -- password: "password123"
+        
+        INSERT INTO account (login_mail, password, first_login, role_id, employee_id, created_date)
+        VALUES (login_email, hashed_password, true, 'employee', emp.employee_id, NOW())
+        RETURNING id INTO new_account_id;
+        
+        -- Update employee with account_id
+        UPDATE employee SET account_id = new_account_id WHERE employee_id = emp.employee_id;
+    END LOOP;ot exists
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Function to generate random Vietnamese names
@@ -175,8 +193,8 @@ BEGIN
         VALUES (login_email, hashed_password, true, 'employee', emp.employee_id, NOW())
         RETURNING id INTO account_id;
         
-        -- Update employee with account_id
-        UPDATE employee SET account_id = account_id WHERE employee_id = emp.employee_id;
+        -- Update employee with account_id (use qualified column name to avoid ambiguity)
+        UPDATE employee SET employee.account_id = account_id WHERE employee_id = emp.employee_id;
     END LOOP;
     
     -- Create some manager accounts

@@ -254,7 +254,7 @@ CREATE TABLE IF NOT EXISTS employee (
     job_title_id VARCHAR(50),
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
     manager VARCHAR(50),
-    department_id VARCHAR(6),
+    department_id VARCHAR(10),
     created_date TIMESTAMPTZ DEFAULT NOW(),
     schedule_id INTEGER,
     FOREIGN KEY (position_id) REFERENCES position(position_id),

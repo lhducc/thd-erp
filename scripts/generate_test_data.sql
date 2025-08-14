@@ -276,7 +276,7 @@ BEGIN
     -- Create accounts for first 20 employees
     FOR emp IN (SELECT employee_id, full_name, email FROM employee LIMIT 20) LOOP
         login_email := normalize_vietnamese_text(emp.full_name) || '@company.vn';
-        hashed_password := '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'; -- password: "password123"
+        hashed_password := '$2a$10$5RKK2ig9EPLErMn/Ue2Wi.VHd156Htap9yIde6XErnTPC18GvA9ba'; -- password: "password123"
         
         INSERT INTO account (login_mail, password, first_login, role_id, employee_id, created_date)
         VALUES (login_email, hashed_password, true, 'employee', emp.employee_id, NOW())
@@ -289,8 +289,8 @@ BEGIN
     -- Create some manager accounts (avoid duplicates)
     INSERT INTO account (login_mail, password, first_login, role_id, employee_id, created_date)
     VALUES 
-        ('manager@company.vn', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', false, 'manager', (SELECT employee_id FROM employee LIMIT 1), NOW()),
-        ('admin@company.vn', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', false, 'admin', (SELECT employee_id FROM employee OFFSET 1 LIMIT 1), NOW())
+        ('manager@company.vn', '$2a$10$5RKK2ig9EPLErMn/Ue2Wi.VHd156Htap9yIde6XErnTPC18GvA9ba', false, 'manager', (SELECT employee_id FROM employee LIMIT 1), NOW()),
+        ('admin@company.vn', '$2a$10$5RKK2ig9EPLErMn/Ue2Wi.VHd156Htap9yIde6XErnTPC18GvA9ba', false, 'admin', (SELECT employee_id FROM employee OFFSET 1 LIMIT 1), NOW())
     ON CONFLICT (login_mail) DO NOTHING;
 END $$;
 

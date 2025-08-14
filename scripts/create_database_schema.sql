@@ -194,14 +194,14 @@ CREATE TABLE IF NOT EXISTS role (
 );
 
 -- 2. Office table (no dependencies)
-CREATE TABLE IF NOT EXISTS office (
+CREATE TABLE office (
     office_id VARCHAR(8) PRIMARY KEY,
     office_name VARCHAR(100) NOT NULL,
-    phone_number VARCHAR(12),
+    phone_number VARCHAR(20),
     address TEXT,
-    latitude FLOAT,
-    longitude FLOAT,
-    created_date TIMESTAMPTZ DEFAULT NOW()
+    latitude DECIMAL(10,7),
+    longitude DECIMAL(10,7),
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 3. Position table (no dependencies)
@@ -212,12 +212,13 @@ CREATE TABLE IF NOT EXISTS position (
 );
 
 -- 4. Department table (depends on office)
-CREATE TABLE IF NOT EXISTS department (
-    department_id VARCHAR(6) PRIMARY KEY,
-    department_name VARCHAR(30) NOT NULL,
-    manager VARCHAR(8),
-    created_date TIMESTAMPTZ DEFAULT NOW(),
-    office_id VARCHAR(6),
+CREATE TABLE department (
+    department_id VARCHAR(10) PRIMARY KEY,
+    department_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    manager VARCHAR(100),
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    office_id VARCHAR(8),
     FOREIGN KEY (office_id) REFERENCES office(office_id)
 );
 

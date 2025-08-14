@@ -120,7 +120,7 @@ DECLARE
     positions TEXT[] := ARRAY['POS001', 'POS002', 'POS003', 'POS004', 'POS005', 'POS006', 'POS007', 'POS008'];
     job_titles TEXT[] := ARRAY['JT001', 'JT002', 'JT003', 'JT004', 'JT005', 'JT006', 'JT007', 'JT008'];
     departments TEXT[] := ARRAY['HR001', 'IT001', 'FIN001', 'MKT001', 'SALE001', 'OP001'];
-    work_types TEXT[] := ARRAY['Toàn thời gian', 'Bán thời gian', 'Theo ca'];
+    work_types TEXT[] := ARRAY['ca hành chính', 'ca kíp'];
     genders TEXT[] := ARRAY['Nam', 'Nữ'];
     addresses TEXT[] := ARRAY[
         'Quận Ba Đình, Hà Nội',
@@ -151,7 +151,7 @@ BEGIN
             phone_number, email, address, position_id, job_title_id, 
             status, department_id, created_date
         ) VALUES (
-            emp_id, full_name, birthday, gender, work_type,
+            emp_id, full_name, birthday, gender, work_type::work_type_enum,
             phone, email, address, position_id, job_title_id,
             'active', department_id, NOW()
         );

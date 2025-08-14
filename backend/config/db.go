@@ -22,7 +22,11 @@ func ConnectPostgres() {
 	// ENUM types are created by the schema script
 	// AutoMigrate is disabled - tables are created from scratch
 	// Default roles are created by the schema script
-
+	errT := AutoMigrate(db)
+	if errT != nil {
+		log.Fatal("Không thể tự động migrate:", errT)
+	}
+	
 	fmt.Println("Đã kết nối PostgreSQL!")
 	DB = db
 

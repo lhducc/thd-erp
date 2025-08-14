@@ -3,7 +3,7 @@ import {Label} from "@/components/ui/label";
 import {useState} from "react";
 import {Pencil, Trash2} from "lucide-react";
 import DocumentEmployeeForm from "@/components/DocumentEmployeeForm"
-import {useGetEmployeeById} from "@/query/useEmployee.ts";
+import {useGetEmployeeById} from "@/query/employee.query.ts";
 import {useParams} from "react-router-dom";
 import Loading from "@/components/Loading.tsx";
 import {useDocumentEmployeeById} from "@/query/useDocumentEmployee.ts";

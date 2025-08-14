@@ -1,6 +1,7 @@
 package config
 
 import (
+	checkin_model "erp/backend/internal/hrm/checkin/model"
 	"fmt"
 	"log"
 
@@ -31,7 +32,7 @@ func ConnectPostgres() {
 
 // DEPRECATED: Enum creation is now handled by SQL schema scripts
 // This function is kept for reference but not used
-/*
+
 func createEnums(db *gorm.DB) error {
 	enumSQL := `
 	DO $$
@@ -177,33 +178,32 @@ func createEnums(db *gorm.DB) error {
 	`
 	return db.Exec(enumSQL).Error
 }
-*/
 
 // DEPRECATED: AutoMigrate is replaced by manual SQL schema creation
 // This function is kept for reference but not used
-/*
+
 func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
-		&model.Role{},
-		&model.Office{},
-		&model.Position{},
-		&model.Department{},
-		&model.EmployeeDocumentType{},
-		&model.ContractType{},
-		&model.DecisionType{},
-		&model.Insurance{},
-		&model.Allowance{},
+		// &model.Role{},
+		// &model.Office{},
+		// &model.Position{},
+		// &model.Department{},
+		// &model.EmployeeDocumentType{},
+		// &model.ContractType{},
+		// &model.DecisionType{},
+		// &model.Insurance{},
+		// &model.Allowance{},
 
-		// Create Employee table before JobTitle since JobTitle references Employee
-		&model.Employee{},
-		&model.JobTitle{},
+		// // Create Employee table before JobTitle since JobTitle references Employee
+		// &model.Employee{},
+		// &model.JobTitle{},
 
 		&checkin_model.EmployeeWorkshift{},
 		&checkin_model.WorkShifts{},
-		&model.Contract{},
-		&model.Decision{},
-		&model.DecisionEmployee{},
-		&model.ContractAllowance{},
+		// &model.Contract{},
+		// &model.Decision{},
+		// &model.DecisionEmployee{},
+		// &model.ContractAllowance{},
 		&checkin_model.AttendanceCategory{},
 		&checkin_model.AttendanceRecord{},
 		&checkin_model.WorkSchedule{},
@@ -221,7 +221,6 @@ func AutoMigrate(db *gorm.DB) error {
 
 	return nil
 }
-*/
 
 func GetDB() *gorm.DB {
 	return DB

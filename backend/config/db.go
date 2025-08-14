@@ -22,15 +22,18 @@ func ConnectPostgres() {
 	if err != nil {
 		log.Fatal("Không thể kết nối PostgreSQL:", err)
 	}
-	// Database schema is now created manually using SQL scripts
-	// ENUM types are created by the schema script
-	// AutoMigrate is disabled - tables are created from scratch
-	// Default roles are created by the schema script
-	errT := AutoMigrate(db)
-	if errT != nil {
-		log.Fatal("Không thể tự động migrate:", errT)
+
+	// Create ENUM types first before AutoMigrate
+	if err := createEnums(db); err != nil {
+		log.Fatal("Không thể tạo enum types:", err)
 	}
 
+	// Run AutoMigrate to create tables
+	if err := AutoMigrate(db); err != nil {
+		log.Fatal("Không thể tự động migrate:", err)
+	}
+
+	// Create default roles after tables are created
 	if err := createDefaultRoles(db); err != nil {
 		log.Fatal("Không thể tạo vai trò mặc định:", err)
 	}
@@ -39,185 +42,214 @@ func ConnectPostgres() {
 	DB = db
 
 	db.Exec("DISCARD ALL")
-
 }
 
-// DEPRECATED: Enum creation is now handled by SQL schema scripts
-// This function is kept for reference but not used
+// Create ENUM types for AutoMigrate
+func createEnums(db *gorm.DB) error {
+	enumSQL := `
+	DO $$
+	BEGIN
+		-- enum contract_group_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'contract_group_enum') THEN
+			CREATE TYPE contract_group_enum AS ENUM (
+				'Hợp đồng xác định thời hạn',
+				'Hợp đồng không xác định thời hạn',
+				'Hợp đồng thử việc',
+				'Hợp đồng đào tạo nghề',
+				'Hợp đồng dịch vụ'
+			);
+		END IF;
 
-// func createEnums(db *gorm.DB) error {
-// 	enumSQL := `
-// 	DO $$
-// 	BEGIN
-// 		-- enum contract_group_enum
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'contract_group_enum') THEN
-// 			CREATE TYPE contract_group_enum AS ENUM (
-// 				'Hợp đồng xác định thời hạn',
-// 				'Hợp đồng không xác định thời hạn',
-// 				'Hợp đồng thử việc',
-// 				'Hợp đồAutoMigrateng đào tạo nghề',
-// 				'Hợp đồng dịch vụ'
-// 			);
-// 		END IF;
+		-- enum unit_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'unit_enum') THEN
+			CREATE TYPE unit_enum AS ENUM ('Năm', 'Tháng', 'Tuần', 'Ngày');
+		END IF;
 
-// 		-- enum unit_enum
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'unit_enum') THEN
-// 			CREATE TYPE unit_enum AS ENUM ('Năm', 'Tháng', 'Tuần', 'Ngày');
-// 		END IF;
+		-- enum working_type_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'working_type_enum') THEN
+			CREATE TYPE working_type_enum AS ENUM (
+				'Toàn thời gian',
+				'Bán thời gian',
+				'Cộng tác viên',
+				'Chuyên gia',
+				'Theo ca',
+				'Khoán sản phẩm',
+				'Khoán công việc'
+			);
+		END IF;
 
-// 		-- enum working_type_enum
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'working_type_enum') THEN
-// 			CREATE TYPE working_type_enum AS ENUM (
-// 				'Toàn thời gian',
-// 				'Bán thời gian',
-// 				'Cộng tác viên',
-// 				'Chuyên gia',
-// 				'Theo ca',
-// 				'Khoán sản phẩm',
-// 				'Khoán công việc'
-// 			);
-// 		END IF;
+		-- enum decision_status_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'decision_status_enum') THEN
+			CREATE TYPE decision_status_enum AS ENUM (
+				'Đã duyệt',
+				'Không duyệt',
+				'Chờ duyệt'
+			);
+		END IF;
 
-// 		-- enum decision_status_enum
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'decision_status_enum') THEN
-// 			CREATE TYPE decision_status_enum AS ENUM (
-// 				'Đã duyệt',
-// 				'Không duyệt',
-// 				'Chờ duyệt'
-// 			);
-// 		END IF;
+		-- enum decision_condition_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'decision_condition_enum') THEN
+			CREATE TYPE decision_condition_enum AS ENUM (
+				'Chưa hiệu lực',
+				'Đang hiệu lực'
+			);
+		END IF;
 
-// 		-- enum decision_condition_enum
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'decision_condition_enum') THEN
-// 			CREATE TYPE decision_condition_enum AS ENUM (
-// 				'Chưa hiệu lực',
-// 				'Đang hiệu lực'
-// 			);
-// 		END IF;
+		-- enum decision_group_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'decision_group_enum') THEN
+			CREATE TYPE decision_group_enum AS ENUM (
+				'Hình thức khen thưởng',
+				'Hình thức kỷ luật',
+				'Lý do điều chuyển',
+				'Lý do tiếp nhận',
+				'Lý do bổ nhiệm',
+				'Lý do miễn nhiệm',
+				'Lý do chấm dứt HĐLĐ'
+			);
+		END IF;
 
-// 		-- enum decision_group_enum
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'decision_group_enum') THEN
-// 			CREATE TYPE decision_group_enum AS ENUM (
-// 				'Hình thức khen thưởng',
-// 				'Hình thức kỷ luật',
-// 				'Lý do điều chuyển',
-// 				'Lý do tiếp nhận',
-// 				'Lý do bổ nhiệm',
-// 				'Lý do miễn nhiệm',
-// 				'Lý do chấm dứt HĐLĐ'
-// 			);
-// 		END IF;
+		-- enum document_condition_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'document_condition_enum') THEN
+			CREATE TYPE document_condition_enum AS ENUM (
+				'Hết hạn',
+				'Đang hiệu lực'
+			);
+		END IF;
 
-// 		-- enum document_condition_enum
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'document_condition_enum') THEN
-// 			CREATE TYPE document_condition_enum AS ENUM (
-// 				'Hết hạn',
-// 				'Đang hiệu lực'
-// 			);
-// 		END IF;
+		-- enum document_status_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'document_status_enum') THEN
+			CREATE TYPE document_status_enum AS ENUM (
+				'Duyệt',
+				'Không duyệt',
+				'Chờ duyệt'
+			);
+		END IF;
 
-// 		-- enum document_status_enum
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'document_status_enum') THEN
-// 			CREATE TYPE document_status_enum AS ENUM (
-// 				'Duyệt',
-// 				'Không duyệt',
-// 				'Chờ duyệt'
-// 			);
-// 		END IF;
-// 		-- enum approve_status_enum
-// 	   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'approve_status_enum') THEN
-// 		  CREATE TYPE approve_status_enum AS ENUM (
-// 			 'Đã duyệt',
-// 			'Không duyệt',
-// 			'Chờ duyệt'
-// 		  );
-// 	   END IF;
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'condition_enum') THEN
-//         CREATE TYPE condition_enum AS ENUM (
-//             'Chưa hiệu lực',
-//             'Đang hiệu lực',
-//             'Hết hiệu lực',
-//             'Thanh lý'
-//         );
-//     	END IF;
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'document_group_enum') THEN
-// 		  CREATE TYPE document_group_enum AS ENUM (
-// 			 'Loại chứng chỉ',
-// 			 'Loại lao động',
-// 			 'Thủ tục tiếp nhận',
-// 			 'Thủ tục thôi việc'
-// 		  );
-// 		END IF;
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'work_day_enum') THEN
-// 		  CREATE TYPE work_day_enum AS ENUM (
-// 			 '1',
-// 			 '0.5',
-// 			 '0'
-// 		  );
-// 		END IF;
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'repeat_type_enum') THEN
-// 			CREATE TYPE repeat_type_enum AS ENUM (
-// 				'weekly',
-// 				'monthly'
-// 			);
-//     	END IF;
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'status_work_schedule_enum') THEN
-// 			CREATE TYPE status_work_schedule_enum AS ENUM (
-// 				'expired',
-// 				'inactive',
-// 				'active'
-// 			);
-// 		END IF;
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'weekday_enum') THEN
-// 			CREATE TYPE weekday_enum AS ENUM (
-// 				'sunday',
-// 				'monday',
-// 				'tuesday',
-// 				'wednesday',
-// 				'thursday',
-// 				'friday',
-// 				'saturday'
-// 			);
-// 		END IF;
-// 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'work_type_enum') THEN
-// 			CREATE TYPE work_type_enum AS ENUM (
-// 				'ca hành chính',
-// 				'ca kíp'
-// 			);
-// 		END IF;
-// 	END
-// 	$$;
-// 	`
-// 	return db.Exec(enumSQL).Error
-// }
+		-- enum approve_status_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'approve_status_enum') THEN
+			CREATE TYPE approve_status_enum AS ENUM (
+				'Đã duyệt',
+				'Không duyệt',
+				'Chờ duyệt'
+			);
+		END IF;
 
-// DEPRECATED: AutoMigrate is replaced by manual SQL schema creation
-// This function is kept for reference but not used
+		-- enum condition_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'condition_enum') THEN
+			CREATE TYPE condition_enum AS ENUM (
+				'Chưa hiệu lực',
+				'Đang hiệu lực',
+				'Hết hiệu lực',
+				'Thanh lý'
+			);
+		END IF;
 
+		-- enum document_group_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'document_group_enum') THEN
+			CREATE TYPE document_group_enum AS ENUM (
+				'Loại chứng chỉ',
+				'Loại lao động',
+				'Thủ tục tiếp nhận',
+				'Thủ tục thôi việc'
+			);
+		END IF;
+
+		-- enum work_day_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'work_day_enum') THEN
+			CREATE TYPE work_day_enum AS ENUM (
+				'1',
+				'0.5',
+				'0'
+			);
+		END IF;
+
+		-- enum repeat_type_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'repeat_type_enum') THEN
+			CREATE TYPE repeat_type_enum AS ENUM (
+				'daily',
+				'weekly',
+				'monthly',
+				'none'
+			);
+		END IF;
+
+		-- enum status_work_schedule_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'status_work_schedule_enum') THEN
+			CREATE TYPE status_work_schedule_enum AS ENUM (
+				'expired',
+				'inactive',
+				'active',
+				'pending'
+			);
+		END IF;
+
+		-- enum weekday_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'weekday_enum') THEN
+			CREATE TYPE weekday_enum AS ENUM (
+				'sunday',
+				'monday',
+				'tuesday',
+				'wednesday',
+				'thursday',
+				'friday',
+				'saturday'
+			);
+		END IF;
+
+		-- enum work_type_enum
+		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'work_type_enum') THEN
+			CREATE TYPE work_type_enum AS ENUM (
+				'ca hành chính',
+				'ca kíp'
+			);
+		END IF;
+	END
+	$$;
+	`
+	return db.Exec(enumSQL).Error
+}
+
+// AutoMigrate creates all database tables
 func AutoMigrate(db *gorm.DB) error {
+	// Migrate models in dependency order to avoid foreign key issues
 	err := db.AutoMigrate(
+		// Basic lookup tables first (no dependencies)
 		&model.Role{},
 		&model.Office{},
 		&model.Position{},
-		&model.Department{},
+		&model.HierarchyLevel{},
 		&model.EmployeeDocumentType{},
 		&model.ContractType{},
 		&model.DecisionType{},
 		&model.Insurance{},
 		&model.Allowance{},
 
-		// Create Employee table before JobTitle since JobTitle references Employee
-		&model.Employee{},
+		// Department depends on Office
+		&model.Department{},
+
+		// JobTitle depends on HierarchyLevel
 		&model.JobTitle{},
 
-		&checkin_model.EmployeeWorkshift{},
+		// Employee depends on Position, JobTitle, Department
+		&model.Employee{},
+
+		// Account depends on Employee and Role
+		&model.Account{},
+
+		// Checkin models
 		&checkin_model.WorkShifts{},
+		&checkin_model.EmployeeWorkshift{},
+		&checkin_model.AttendanceCategory{},
+		&checkin_model.AttendanceRecord{},
+
+		// Contract and Decision models (after Employee)
 		&model.Contract{},
 		&model.Decision{},
 		&model.DecisionEmployee{},
 		&model.ContractAllowance{},
-		&checkin_model.AttendanceCategory{},
-		&checkin_model.AttendanceRecord{},
+		&model.EmployeeDocument{},
+
+		// Work schedule models
 		&checkin_model.WorkSchedule{},
 		&checkin_model.WorkScheduleShift{},
 		&checkin_model.WorkScheduleManager{},
@@ -225,6 +257,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&checkin_model.TimeSheet{},
 		&checkin_model.TimeSheetDetail{},
 	)
+
 	fmt.Println("Migration complete")
 
 	if err != nil {
@@ -238,9 +271,7 @@ func GetDB() *gorm.DB {
 	return DB
 }
 
-// DEPRECATED: Default roles are now created by SQL schema scripts
-// This function is kept for reference but not used
-
+// Create default roles after migration
 func createDefaultRoles(db *gorm.DB) error {
 	defaultRoles := []string{"admin", "manager", "employee"}
 

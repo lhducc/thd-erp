@@ -10,7 +10,7 @@ VALUES
     ('POS006', 'Phó giám đốc', NOW()),
     ('POS007', 'Giám đốc', NOW()),
     ('POS008', 'Chuyên viên', NOW())
-ON CONFLICT (position_id) DO NOTHING;le users and related data
+ON CONFLICT (position_id) DO NOTHING;
 
 -- Create extension for random data generation
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -97,19 +97,6 @@ VALUES
     ('LV004', 'Phó giám đốc', 4, NOW()),
     ('LV005', 'Giám đốc', 5, NOW())
 ON CONFLICT (id) DO NOTHING;
-
--- Insert sample positions
-INSERT INTO position (position_id, position_name, description, created_date, hierarchy_level_id)
-VALUES 
-    ('POS001', 'Nhân viên', 'Nhân viên cơ bản', NOW(), 'LV001'),
-    ('POS002', 'Nhân viên Senior', 'Nhân viên có kinh nghiệm', NOW(), 'LV001'),
-    ('POS003', 'Trưởng nhóm', 'Quản lý nhóm nhỏ', NOW(), 'LV002'),
-    ('POS004', 'Phó trưởng phòng', 'Phụ trách một phần công việc phòng', NOW(), 'LV002'),
-    ('POS005', 'Trưởng phòng', 'Quản lý toàn bộ phòng ban', NOW(), 'LV003'),
-    ('POS006', 'Phó giám đốc', 'Hỗ trợ giám đốc', NOW(), 'LV004'),
-    ('POS007', 'Giám đốc', 'Quản lý toàn công ty', NOW(), 'LV005'),
-    ('POS008', 'Chuyên viên', 'Chuyên gia trong lĩnh vực', NOW(), 'LV001')
-ON CONFLICT (position_id) DO NOTHING;
 
 -- Insert sample job titles
 INSERT INTO jobtitle (job_title_id, job_title, created_date)
@@ -202,11 +189,12 @@ BEGIN
         UPDATE employee SET account_id = new_account_id WHERE employee_id = emp.employee_id;
     END LOOP;
     
-    -- Create some manager accounts
+    -- Create some manager accounts (avoid duplicates)
     INSERT INTO account (login_mail, password, first_login, role_id, employee_id, created_date)
     VALUES 
         ('manager@company.vn', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', false, 'manager', (SELECT employee_id FROM employee LIMIT 1), NOW()),
-        ('admin@company.vn', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', false, 'admin', (SELECT employee_id FROM employee OFFSET 1 LIMIT 1), NOW());
+        ('admin@company.vn', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', false, 'admin', (SELECT employee_id FROM employee OFFSET 1 LIMIT 1), NOW())
+    ON CONFLICT (login_mail) DO NOTHING;
 END $$;
 
 -- Set some employees as managers of departments
@@ -253,7 +241,7 @@ FROM employee
 LIMIT 5;
 
 SELECT 'Sample Accounts:' as info;
-SELECT a.account_id, a.login_mail, a.role_id, a.employee_id, e.full_name 
+SELECT a.id, a.login_mail, a.role_id, a.employee_id, e.full_name 
 FROM account a
 LEFT JOIN employee e ON a.employee_id = e.employee_id
 LIMIT 5;

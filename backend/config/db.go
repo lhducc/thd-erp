@@ -144,7 +144,7 @@ func createEnums(db *gorm.DB) error {
 		  );
 		END IF;
 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'work_day_enum') THEN
-		  CREATE TYPE work_group_enum AS ENUM (
+		  CREATE TYPE work_day_enum AS ENUM (
 			 '1',
 			 '0.5',
 			 '0'

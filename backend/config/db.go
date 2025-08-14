@@ -26,7 +26,9 @@ func ConnectPostgres() {
 	if errT != nil {
 		log.Fatal("Không thể tự động migrate:", errT)
 	}
-	
+
+	if err := createDefaultRoles(db); err != nil { log.Fatal("Không thể tạo vai trò mặc định:", err)
+
 	fmt.Println("Đã kết nối PostgreSQL!")
 	DB = db
 
@@ -202,20 +204,20 @@ func AutoMigrate(db *gorm.DB) error {
 		// &model.Employee{},
 		// &model.JobTitle{},
 
-		&checkin_model.EmployeeWorkshift{},
-		&checkin_model.WorkShifts{},
-		// &model.Contract{},
-		// &model.Decision{},
-		// &model.DecisionEmployee{},
-		// &model.ContractAllowance{},
-		&checkin_model.AttendanceCategory{},
-		&checkin_model.AttendanceRecord{},
-		&checkin_model.WorkSchedule{},
-		&checkin_model.WorkScheduleShift{},
-		&checkin_model.WorkScheduleManager{},
-		//&checkin_model.TimeSheetList{},
-		&checkin_model.TimeSheet{},
-		&checkin_model.TimeSheetDetail{},
+		// &checkin_model.EmployeeWorkshift{},
+		// &checkin_model.WorkShifts{},
+		// // &model.Contract{},
+		// // &model.Decision{},
+		// // &model.DecisionEmployee{},
+		// // &model.ContractAllowance{},
+		// &checkin_model.AttendanceCategory{},
+		// &checkin_model.AttendanceRecord{},
+		// &checkin_model.WorkSchedule{},
+		// &checkin_model.WorkScheduleShift{},
+		// &checkin_model.WorkScheduleManager{},
+		// //&checkin_model.TimeSheetList{},
+		// &checkin_model.TimeSheet{},
+		// &checkin_model.TimeSheetDetail{},
 	)
 	fmt.Println("Migration complete")
 
@@ -232,7 +234,7 @@ func GetDB() *gorm.DB {
 
 // DEPRECATED: Default roles are now created by SQL schema scripts
 // This function is kept for reference but not used
-/*
+
 func createDefaultRoles(db *gorm.DB) error {
 	defaultRoles := []string{"admin", "manager", "employee"}
 
@@ -254,4 +256,4 @@ func createDefaultRoles(db *gorm.DB) error {
 	}
 	return nil
 }
-*/
+

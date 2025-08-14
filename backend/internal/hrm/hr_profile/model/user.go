@@ -43,7 +43,7 @@ type Employee struct {
 
 	Account    *Account          `gorm:"foreignKey:AccountID;references:ID" json:"-"`
 	Position   *Position         `gorm:"foreignKey:PositionID;references:ID" json:"position,omitempty"`
-	JobTitle   *JobTitleResponse `gorm:"foreignKey:JobTitleID;references:JobTitleID" json:"job_title,omitempty"`
+	JobTitle   *JobTitle `gorm:"foreignKey:JobTitleID;references:JobTitleID" json:"job_title,omitempty"`
 	Manager    *ManagerResponse  `gorm:"foreignKey:ManagerID;references:EmployeeID" json:"manager,omitempty"`
 	Department *Department       `gorm:"foreignKey:DepartmentID;references:ID" json:"department,omitempty"`
 

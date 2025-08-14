@@ -222,7 +222,6 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.ContractType{},
 		// DecisionType has no dependencies
 		&model.DecisionType{},
-		&model.Decision{},
 		&model.Insurance{},
 		&model.Allowance{},
 
@@ -250,6 +249,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.EmployeeDocument{},
 
 		// Decision depends on DecisionType and Employee (both already migrated)
+		&model.Decision{},
 		&model.DecisionEmployee{},
 
 		// Work schedule models

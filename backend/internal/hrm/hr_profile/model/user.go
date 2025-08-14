@@ -10,7 +10,7 @@ import (
 
 type Account struct {
 	ID          int64     `gorm:"primaryKey;column:id" json:"account_id"`
-	LoginMail   string    `gorm:"column:login_mail;index" json:"login_mail"`
+	LoginMail   string    `gorm:"column:login_mail" json:"login_mail"`
 	Password    string    `gorm:"column:password" json:"password"`
 	FirstLogin  bool      `gorm:"column:first_login" json:"first_login"`
 	RoleID      string    `gorm:"column:role_id" json:"role_id"`

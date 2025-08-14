@@ -25,9 +25,6 @@ type DecisionType struct {
 	DecisionGroup  DecisionGroup `gorm:"type:decision_group_enum;not null" json:"decision_group"` // Decision group (e.g., Award, Discipline, etc.)
 	Description    string        `gorm:"type:text" json:"description"`                            // Description of decision type
 	CreatedDate    time.Time     `gorm:"not null" json:"created_date"`                            // Date when the record was created
-
-	// One-to-many relationship: One DecisionType can have many Decisions
-	Decisions []Decision `gorm:"foreignKey:DecisionTypeID" json:"decisions,omitempty"`
 }
 
 func (DecisionType) TableName() string {

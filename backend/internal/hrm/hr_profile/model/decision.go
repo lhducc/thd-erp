@@ -16,7 +16,7 @@ type Decision struct {
 	// Many-to-many relationship with Employee
 	Employees []Employee `gorm:"many2many:decision_employees;joinForeignKey:DecisionID;joinReferences:EmployeeID"`
 	// Many-to-one relationship with DecisionType
-	DecisionType DecisionType `gorm:"foreignKey:DecisionTypeID;references:DecisionTypeID" json:"decision_type,omitempty"`
+	DecisionType *DecisionType `gorm:"foreignKey:DecisionTypeID;references:DecisionTypeID" json:"decision_type,omitempty"`
 }
 
 func (Decision) TableName() string {

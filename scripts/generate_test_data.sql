@@ -1,5 +1,16 @@
 -- Script to create random test data for ERP system
--- Run this script in PostgreSQL to generate sample users and related data
+-- Run this script in PostgreSQL to g-- Insert sample positions
+INSERT INTO position (position_id, position_name, created_date)
+VALUES 
+    ('POS001', 'Nhân viên', NOW()),
+    ('POS002', 'Nhân viên cao cấp', NOW()),
+    ('POS003', 'Trưởng nhóm', NOW()),
+    ('POS004', 'Phó trưởng phòng', NOW()),
+    ('POS005', 'Trưởng phòng', NOW()),
+    ('POS006', 'Phó giám đốc', NOW()),
+    ('POS007', 'Giám đốc', NOW()),
+    ('POS008', 'Chuyên viên', NOW())
+ON CONFLICT (position_id) DO NOTHING;le users and related data
 
 -- Create extension for random data generation
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -50,7 +61,7 @@ $$ LANGUAGE plpgsql;
 
 -- Clear existing test data (keep schema)
 DELETE FROM account WHERE employee_id IS NOT NULL;
-DELETE FROM decision_employee;
+DELETE FROM decision_employees;
 DELETE FROM contract;
 DELETE FROM employee;
 DELETE FROM jobtitle;
@@ -101,16 +112,16 @@ VALUES
 ON CONFLICT (position_id) DO NOTHING;
 
 -- Insert sample job titles
-INSERT INTO jobtitle (job_title_id, job_title_name, description, created_date)
+INSERT INTO jobtitle (job_title_id, job_title, created_date)
 VALUES 
-    ('JT001', 'Lập trình viên', 'Phát triển phần mềm', NOW()),
-    ('JT002', 'Nhân viên nhân sự', 'Quản lý nhân sự', NOW()),
-    ('JT003', 'Kế toán', 'Quản lý tài chính', NOW()),
-    ('JT004', 'Marketing', 'Tiếp thị sản phẩm', NOW()),
-    ('JT005', 'Kinh doanh', 'Bán hàng và phát triển khách hàng', NOW()),
-    ('JT006', 'Vận hành', 'Quản lý hoạt động', NOW()),
-    ('JT007', 'Thiết kế', 'Thiết kế đồ họa', NOW()),
-    ('JT008', 'Tester', 'Kiểm thử phần mềm', NOW())
+    ('JT001', 'Lập trình viên', NOW()),
+    ('JT002', 'Nhân viên nhân sự', NOW()),
+    ('JT003', 'Kế toán', NOW()),
+    ('JT004', 'Marketing', NOW()),
+    ('JT005', 'Kinh doanh', NOW()),
+    ('JT006', 'Vận hành', NOW()),
+    ('JT007', 'Thiết kế', NOW()),
+    ('JT008', 'Tester', NOW())
 ON CONFLICT (job_title_id) DO NOTHING;
 
 -- Generate 50 random employees
@@ -242,7 +253,7 @@ FROM employee
 LIMIT 5;
 
 SELECT 'Sample Accounts:' as info;
-SELECT account_id, login_mail, role_id, employee_id, full_name 
+SELECT a.account_id, a.login_mail, a.role_id, a.employee_id, e.full_name 
 FROM account a
 LEFT JOIN employee e ON a.employee_id = e.employee_id
 LIMIT 5;

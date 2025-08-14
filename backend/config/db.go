@@ -1,7 +1,6 @@
 package config
 
 import (
-	checkin_model "erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/hr_profile/model"
 
 	"fmt"
@@ -21,14 +20,10 @@ func ConnectPostgres() {
 	if err != nil {
 		log.Fatal("Không thể kết nối PostgreSQL:", err)
 	}
-	if err := createEnums(db); err != nil {
-		log.Fatalf("Không thể tạo ENUM: %v", err)
-	}
-	errT := AutoMigrate(db)
-	if errT != nil {
-		fmt.Print(errT)
-	}
-
+	// Database schema is now created manually using SQL scripts
+	// ENUM types are created by the schema script
+	// AutoMigrate is disabled - tables are created from scratch
+	
 	if err := createDefaultRoles(db); err != nil {
 		log.Fatalf("Không thể tạo role mặc định: %v", err)
 	}
@@ -40,6 +35,9 @@ func ConnectPostgres() {
 
 }
 
+// DEPRECATED: Enum creation is now handled by SQL schema scripts
+// This function is kept for reference but not used
+/*
 func createEnums(db *gorm.DB) error {
 	enumSQL := `
 	DO $$
@@ -185,11 +183,11 @@ func createEnums(db *gorm.DB) error {
 	`
 	return db.Exec(enumSQL).Error
 }
+*/
 
-func GetDB() *gorm.DB {
-	return DB
-}
-
+// DEPRECATED: AutoMigrate is replaced by manual SQL schema creation
+// This function is kept for reference but not used
+/*
 func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
 		&model.Role{},
@@ -228,6 +226,11 @@ func AutoMigrate(db *gorm.DB) error {
 	}
 
 	return nil
+}
+*/
+
+func GetDB() *gorm.DB {
+	return DB
 }
 
 func createDefaultRoles(db *gorm.DB) error {

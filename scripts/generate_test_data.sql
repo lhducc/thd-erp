@@ -208,7 +208,7 @@ INSERT INTO employee (
     created_date, schedule_id
 )
 VALUES (
-    'THD001', 'Nguyen Van A', '1995-05-20', 'Nam', 'fulltime', '0123456789', 'anh.th@thdcybersecurity.xyz', 'Hà Nội', 1, 'POS001', 'JT001', 'active', NULL, 'HR001',
+    'THD001', 'Nguyen Van A', '1995-05-20', 'Nam', 'ca hành chính', '0123456789', 'anh.th@thdcybersecurity.xyz', 'Hà Nội', 1, 'POS001', 'JT001', 'active', NULL, 'HR001',
     NOW(), NULL
 );
 

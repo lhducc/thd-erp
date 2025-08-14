@@ -33,6 +33,11 @@ func ConnectPostgres() {
 		log.Fatal("Không thể tự động migrate:", err)
 	}
 
+	// Add foreign key constraints manually after migration
+	if err := addForeignKeyConstraints(db); err != nil {
+		log.Fatal("Không thể tạo foreign key constraints:", err)
+	}
+
 	// Create default roles after tables are created
 	if err := createDefaultRoles(db); err != nil {
 		log.Fatal("Không thể tạo vai trò mặc định:", err)
@@ -268,6 +273,28 @@ func AutoMigrate(db *gorm.DB) error {
 	}
 
 	return nil
+}
+
+// Add foreign key constraints manually after migration
+func addForeignKeyConstraints(db *gorm.DB) error {
+	// Add foreign key constraint from decision.decision_type_id to decisiontype.decision_type_id
+	constraintSQL := `
+	DO $$
+	BEGIN
+		-- Add foreign key constraint for decision.decision_type_id -> decisiontype.decision_type_id
+		IF NOT EXISTS (
+			SELECT 1 FROM information_schema.table_constraints 
+			WHERE constraint_name = 'fk_decision_decision_type_id'
+		) THEN
+			ALTER TABLE decision 
+			ADD CONSTRAINT fk_decision_decision_type_id 
+			FOREIGN KEY (decision_type_id) REFERENCES decisiontype(decision_type_id) 
+			ON UPDATE CASCADE ON DELETE SET NULL;
+		END IF;
+	END
+	$$;
+	`
+	return db.Exec(constraintSQL).Error
 }
 
 func GetDB() *gorm.DB {

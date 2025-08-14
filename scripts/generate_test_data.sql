@@ -193,6 +193,17 @@ VALUES
     ('JT009', 'Giám đốc điều hành', NOW(), 'LV005')
 ON CONFLICT (job_title_id) DO NOTHING;
 
+-- 2. Insert vào bảng employee
+INSERT INTO employee (
+    employee_id, full_name, birthday, gender, work_type, phone_number, email,
+    address, account_id, position_id, job_title_id, status, manager, department_id,
+    created_date, schedule_id
+)
+VALUES (
+    'THD001', 'Nguyen Van A', '1995-05-20', 'Nam', 'ca hành chính', '0123456789', 'anh.th@thdcybersecurity.xyz', 'Hà Nội', NULL, 'POS001', 'JT001', 'active', NULL, 'HR001',
+    NOW(), NULL
+);
+
 -- 1. Insert vào bảng account trước
 INSERT INTO account (
     id, login_mail, password, first_login, role_id, employee_id, created_date
@@ -201,16 +212,9 @@ VALUES (
     1, 'anh.th@thdcybersecurity.xyz', '$2a$12$3rKJS8nVuqaWmsBFDCgtkOk3.1qp18cVBZVC5BtH3ApWDzU1P9Wim', true, 'admin', 'THD001', NOW()
 );
 
--- 2. Insert vào bảng employee
-INSERT INTO employee (
-    employee_id, full_name, birthday, gender, work_type, phone_number, email,
-    address, account_id, position_id, job_title_id, status, manager, department_id,
-    created_date, schedule_id
-)
-VALUES (
-    'THD001', 'Nguyen Van A', '1995-05-20', 'Nam', 'ca hành chính', '0123456789', 'anh.th@thdcybersecurity.xyz', 'Hà Nội', 1, 'POS001', 'JT001', 'active', NULL, 'HR001',
-    NOW(), NULL
-);
+UPDATE employee
+SET account_id = 1
+WHERE employee_id = 'THD001';
 
 -- -- Generate 50 random employees
 -- DO $$

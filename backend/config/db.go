@@ -1,8 +1,8 @@
 package config
 
 import (
+	checkin_model "erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/hr_profile/model"
-	checkin_model	"erp/backend/internal/hrm/checkin/model"
 
 	"fmt"
 	"log"
@@ -144,7 +144,7 @@ func createEnums(db *gorm.DB) error {
 		  );
 		END IF;
 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'work_day_enum') THEN
-		  CREATE TYPE document_group_enum AS ENUM (
+		  CREATE TYPE work_group_enum AS ENUM (
 			 '1',
 			 '0.5',
 			 '0'
@@ -192,34 +192,34 @@ func GetDB() *gorm.DB {
 
 func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
-	&model.Role{},
-	&model.Office{},
-	&checkin_model.EmployeeWorkshift{},
+		&model.Role{},
+		&model.Office{},
+		&checkin_model.EmployeeWorkshift{},
 
-	&model.Position{},
-	&model.Department{},
-	&model.JobTitle{},
-	&checkin_model.WorkShifts{},
-	&checkin_model.EmployeeWorkshift{},
-	&model.EmployeeDocumentType{},
-	&model.Employee{},
-	&model.ContractType{},
-	&model.Contract{},
-	&model.DecisionType{},
-	&model.Decision{},
-	&model.DecisionEmployee{},
-	&model.Insurance{},
-	&model.Allowance{},
-	&model.Contract{},
-	&model.ContractAllowance{},
-	&checkin_model.AttendanceCategory{},
-	&checkin_model.AttendanceRecord{},
-	&checkin_model.WorkSchedule{},
-	&checkin_model.WorkScheduleShift{},
-	&checkin_model.WorkScheduleManager{},
-	&checkin_model.TimeSheetList{},
-	&checkin_model.TimeSheet{},
-	&checkin_model.TimeSheetDetail{},
+		&model.Position{},
+		&model.Department{},
+		&model.JobTitle{},
+		&checkin_model.WorkShifts{},
+		&checkin_model.EmployeeWorkshift{},
+		&model.EmployeeDocumentType{},
+		&model.Employee{},
+		&model.ContractType{},
+		&model.Contract{},
+		&model.DecisionType{},
+		&model.Decision{},
+		&model.DecisionEmployee{},
+		&model.Insurance{},
+		&model.Allowance{},
+		&model.Contract{},
+		&model.ContractAllowance{},
+		&checkin_model.AttendanceCategory{},
+		&checkin_model.AttendanceRecord{},
+		&checkin_model.WorkSchedule{},
+		&checkin_model.WorkScheduleShift{},
+		&checkin_model.WorkScheduleManager{},
+		&checkin_model.TimeSheetList{},
+		&checkin_model.TimeSheet{},
+		&checkin_model.TimeSheetDetail{},
 	)
 	fmt.Println("Migration complete")
 

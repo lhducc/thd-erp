@@ -11,10 +11,12 @@ type Decision struct {
 	Condition      string    `gorm:"type:varchar(20);column:condition" json:"condition"`
 	AttachedFile   string    `gorm:"column:attached_file" json:"attached_file"`
 	CreatedDate    time.Time `gorm:"column:created_date" json:"created_date"`
-	DecisionTypeID string    `gorm:"type:varchar(6);column:decision_type_id" json:"decision_type_id"`
-	
-	Employees    []Employee    `gorm:"many2many:decision_employees;joinForeignKey:DecisionID;joinReferences:EmployeeID"`
-	DecisionType *DecisionType `gorm:"foreignKey:DecisionTypeID;references:DecisionTypeID" json:"decision_type,omitempty"`
+	DecisionTypeID string    `gorm:"type:varchar(6);column:decision_type_id;not null" json:"decision_type_id"`
+
+	// Many-to-many relationship with Employee
+	Employees []Employee `gorm:"many2many:decision_employees;joinForeignKey:DecisionID;joinReferences:EmployeeID"`
+	// Many-to-one relationship with DecisionType
+	DecisionType DecisionType `gorm:"foreignKey:DecisionTypeID;references:DecisionTypeID" json:"decision_type,omitempty"`
 }
 
 func (Decision) TableName() string {

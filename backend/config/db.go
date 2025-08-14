@@ -220,6 +220,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.HierarchyLevel{},
 		&model.EmployeeDocumentType{},
 		&model.ContractType{},
+		// DecisionType has no dependencies
 		&model.DecisionType{},
 		&model.Insurance{},
 		&model.Allowance{},
@@ -242,12 +243,14 @@ func AutoMigrate(db *gorm.DB) error {
 		&checkin_model.AttendanceCategory{},
 		&checkin_model.AttendanceRecord{},
 
-		// Contract and Decision models (after Employee)
+		// Contract models (after Employee)
 		&model.Contract{},
-		&model.Decision{},
-		&model.DecisionEmployee{},
 		&model.ContractAllowance{},
 		&model.EmployeeDocument{},
+
+		// Decision depends on DecisionType and Employee (both already migrated)
+		&model.Decision{},
+		&model.DecisionEmployee{},
 
 		// Work schedule models
 		&checkin_model.WorkSchedule{},

@@ -44,11 +44,100 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Function to normalize Vietnamese text to ASCII
+CREATE OR REPLACE FUNCTION normalize_vietnamese_text(input_text TEXT) RETURNS TEXT AS $$
+DECLARE
+    normalized_text TEXT;
+BEGIN
+    normalized_text := lower(input_text);
+    
+    -- Replace Vietnamese characters with ASCII equivalents
+    normalized_text := replace(normalized_text, 'á', 'a');
+    normalized_text := replace(normalized_text, 'à', 'a');
+    normalized_text := replace(normalized_text, 'ả', 'a');
+    normalized_text := replace(normalized_text, 'ã', 'a');
+    normalized_text := replace(normalized_text, 'ạ', 'a');
+    normalized_text := replace(normalized_text, 'ă', 'a');
+    normalized_text := replace(normalized_text, 'ắ', 'a');
+    normalized_text := replace(normalized_text, 'ằ', 'a');
+    normalized_text := replace(normalized_text, 'ẳ', 'a');
+    normalized_text := replace(normalized_text, 'ẵ', 'a');
+    normalized_text := replace(normalized_text, 'ặ', 'a');
+    normalized_text := replace(normalized_text, 'â', 'a');
+    normalized_text := replace(normalized_text, 'ấ', 'a');
+    normalized_text := replace(normalized_text, 'ầ', 'a');
+    normalized_text := replace(normalized_text, 'ẩ', 'a');
+    normalized_text := replace(normalized_text, 'ẫ', 'a');
+    normalized_text := replace(normalized_text, 'ậ', 'a');
+    
+    normalized_text := replace(normalized_text, 'é', 'e');
+    normalized_text := replace(normalized_text, 'è', 'e');
+    normalized_text := replace(normalized_text, 'ẻ', 'e');
+    normalized_text := replace(normalized_text, 'ẽ', 'e');
+    normalized_text := replace(normalized_text, 'ẹ', 'e');
+    normalized_text := replace(normalized_text, 'ê', 'e');
+    normalized_text := replace(normalized_text, 'ế', 'e');
+    normalized_text := replace(normalized_text, 'ề', 'e');
+    normalized_text := replace(normalized_text, 'ể', 'e');
+    normalized_text := replace(normalized_text, 'ễ', 'e');
+    normalized_text := replace(normalized_text, 'ệ', 'e');
+    
+    normalized_text := replace(normalized_text, 'í', 'i');
+    normalized_text := replace(normalized_text, 'ì', 'i');
+    normalized_text := replace(normalized_text, 'ỉ', 'i');
+    normalized_text := replace(normalized_text, 'ĩ', 'i');
+    normalized_text := replace(normalized_text, 'ị', 'i');
+    
+    normalized_text := replace(normalized_text, 'ó', 'o');
+    normalized_text := replace(normalized_text, 'ò', 'o');
+    normalized_text := replace(normalized_text, 'ỏ', 'o');
+    normalized_text := replace(normalized_text, 'õ', 'o');
+    normalized_text := replace(normalized_text, 'ọ', 'o');
+    normalized_text := replace(normalized_text, 'ô', 'o');
+    normalized_text := replace(normalized_text, 'ố', 'o');
+    normalized_text := replace(normalized_text, 'ồ', 'o');
+    normalized_text := replace(normalized_text, 'ổ', 'o');
+    normalized_text := replace(normalized_text, 'ỗ', 'o');
+    normalized_text := replace(normalized_text, 'ộ', 'o');
+    normalized_text := replace(normalized_text, 'ơ', 'o');
+    normalized_text := replace(normalized_text, 'ớ', 'o');
+    normalized_text := replace(normalized_text, 'ờ', 'o');
+    normalized_text := replace(normalized_text, 'ở', 'o');
+    normalized_text := replace(normalized_text, 'ỡ', 'o');
+    normalized_text := replace(normalized_text, 'ợ', 'o');
+    
+    normalized_text := replace(normalized_text, 'ú', 'u');
+    normalized_text := replace(normalized_text, 'ù', 'u');
+    normalized_text := replace(normalized_text, 'ủ', 'u');
+    normalized_text := replace(normalized_text, 'ũ', 'u');
+    normalized_text := replace(normalized_text, 'ụ', 'u');
+    normalized_text := replace(normalized_text, 'ư', 'u');
+    normalized_text := replace(normalized_text, 'ứ', 'u');
+    normalized_text := replace(normalized_text, 'ừ', 'u');
+    normalized_text := replace(normalized_text, 'ử', 'u');
+    normalized_text := replace(normalized_text, 'ữ', 'u');
+    normalized_text := replace(normalized_text, 'ự', 'u');
+    
+    normalized_text := replace(normalized_text, 'ý', 'y');
+    normalized_text := replace(normalized_text, 'ỳ', 'y');
+    normalized_text := replace(normalized_text, 'ỷ', 'y');
+    normalized_text := replace(normalized_text, 'ỹ', 'y');
+    normalized_text := replace(normalized_text, 'ỵ', 'y');
+    
+    normalized_text := replace(normalized_text, 'đ', 'd');
+    
+    -- Replace spaces with dots and remove any remaining special characters
+    normalized_text := replace(normalized_text, ' ', '.');
+    normalized_text := regexp_replace(normalized_text, '[^a-z0-9.]', '', 'g');
+    
+    RETURN normalized_text;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Function to generate random email
 CREATE OR REPLACE FUNCTION random_email(full_name TEXT) RETURNS TEXT AS $$
 BEGIN
-    RETURN lower(replace(replace(full_name, ' ', '.'), 'đ', 'd')) || 
-           floor(random() * 1000)::TEXT || '@email.com';
+    RETURN normalize_vietnamese_text(full_name) || floor(random() * 1000)::TEXT || '@email.com';
 END;
 $$ LANGUAGE plpgsql;
 
@@ -186,7 +275,7 @@ DECLARE
 BEGIN
     -- Create accounts for first 20 employees
     FOR emp IN (SELECT employee_id, full_name, email FROM employee LIMIT 20) LOOP
-        login_email := lower(replace(replace(emp.full_name, ' ', '.'), 'đ', 'd')) || '@company.vn';
+        login_email := normalize_vietnamese_text(emp.full_name) || '@company.vn';
         hashed_password := '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'; -- password: "password123"
         
         INSERT INTO account (login_mail, password, first_login, role_id, employee_id, created_date)
@@ -227,6 +316,7 @@ BEGIN
 END $$;
 
 -- Clean up functions
+DROP FUNCTION normalize_vietnamese_text(TEXT);
 DROP FUNCTION random_vietnamese_name();
 DROP FUNCTION random_phone();
 DROP FUNCTION random_email(TEXT);

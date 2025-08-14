@@ -51,7 +51,7 @@ type TimeSheet struct {
 	// Relationships
 	Employee   *model.EmployeeInforResponse `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"employee,omitempty"`
 	Office     *model.Office                `gorm:"foreignKey:OfficeID;references:ID" json:"office,omitempty"`
-	Department *model.Department            `gorm:"foreignKey:ID;references:department_id" json:"department,omitempty"`
+	Department *model.Department            `gorm:"foreignKey:DepartmentID;references:ID" json:"department,omitempty"`
 	Details    []TimeSheetDetail            `gorm:"foreignKey:TimeSheetID;references:TimeSheetID;constraint:OnDelete:CASCADE" json:"details,omitempty"`
 	Creator    *model.ManagerResponse       `gorm:"foreignKey:CreatedBy;references:EmployeeID" json:"creator,omitempty"`
 	Updater    *model.ManagerResponse       `gorm:"foreignKey:UpdatedBy;references:EmployeeID" json:"updater,omitempty"`

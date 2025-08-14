@@ -217,9 +217,9 @@ func AutoMigrate(db *gorm.DB) error {
 		&checkin_model.WorkSchedule{},
 		&checkin_model.WorkScheduleShift{},
 		&checkin_model.WorkScheduleManager{},
-		//&checkin_model.TimeSheetList{},
-		//&checkin_model.TimeSheet{},
-		//&checkin_model.TimeSheetDetail{},
+		&checkin_model.TimeSheetList{},
+		&checkin_model.TimeSheet{},
+		&checkin_model.TimeSheetDetail{},
 	)
 	fmt.Println("Migration complete")
 

@@ -1,11 +1,13 @@
 package config
 
 import (
-	"github.com/joho/godotenv"
-	"github.com/spf13/viper"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
 // App config struct
@@ -57,6 +59,19 @@ func LoadConfig() {
 	err = viper.Unmarshal(&AppConfig)
 	if err != nil {
 		log.Fatalf("Lỗi parse config: %v", err)
+	}
+
+	// Override CORS origins from environment variable if set
+	if corsOrigins := os.Getenv("CORS_ALLOW_ORIGINS"); corsOrigins != "" {
+		// Split comma-separated values and trim spaces
+		origins := strings.Split(corsOrigins, ",")
+		for i, origin := range origins {
+			origins[i] = strings.TrimSpace(origin)
+		}
+		AppConfig.CORS.AllowOrigins = origins
+		log.Printf("CORS origins loaded from environment: %v", origins)
+	} else {
+		log.Printf("CORS origins loaded from config file: %v", AppConfig.CORS.AllowOrigins)
 	}
 }
 

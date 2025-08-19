@@ -348,7 +348,6 @@ func setupWorkShiftRoutes(router *gin.RouterGroup, workShiftHandler *checkin.Wor
 func setupAttandanceRecordRoutes(amdinRouter, userRouter *gin.RouterGroup, handler *checkin.AttendanceRecordHandler) {
 	adminGroup := amdinRouter.Group("/attendance-record")
 	{
-		adminGroup.POST("", handler.CreateAttendanceRecord())
 		adminGroup.GET("/:id", handler.GetAttendanceRecordByID())
 		adminGroup.GET("/employee/:employeeId", handler.GetRecordsByEmployee())
 		adminGroup.GET("/employee/:employeeId/date-range", handler.GetRequestsByDateRange())
@@ -360,6 +359,7 @@ func setupAttandanceRecordRoutes(amdinRouter, userRouter *gin.RouterGroup, handl
 	}
 	userGr := userRouter.Group("/attendance-record")
 	{
+		userGr.POST("", handler.CreateAttendanceRecord())
 		userGr.GET("/personal", handler.GetPersonalHistoryRecord())
 		userGr.GET("/:id/personal", handler.GetPersonalRecordDetailById())
 	}

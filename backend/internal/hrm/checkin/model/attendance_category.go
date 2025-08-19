@@ -13,7 +13,7 @@ type AttendanceCategory struct {
 	IsCamera               bool                          `gorm:"column:is_camera;not null;default:false" json:"is_camera"`
 	IsCheckLocation        bool                          `gorm:"column:is_check_location;not null;default:false" json:"is_check_location"`
 	Scope                  int                           `gorm:"column:scope;type:integer" json:"scope"` // Changed to integer for meters
-	Status                 variable.StatusAttendanceEnum `gorm:"column:status;type:varchar(50);not null;default:'active" json:"status"`
+	Status                 variable.StatusAttendanceEnum `gorm:"column:status;type:varchar(50);not null;default:'active'" json:"status"`
 	IsDeleted              bool                          `gorm:"column:is_deleted;default:false" json:"is_deleted"`
 	OfficeID               string                        `gorm:"column:office_id;type:varchar(50);not null" json:"office_id"`
 	CreatedBy              string                        `gorm:"column:created_by;type:varchar(50)" json:"created_by"`

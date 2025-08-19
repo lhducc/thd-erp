@@ -66,6 +66,12 @@ func (r *accountStore) UpdateAccount(ctx context.Context, id string, data *hrmmo
 		Updates(data).Error
 }
 
+func (r *accountStore) UpdateAccountTrans(tx *gorm.DB, id int64, data *hrmmodel.Account) error {
+	return tx.Table("account").
+		Where("id = ?", id).
+		Updates(data).Error
+}
+
 func (r *accountStore) DeleteAccount(ctx context.Context, id string) error {
 	return r.db.WithContext(ctx).Table("account").
 		Where("id = ?", id).

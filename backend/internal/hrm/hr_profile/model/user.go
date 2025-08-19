@@ -36,10 +36,16 @@ type Employee struct {
 	PositionID   string    `gorm:"column:position_id" json:"position_id"`
 	JobTitleID   string    `gorm:"column:job_title_id" json:"job_title_id"`
 	Status       string    `gorm:"column:status" json:"status" validate:"required,oneof=active inactive"`
-	ManagerID    string    `gorm:"column:manager;foreignKey:EmployeeID;references:employee_id" json:"manager_id"`
+	ManagerID    *string   `gorm:"column:manager" json:"manager_id"`
 	DepartmentID string    `gorm:"column:department_id" json:"department_id"`
 	CreatedDate  time.Time `gorm:"column:created_date;autoCreateTime" json:"created_date"`
 	ScheduleID   *int      `gorm:"column:schedule_id" json:"schedule_id"`
+
+	Account    *Account          `gorm:"foreignKey:AccountID;references:id" json:"-"`
+	Position   *Position         `gorm:"foreignKey:PositionID;references:position_id" json:"position,omitempty"`
+	JobTitle   *JobTitleResponse `gorm:"foreignKey:JobTitleID;references:job_title_id" json:"job_title,omitempty"`
+	Manager    *ManagerResponse  `gorm:"foreignKey:ManagerID;references:employee_id" json:"manager,omitempty"`
+	Department *Department       `gorm:"foreignKey:DepartmentID;references:department_id" json:"department,omitempty"`
 
 	Account    *Account         `gorm:"foreignKey:AccountID;references:id" json:"-"`
 	Position   *Position        `gorm:"foreignKey:PositionID;references:position_id" json:"position,omitempty"`
@@ -117,7 +123,7 @@ func ValidateEmployeeReferences(tx *gorm.DB, e Employee) error {
 			return fmt.Errorf("Không tồn tại %s: %w", e.JobTitleID, err)
 		}
 	}
-	if e.ManagerID != "" {
+	if e.ManagerID != nil {
 		var mgr Employee
 		if err := tx.First(&mgr, "employee_id = ?", e.ManagerID).Error; err != nil {
 			return fmt.Errorf("Không tồn tại %s: %w", e.ManagerID, err)

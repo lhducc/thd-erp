@@ -16,7 +16,7 @@ import (
 type EmployeeBiz interface {
 	CreateEmployeeWithAccount(ctx context.Context, employee *model.Employee, roleID string) error
 	GetUserById(id string) (model.Employee, error)
-	UpdateEmployee(ctx context.Context, id string, updatedEmployee model.Employee) error
+	UpdateEmployee(ctx context.Context, id string, updatedEmployee dto.EmployeeDTO) error
 	DeleteEmployee(id string) error
 	GetAllEmployees(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error)
 	GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error)
@@ -174,7 +174,7 @@ func (biz *EmployeeHandler) UpdateEmployee() gin.HandlerFunc {
 		idParam := c.Param("id")
 		ctx := c.Request.Context()
 
-		var data model.Employee
+		var data dto.EmployeeDTO
 		if err := c.ShouldBindJSON(&data); err != nil {
 			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
 			return

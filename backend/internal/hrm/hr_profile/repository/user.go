@@ -5,9 +5,10 @@ import (
 	"erp/backend/internal/hrm/hr_profile/model"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"log"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 type UserStore struct {
@@ -138,16 +139,8 @@ func (s *UserStore) GetAllEmployeesPagination(page, pageSize int, filters map[st
 	return employees, totalRecords, nil
 }
 
-func (s *UserStore) UpdateEmployee(tx *gorm.DB, id string, updatedEmployee model.Employee) error {
-
-	existingEmployee, err := s.GetUserById(id)
-	if err != nil {
-		return err
-	}
-
-	model.UpdateEmployeeFields(&existingEmployee, updatedEmployee)
-
-	if err := tx.Save(&existingEmployee).Error; err != nil {
+func (s *UserStore) UpdateEmployee(tx *gorm.DB, updatedEmployee model.Employee) error {
+	if err := tx.Save(&updatedEmployee).Error; err != nil {
 		return fmt.Errorf("failed to update employee: %w", err)
 	}
 

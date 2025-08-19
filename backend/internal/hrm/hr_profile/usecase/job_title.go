@@ -31,10 +31,10 @@ func NewJobTitleBiz(repo JobTitleRepo, hieRepo HierarchyLevelRepo) *jobTitleBiz 
 
 func (biz *jobTitleBiz) CreateJobTitle(context context.Context, data *model.JobTitleCreate) error {
 	data.CreatedDate = utils.GetCurrentDate()
-	check, err := biz.repo.CheckExistJobTitle(data.JobTitle)
-	if err != nil || check {
-		return err
-	}
+	//check, err := biz.repo.CheckExistJobTitle(data.JobTitle)
+	//if err != nil || check {
+	//	return err
+	//}
 
 	code, err := utils.GenerateCode("CV", 4, func() (string, error) {
 		var last model.JobTitle

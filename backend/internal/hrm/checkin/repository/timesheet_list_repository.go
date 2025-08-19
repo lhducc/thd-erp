@@ -6,8 +6,10 @@ import (
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
+	"log"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 type timesheetListRepo struct {
@@ -40,7 +42,14 @@ func (r *timesheetListRepo) GetByID(ctx context.Context, id string) (*model.Time
 		return nil, err
 	}
 	for _, timesheet := range ts.Timesheets {
-		timesheet.Employee.HierarchyLevel = timesheet.Employee.JobTitle.HierarchyLevel
+		if timesheet.Employee != nil {
+			if timesheet.Employee.JobTitle == nil {
+				log.Println("timesheet.Employee.JobTitle is nil" + timesheet.EmployeeID)
+				continue
+			} else {
+				timesheet.Employee.HierarchyLevel = timesheet.Employee.JobTitle.HierarchyLevel
+			}
+		}
 	}
 	return &ts, nil
 }

@@ -8,9 +8,11 @@ services:
       - "5173:5173"
     env_file:
       - ../.env
-#    volumes:
-#      - ../frontend:/app
-      
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0"
+
   backend:
     container_name: erp-backend
     build:

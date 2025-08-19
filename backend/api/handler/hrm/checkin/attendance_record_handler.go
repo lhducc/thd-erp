@@ -4,17 +4,18 @@ import (
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
-	"erp/backend/pkg"
+	utils "erp/backend/pkg"
 	"erp/backend/pkg/job"
 	"erp/backend/pkg/minIO"
 	"erp/backend/pkg/variable"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type AttendanceRecordHandler struct {
@@ -111,6 +112,27 @@ func extractEmployeeIDFromContext(c *gin.Context) (string, error) {
 	return employeeID, nil
 }
 
+// func (h *AttendanceRecordHandler) GetAttendanceRecordByID() gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+// 		ctx := c.Request.Context()
+// 		id := c.Param("id")
+// 		record, err := h.biz.GetAttendanceRecordByID(ctx, id)
+// 		if err != nil {
+// 			utils.ResponseMessage(c, "Attendance record not found", http.StatusNotFound, nil)
+// 			return
+// 		}
+
+// 		url, err := minIO.GeneratePresignedURL(c, minIO.AttendanceBucket, record.ImageName, 15*time.Minute)
+// 		if err != nil {
+// 			utils.ResponseMessage(c, "Failed to generate presigned URL", http.StatusInternalServerError, nil)
+// 			return
+// 		}
+// 		record.ImageURL = url
+
+// 		utils.ResponseSuccess(c, "Attendance record found", http.StatusOK, &record)
+// 	}
+// }
+
 func (h *AttendanceRecordHandler) GetAttendanceRecordByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
@@ -121,12 +143,13 @@ func (h *AttendanceRecordHandler) GetAttendanceRecordByID() gin.HandlerFunc {
 			return
 		}
 
-		url, err := minIO.GeneratePresignedURL(c, minIO.AttendanceBucket, record.ImageName, 15*time.Minute)
-		if err != nil {
-			utils.ResponseMessage(c, "Failed to generate presigned URL", http.StatusInternalServerError, nil)
-			return
+		// Construct direct object URL if ImageName exists
+		if record.ImageName != "" {
+			// Replace with your MinIO HTTPS endpoint and bucket
+			record.ImageURL = fmt.Sprintf("https://localhost:9000/%s/%s", minIO.AttendanceBucket, record.ImageName)
+		} else {
+			record.ImageURL = ""
 		}
-		record.ImageURL = url
 
 		utils.ResponseSuccess(c, "Attendance record found", http.StatusOK, &record)
 	}

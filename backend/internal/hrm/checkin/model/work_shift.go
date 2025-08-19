@@ -19,7 +19,7 @@ type WorkShifts struct {
 	BreakStart    *string              `gorm:"column:break_start;type:time" json:"break_start"`
 	BreakEnd      *string              `gorm:"column:break_end;type:time" json:"break_end"`
 	WorkHours     float64              `gorm:"column:work_hours;type:decimal(4,2)" json:"work_hours" validate:"gte=0"`
-	WorkDay       variable.WorkDayEnum `gorm:"column:work_day;type:work_day_enum;default:0" json:"work_day" validate:"required"`
+	WorkDay       variable.WorkDayEnum `gorm:"column:work_day;type:int;default:0" json:"work_day" validate:"required"`
 	CoefNormalDay float64              `gorm:"column:coef_normal_day;type:decimal(3,2);default:1.00" json:"coef_normal_day" validate:"gte=0"`
 	CoefWeekend   float64              `gorm:"column:coef_weekend;type:decimal(3,2);default:1.00" json:"coef_weekend" validate:"gte=0"`
 	CoefHoliday   float64              `gorm:"column:coef_holiday;type:decimal(3,2);default:1.00" json:"coef_holiday" validate:"gte=0"`

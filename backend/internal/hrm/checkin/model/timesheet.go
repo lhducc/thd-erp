@@ -6,7 +6,7 @@ import (
 )
 
 type TimeSheet struct {
-	TimeSheetID     int    `gorm:"column:timesheet_id;primaryKey;type:serial" json:"timesheet_id"`
+	TimeSheetID     int    `gorm:"column:timesheet_id;primaryKey;autoIncrement" json:"timesheet_id"`
 	TimeSheetListID string `gorm:"column:timesheet_list_id;type:varchar;not null;index" json:"timesheet_list_id"`
 	EmployeeID      string `gorm:"column:employee_id;type:varchar;not null;index:idx_list_emp" json:"employee_id"` // employee of Office
 	Month           int    `gorm:"column:month;type:integer;not null;index:idx_list_emp" json:"month" validate:"required,min=1,max=12"`
@@ -51,7 +51,7 @@ type TimeSheet struct {
 	// Relationships
 	Employee   *model.EmployeeInforResponse `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"employee,omitempty"`
 	Office     *model.Office                `gorm:"foreignKey:OfficeID;references:ID" json:"office,omitempty"`
-	Department *model.Department            `gorm:"foreignKey:ID;references:department_id" json:"department,omitempty"`
+	Department *model.Department            `gorm:"foreignKey:DepartmentID;references:ID" json:"department,omitempty"`
 	Details    []TimeSheetDetail            `gorm:"foreignKey:TimeSheetID;references:TimeSheetID;constraint:OnDelete:CASCADE" json:"details,omitempty"`
 	Creator    *model.ManagerResponse       `gorm:"foreignKey:CreatedBy;references:EmployeeID" json:"creator,omitempty"`
 	Updater    *model.ManagerResponse       `gorm:"foreignKey:UpdatedBy;references:EmployeeID" json:"updater,omitempty"`

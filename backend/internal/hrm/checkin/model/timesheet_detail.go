@@ -7,7 +7,7 @@ import (
 )
 
 type TimeSheetDetail struct {
-	TimeSheetDetailID int       `gorm:"column:timesheet_detail_id;primaryKey;type:serial" json:"timesheet_detail_id"`
+	TimeSheetDetailID int       `gorm:"column:timesheet_detail_id;primaryKey;autoIncrement" json:"timesheet_detail_id"`
 	TimeSheetID       int       `gorm:"column:timesheet_id;not null;uniqueIndex:idx_timesheet_date" json:"timesheet_id"`
 	Date              time.Time `gorm:"column:date;type:date;not null;uniqueIndex:idx_timesheet_date" json:"date"`
 	DayOfWeek         int       `gorm:"column:day_of_week;type:integer" json:"day_of_week"` // 1=monday, 7=sunday

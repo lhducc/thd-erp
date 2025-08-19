@@ -3,6 +3,7 @@ package repo_interface
 import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
+
 	"gorm.io/gorm"
 )
 
@@ -14,4 +15,5 @@ type TimeSheetRepoInterface interface {
 	Update(ctx context.Context, timesheet *model.TimeSheet) error
 	CreateEmployeeTimeSheet(tx *gorm.DB, timesheet *model.TimeSheet) error
 	FindByEmployeeForExport(ctx context.Context, employeeID string, month, year int) (*model.TimeSheet, error)
+	CheckExist(ctx context.Context, employeeID string, month, year int) (*model.TimeSheet, error)
 }

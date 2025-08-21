@@ -453,7 +453,20 @@ func (t *timesheetServiceImp) ManualAdjustWorkDay(
 
 	//get timesheet
 	if err != nil {
-		return errors.New("Lỗi khi lấy timesheet")
+		return errors.New("Lỗi khi lấy timesheetDetail")
+	}
+
+	timesheet, err := t.timesheetRepo.GetByID(ctx, detail.TimeSheetID)
+	if err != nil {
+		return errors.New("Lỗi khi lấy dữ liệu timesheet")
+	}
+
+	timesheetList, err := t.tsListRepo.GetByID(ctx, timesheet.TimeSheetListID)
+	if err != nil {
+		return errors.New("Lỗi khi lấy dữ liệu timesheetList")
+	}
+	if timesheetList.IsLocked {
+		return errors.New("Bảng công được chốt, không thể sửa")
 	}
 
 	// save old workday

@@ -14,6 +14,8 @@ services:
       - ../.env
     depends_on:
       - backend
+    networks:
+      - erp-network
     restart: unless-stopped
 
   backend:
@@ -37,6 +39,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    networks:
+      - erp-network
     restart: unless-stopped
   # Note: Backend must be configured to connect to Postgres and MinIO using SSL/TLS (see below)
 
@@ -62,6 +66,8 @@ services:
     restart: unless-stopped
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - erp-network
 
   postgres-replica:
     # image: ${POSTGRES_IMAGE:-postgres:15-alpine}
@@ -90,6 +96,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - erp-network
 
   minio:
     # image: ${MINIO_IMAGE:-minio/minio:latest}
@@ -114,9 +122,15 @@ services:
       # Mount SSL certificates for MinIO (must be named public.crt and private.key)
       - ../ssl/minio.crt:/root/.minio/certs/public.crt:ro
       - ../ssl/minio.key:/root/.minio/certs/private.key:ro
+    networks:
+      - erp-network
     restart: unless-stopped
 
 volumes:
   pgdata:
   pgdata_replica:
   minio_data:
+
+networks:
+  erp-network:
+    driver: bridge

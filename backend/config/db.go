@@ -7,45 +7,42 @@ import (
 	"fmt"
 	"log"
 	"time"
-
 	"gorm.io/gorm/schema"
-
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
 )
 
 var DB *gorm.DB
 
 var AllModels = []interface{}{
-	//&model.Office{},
-	//&checkin_model.EmployeeWorkshift{},
-	//&model.Position{},
-	//&model.Department{},
-	//&model.Office{},
-	//&model.JobTitle{},
-	//&checkin_model.WorkShifts{},
-	//&checkin_model.EmployeeWorkshift{},
-	//&model.EmployeeDocumentType{},
-	//&model.Employee{},
-	//&model.ContractType{},
-	//&model.Contract{},
-	//&model.DecisionType{},
-	//&model.Decision{},
-	//&model.DecisionEmployee{},
-	//&model.Insurance{},
-	//&checkin_model.WorkShifts{},
-	//&model.Allowance{},
-	//&model.Contract{},
-	//&model.ContractAllowance{},
-	//&checkin_model.AttendanceCategory{},
-	//&checkin_model.AttendanceRecord{},
-	//&checkin_model.WorkSchedule{},
-	//&checkin_model.WorkScheduleShift{},
-	//&checkin_model.WorkScheduleManager{},
-	//&checkin_model.TimeSheetList{},
-	//&checkin_model.TimeSheet{},
-	//&checkin_model.TimeSheetDetail{},
+	&model.Office{},
+	&checkin_model.EmployeeWorkshift{},
+	&model.Position{},
+	&model.Department{},
+	&model.Office{},
+	&model.JobTitle{},
+	&checkin_model.WorkShifts{},
+	&checkin_model.EmployeeWorkshift{},
+	&model.EmployeeDocumentType{},
+	&model.Employee{},
+	&model.ContractType{},
+	&model.Contract{},
+	&model.DecisionType{},
+	&model.Decision{},
+	&model.DecisionEmployee{},
+	&model.Insurance{},
+	&checkin_model.WorkShifts{},
+	&model.Allowance{},
+	&model.Contract{},
+	&model.ContractAllowance{},
+	&checkin_model.AttendanceCategory{},
+	&checkin_model.AttendanceRecord{},
+	&checkin_model.WorkSchedule{},
+	&checkin_model.WorkScheduleShift{},
+	&checkin_model.WorkScheduleManager{},
+	&checkin_model.TimeSheetList{},
+	&checkin_model.TimeSheet{},
+	&checkin_model.TimeSheetDetail{},
 }
 
 func ConnectPostgres() {
@@ -54,10 +51,10 @@ func ConnectPostgres() {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 	})
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		DisableForeignKeyConstraintWhenMigrating: true, // ⟵ TẮT tạo FK khi AutoMigrate
-		NamingStrategy:                           schema.NamingStrategy{},
-	})
+	// db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+	// 	DisableForeignKeyConstraintWhenMigrating: true, // ⟵ TẮT tạo FK khi AutoMigrate
+	// 	NamingStrategy:                           schema.NamingStrategy{},
+	// })
 	if err != nil {
 		log.Fatal("Không thể kết nối PostgreSQL:", err)
 	}
@@ -70,25 +67,26 @@ func ConnectPostgres() {
 	if errT != nil {
 		fmt.Print(errT)
 
-	// Run AutoMigrate to create tables
-	if err := AutoMigrate(db); err != nil {
-		log.Fatal("Không thể tự động migrate:", err)
+		// Run AutoMigrate to create tables
+		if err := AutoMigrate(db); err != nil {
+			log.Fatal("Không thể tự động migrate:", err)
+		}
+		CreateAllContraints(db)
+
+		// Create default roles after tables are created
+		if err := createDefaultRoles(db); err != nil {
+			log.Fatal("Không thể tạo vai trò mặc định:", err)
+		}
+
+		if err := CreateForeignKeysFromModels(db, AllModels); err != nil {
+			log.Fatalf("Không tạo được FK cho bảng: %v", err)
+		}
+
+		fmt.Println("Đã kết nối PostgreSQL!")
+		DB = db
+
+		db.Exec("DISCARD ALL")
 	}
-	CreateAllContraints(db)
-
-	// Create default roles after tables are created
-	if err := createDefaultRoles(db); err != nil {
-		log.Fatal("Không thể tạo vai trò mặc định:", err)
-	}
-
-	if err := CreateForeignKeysFromModels(db, AllModels); err != nil {
-		log.Fatalf("Không tạo được FK cho bảng: %v", err)
-	}
-
-	fmt.Println("Đã kết nối PostgreSQL!")
-	DB = db
-
-	db.Exec("DISCARD ALL")
 }
 
 // Create ENUM types for AutoMigrate
@@ -253,6 +251,12 @@ func GetDB() *gorm.DB {
 
 func AutoMigrateModels(db *gorm.DB, models []interface{}) error {
 	err := db.AutoMigrate(models...)
+	if err != nil {
+		return fmt.Errorf("migrate models lỗi: %w", err)
+	}
+	return nil
+}
+
 // AutoMigrate creates all database tables
 func AutoMigrate(db *gorm.DB) error {
 	// First pass - create tables without relationships to avoid circular dependencies
@@ -301,10 +305,6 @@ func AutoMigrate(db *gorm.DB) error {
 	}
 
 	return nil
-}
-
-func GetDB() *gorm.DB {
-	return DB
 }
 
 // Create default roles after migration

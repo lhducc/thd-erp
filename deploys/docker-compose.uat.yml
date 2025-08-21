@@ -6,7 +6,7 @@ services:
       context: ../frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=${VITE_API_URL:-https://localhost:8443/api/v1}
+        - VITE_API_URL=${VITE_API_URL:-https://localhost/api/v1}
     ports:
       - "80:80"
       - "443:443"
@@ -22,9 +22,12 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-      - "8443:8443"  # Add HTTPS port for backend
+    # Ports removed - backend only accessible through frontend reverse proxy
+    expose:
+      - "8080"
+      - "8443"
+    environment:
+      - AUTO_MIGRATE=true
     env_file:
       - ../.env
     depends_on:

@@ -7,42 +7,43 @@ import (
 	"fmt"
 	"log"
 	"time"
-	"gorm.io/gorm/schema"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 var DB *gorm.DB
 
 var AllModels = []interface{}{
-	&model.Office{},
-	&checkin_model.EmployeeWorkshift{},
-	&model.Position{},
-	&model.Department{},
-	&model.Office{},
-	&model.JobTitle{},
-	&checkin_model.WorkShifts{},
-	&checkin_model.EmployeeWorkshift{},
-	&model.EmployeeDocumentType{},
-	&model.Employee{},
-	&model.ContractType{},
-	&model.Contract{},
-	&model.DecisionType{},
-	&model.Decision{},
-	&model.DecisionEmployee{},
-	&model.Insurance{},
-	&checkin_model.WorkShifts{},
-	&model.Allowance{},
-	&model.Contract{},
-	&model.ContractAllowance{},
-	&checkin_model.AttendanceCategory{},
-	&checkin_model.AttendanceRecord{},
-	&checkin_model.WorkSchedule{},
-	&checkin_model.WorkScheduleShift{},
-	&checkin_model.WorkScheduleManager{},
-	&checkin_model.TimeSheetList{},
-	&checkin_model.TimeSheet{},
-	&checkin_model.TimeSheetDetail{},
+	// &model.Office{},
+	// &checkin_model.EmployeeWorkshift{},
+	// &model.Position{},
+	// &model.Department{},
+	// &model.Office{},
+	// &model.JobTitle{},
+	// &checkin_model.WorkShifts{},
+	// &checkin_model.EmployeeWorkshift{},
+	// &model.EmployeeDocumentType{},
+	// &model.Employee{},
+	// &model.ContractType{},
+	// &model.Contract{},
+	// &model.DecisionType{},
+	// &model.Decision{},
+	// &model.DecisionEmployee{},
+	// &model.Insurance{},
+	// &checkin_model.WorkShifts{},
+	// &model.Allowance{},
+	// &model.Contract{},
+	// &model.ContractAllowance{},
+	// &checkin_model.AttendanceCategory{},
+	// &checkin_model.AttendanceRecord{},
+	// &checkin_model.WorkSchedule{},
+	// &checkin_model.WorkScheduleShift{},
+	// &checkin_model.WorkScheduleManager{},
+	// &checkin_model.TimeSheetList{},
+	// &checkin_model.TimeSheet{},
+	// &checkin_model.TimeSheetDetail{},
 }
 
 func ConnectPostgres() {
@@ -59,7 +60,7 @@ func ConnectPostgres() {
 	if err := createEnums(db); err != nil {
 		log.Fatal("Không thể tạo enum types:", err)
 	}
-	
+
 	errT := db.AutoMigrate(AllModels...)
 	if errT != nil {
 		fmt.Print(errT)

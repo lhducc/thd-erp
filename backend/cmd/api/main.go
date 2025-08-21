@@ -26,6 +26,10 @@ func main() {
 	job.InitWorkerPool(10)
 
 	db := config.GetDB()
+	if db == nil {
+		panic("Database connection is nil - failed to connect to PostgreSQL")
+	}
+	
 	sqlDB, err := db.DB()
 	if err != nil {
 		panic("Không thể lấy sql.DB từ GORM: " + err.Error())

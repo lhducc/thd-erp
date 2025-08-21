@@ -51,10 +51,6 @@ func ConnectPostgres() {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 	})
-	// db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-	// 	DisableForeignKeyConstraintWhenMigrating: true, // ⟵ TẮT tạo FK khi AutoMigrate
-	// 	NamingStrategy:                           schema.NamingStrategy{},
-	// })
 	if err != nil {
 		log.Fatal("Không thể kết nối PostgreSQL:", err)
 	}
@@ -63,30 +59,31 @@ func ConnectPostgres() {
 	if err := createEnums(db); err != nil {
 		log.Fatal("Không thể tạo enum types:", err)
 	}
+	
 	errT := db.AutoMigrate(AllModels...)
 	if errT != nil {
 		fmt.Print(errT)
-
-		// Run AutoMigrate to create tables
-		if err := AutoMigrate(db); err != nil {
-			log.Fatal("Không thể tự động migrate:", err)
-		}
-		CreateAllContraints(db)
-
-		// Create default roles after tables are created
-		if err := createDefaultRoles(db); err != nil {
-			log.Fatal("Không thể tạo vai trò mặc định:", err)
-		}
-
-		if err := CreateForeignKeysFromModels(db, AllModels); err != nil {
-			log.Fatalf("Không tạo được FK cho bảng: %v", err)
-		}
-
-		fmt.Println("Đã kết nối PostgreSQL!")
-		DB = db
-
-		db.Exec("DISCARD ALL")
 	}
+
+	// Run AutoMigrate to create tables
+	if err := AutoMigrate(db); err != nil {
+		log.Fatal("Không thể tự động migrate:", err)
+	}
+	CreateAllContraints(db)
+
+	// Create default roles after tables are created
+	if err := createDefaultRoles(db); err != nil {
+		log.Fatal("Không thể tạo vai trò mặc định:", err)
+	}
+
+	if err := CreateForeignKeysFromModels(db, AllModels); err != nil {
+		log.Fatalf("Không tạo được FK cho bảng: %v", err)
+	}
+
+	fmt.Println("Đã kết nối PostgreSQL!")
+	DB = db
+
+	db.Exec("DISCARD ALL")
 }
 
 // Create ENUM types for AutoMigrate

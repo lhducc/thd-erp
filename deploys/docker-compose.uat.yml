@@ -62,16 +62,6 @@ services:
     restart: unless-stopped
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ../scripts/unified-db-init.sh:/docker-entrypoint-initdb.d/unified-db-init.sh:ro
-      # Mount SSL certificates for Postgres (commented out for initial setup)
-      # - ../ssl/thd.erp.com.crt:/var/lib/postgresql/server.crt:ro
-      # - ../ssl/thd.erp.com.key:/var/lib/postgresql/server.key:ro
-      # - ../ssl/rootCA.crt:/var/lib/postgresql/root.crt:ro
-      # Mount custom Postgres configuration files (commented out for initial setup)
-      # - ../postgres/postgresql.conf:/etc/postgresql/postgresql.conf
-      # - ../postgres/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
-    # You must also update postgresql.conf and pg_hba.conf to enable SSL (not shown here)
-    # SSL environment variables commented out for initial setup
 
   postgres-replica:
     # image: ${POSTGRES_IMAGE:-postgres:15-alpine}
@@ -97,7 +87,6 @@ services:
     restart: unless-stopped
     volumes:
       - pgdata_replica:/var/lib/postgresql/data
-      - ../scripts/unified-db-init.sh:/docker-entrypoint-initdb.d/unified-db-init.sh:ro
     depends_on:
       postgres:
         condition: service_healthy

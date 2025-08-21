@@ -7,10 +7,11 @@ import (
 	utils "erp/backend/pkg"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type EmployeeWorkshiftHandler struct {
@@ -241,6 +242,46 @@ func (h *EmployeeWorkshiftHandler) GetListShiftAllowRegister() gin.HandlerFunc {
 	}
 }
 
+func (h *EmployeeWorkshiftHandler) GetAllEmployeeWorkshift() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		monthstr := c.Query("month")
+		yearstr := c.Query("year")
+
+		// Parse month and year parameters
+		month, err := strconv.Atoi(monthstr)
+		if err != nil {
+			utils.ResponseMessage(c, "Invalid month parameter", http.StatusBadRequest, nil)
+			return
+		}
+
+		year, err := strconv.Atoi(yearstr)
+		if err != nil {
+			utils.ResponseMessage(c, "Invalid year parameter", http.StatusBadRequest, nil)
+			return
+		}
+
+		// Validate month and year
+		if month < 1 || month > 12 {
+			utils.ResponseMessage(c, "Month must be between 1 and 12", http.StatusBadRequest, nil)
+			return
+		}
+
+		if year < 2000 || year > 2100 {
+			utils.ResponseMessage(c, "Year must be between 2000 and 2100", http.StatusBadRequest, nil)
+			return
+		}
+
+		// Call service to get all employee workshifts for the month and year
+		result, err := h.biz.GetAllEmployeeWorkshiftsByMonthYear(c.Request.Context(), month, year)
+		if err != nil {
+			utils.ResponseMessage(c, "Failed to get employee workshifts: "+err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Get all employee workshifts successfully", http.StatusOK, result)
+	}
+}
+
 func (h *EmployeeWorkshiftHandler) AssignEmpShifts() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
@@ -265,5 +306,43 @@ func (h *EmployeeWorkshiftHandler) AssignEmpShifts() gin.HandlerFunc {
 		}
 
 		utils.ResponseMessage(c, "Assign workshift successfully", http.StatusOK, nil)
+	}
+}
+
+func (h *EmployeeWorkshiftHandler) RegisterMany() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		var req []model.EmployeeWorkshift
+		if err := c.ShouldBindJSON(&req); err != nil {
+			utils.ResponseMessage(c, "Invalid input data", http.StatusBadRequest, nil)
+			fmt.Printf("error: %s", err.Error())
+			return
+		}
+
+		role := c.GetString("role")
+		managerID := c.GetString("employeeId")
+		var empWSs []*model.EmployeeWorkshift
+		for _, empWS := range req {
+			if role == "manager" {
+				record, err := h.biz.CheckManagerPermission(ctx, managerID, empWS.EmployeeID)
+				if err != nil || errors.Is(err, gorm.ErrRecordNotFound) {
+					fmt.Printf("error: %s", err.Error())
+					utils.ResponseMessage(c, "Lỗi xác thực quyền thao tác của quản lý", http.StatusBadRequest, nil)
+					return
+				}
+				if !record.IsEditing {
+					utils.ResponseMessage(c, "Không có quyền thao tác chỉnh sửa dữ liệu", http.StatusForbidden, nil)
+				}
+			}
+			empWSs = append(empWSs, &empWS)
+		}
+
+		// CreateElementOfTimesheetList the workshift
+		if err := h.biz.RegisterMany(empWSs); err != nil {
+			utils.ResponseMessage(c, "Failed to register workshift: "+err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Register workshift successfully", http.StatusOK, nil)
 	}
 }

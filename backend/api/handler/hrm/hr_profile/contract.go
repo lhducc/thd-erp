@@ -105,6 +105,7 @@ func (h *ContractHandler) GetContract() gin.HandlerFunc {
 					},
 				},
 			},
+			ContractTypeObj: *result.ContractType,
 		}
 		utils.ResponseMessage(c, errors.MsgListData, http.StatusOK, []model.ContractResponse{res})
 	}

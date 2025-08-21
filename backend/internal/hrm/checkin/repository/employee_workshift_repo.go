@@ -7,8 +7,9 @@ import (
 	utils "erp/backend/pkg/transaction"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type employeeWorkShiftRepo struct {
@@ -32,6 +33,11 @@ func (r *employeeWorkShiftRepo) GetAll() ([]model.EmployeeWorkshift, error) {
 
 func (r *employeeWorkShiftRepo) Save(assign *model.EmployeeWorkshift) error {
 	result := r.db.Save(assign)
+	return result.Error
+}
+
+func (r *employeeWorkShiftRepo) SaveMany(assigns []*model.EmployeeWorkshift) error {
+	result := r.db.Save(&assigns)
 	return result.Error
 }
 
@@ -174,4 +180,21 @@ func (r *employeeWorkShiftRepo) CheckShiftConflict(ctx context.Context, employee
 		Count(&count).Error
 
 	return count > 0, err
+}
+
+func (r *employeeWorkShiftRepo) GetAllEmployeeWorkShiftsByMonthYear(ctx context.Context, startDate, endDate time.Time) ([]model.EmployeeWorkshift, error) {
+	var workshifts []model.EmployeeWorkshift
+
+	err := r.db.WithContext(ctx).
+		Where("date BETWEEN ? AND ?", startDate, endDate).
+		//Preload("Employee").
+		Preload("WorkShift").
+		Order("employee_id, date").
+		Find(&workshifts).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get employee workshifts: %w", err)
+	}
+
+	return workshifts, nil
 }

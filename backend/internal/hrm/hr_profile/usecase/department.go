@@ -14,7 +14,7 @@ type DepartmentRepo interface {
 	UpdateDepartment(ctx context.Context, id string, data *model.DepartmentCreate) error
 	DeleteDepartment(ctx context.Context, id string) error
 	GetLastDepartmentByCode(ctx context.Context, office *model.Department) error
-	GetDepartmentByOfficeID(officeID string) (model.Department, error)
+	GetDepartmentByOfficeID(officeID string) ([]model.Department, error)
 }
 
 type departmentBiz struct {
@@ -78,10 +78,10 @@ func (biz *departmentBiz) DeleteDepartment(ctx context.Context, id string) error
 	return nil
 }
 
-func (biz *departmentBiz) GetDepartmentByOfficeID(officeID string) (*model.Department, error) {
+func (biz *departmentBiz) GetDepartmentByOfficeID(officeID string) ([]model.Department, error) {
 	departments, err := biz.repo.GetDepartmentByOfficeID(officeID)
 	if err != nil {
 		return nil, err
 	}
-	return &departments, nil
+	return departments, nil
 }

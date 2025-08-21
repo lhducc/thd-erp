@@ -183,7 +183,7 @@ const ApproveAttendanceDetailPage = () => {
             id: "image",
             header: "Hình ảnh",
             cell: ({row}) => {
-                if (!row.original.image_URL) return null;
+                // if (!row.original.image_URL) return null;
                 return (
                     <button
                         onClick={() => {
@@ -221,7 +221,7 @@ const ApproveAttendanceDetailPage = () => {
                     setSelectedItem(undefined);
                 }
             }}>
-                <DialogContent className="sm:max-w-3xl">
+                <DialogContent className="sm:max-w-5xl">
                     <DialogHeader>
                         <DialogTitle>Phê duyệt chấm công</DialogTitle>
                     </DialogHeader>

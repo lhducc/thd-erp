@@ -13,7 +13,7 @@ export const getAllTimesheets = async (params?: {
 
 export const getTimesheetById = async (id: string):Promise<TimesheetInfor[]> => {
     const response = await api.get(`/timesheet-list/${id}`);
-    return response.data.data.timesheets;
+    return response.data.data;
 }
 
 export const createTimesheetApi = async (payload: CreateTimesheet) => {

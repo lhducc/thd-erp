@@ -30,10 +30,16 @@ export type Employee = {
     address: string;
     account_id: string | null;
     position_id: string;
+    role_id: string;
     position: Position;
     job_title_id: string;
     status: 'active' | 'inactive';
     manager_id: string;
+    role: {
+        id: string;
+        role_name: string;
+    }
+    schedule_id: number;
     department_id: string;
     created_date: string;
     department: Department;

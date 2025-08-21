@@ -6,6 +6,7 @@ import (
 	"erp/backend/internal/hrm/hr_profile/store"
 	"errors"
 	"fmt"
+
 	"gorm.io/gorm"
 )
 
@@ -37,6 +38,7 @@ func (r *ContractStore) GetContract(ctx context.Context, id string) (*hrmmodel.C
 		Preload("Employee.Department").
 		Preload("Employee.Department.Office").
 		Preload("Allowances").
+		Preload("ContractType").
 		Where("contract_id = ? AND is_deleted = false", id).
 		First(&contract).Error; err != nil {
 		return nil, err
@@ -47,6 +49,7 @@ func (r *ContractStore) GetContractByEmployeeID(ctx context.Context, employeeId 
 	var contracts []hrmmodel.Contract
 	if err := r.AddDefaultScope(r.db.WithContext(ctx)).
 		Preload("ContractType").
+		Preload("Allowances").
 		Where("employee_id = ? AND is_deleted = false", employeeId).
 		Find(&contracts).Error; err != nil {
 		return nil, err

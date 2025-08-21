@@ -16,6 +16,7 @@ import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/
 import {Input} from "@/components/ui/input";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Loader2, Plus} from "lucide-react";
+import {useDepartment} from "@/query/useDepartment.ts";
 
 const contractFormSchema = z.object({
     contract_type: z.string().min(1, "Vui lòng chọn loại hợp đồng"),
@@ -69,6 +70,8 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
         queryFn: getAllAllowancesApi,
         enabled: open,
     });
+
+    const {data: departments = [], isPending: pendingDepartment} = useDepartment();
 
     // Fetch employees
     const {data: employees = [], isPending: pendingEmployees} = useQuery({
@@ -233,7 +236,7 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
                     </div>
                 </DialogHeader>
 
-                {pendingAllowances || pendingContractTypes || pendingEmployees ? (
+                {pendingAllowances || pendingContractTypes || pendingEmployees || pendingDepartment ? (
                     <Loading/>
                 ) : (
                 <Form {...form}>
@@ -389,10 +392,19 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
                                 control={form.control}
                                 name="department"
                                 render={({field}) => (
-                                    <FormItem>
+                                    <FormItem className="h-fit">
                                         <FormLabel>Phòng ban</FormLabel>
                                         <FormControl>
-                                            <Input className={`cursor-default rounded-lg h-[50px]`} {...field} readOnly/>
+                                            <select
+                                                {...field}
+                                                className="w-full p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                            >
+                                                <option value="">Chọn vị trí</option>
+                                                {departments?.map((department) => {
+                                                    return <option
+                                                        value={department.department_id}>{department.department_name}</option>
+                                                })}
+                                            </select>
                                         </FormControl>
                                         <FormMessage/>
                                     </FormItem>

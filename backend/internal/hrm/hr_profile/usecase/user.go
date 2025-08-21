@@ -34,11 +34,13 @@ type EmployeeRepo interface {
 	GetEmployeesByOfficeID(ctx context.Context, officeID string) ([]*model.Employee, error)
 	CheckExistEmployeeID(employeeID string) (bool, error)
 	GetUserByRoleID(roleID string) ([]model.ManagerResponse, error)
+	UpdateStatusEmployee(employeeID, statusChange string) error
 }
 
 type AccountRepo interface {
 	CreateAccount(tx *gorm.DB, employee *model.Employee, hashedPassword, roleID string) (*model.Account, error)
 	GetAccount(ctx context.Context, id int64) (*model.Account, error)
+	GetAccountNoCtx(id int64) (*model.Account, error)
 	GetAllAccount(ctx context.Context) ([]model.Account, error)
 	UpdateAccount(ctx context.Context, id string, data *model.Account) error
 	UpdateAccountTrans(tx *gorm.DB, id int64, data *model.Account) error
@@ -155,26 +157,55 @@ func (s *EmployeeBiz) CreateEmployeeWithAccount(ctx context.Context, employee *m
 	})
 }
 
-func (biz *EmployeeBiz) GetUserById(id string) (model.Employee, error) {
+func (biz *EmployeeBiz) GetUserById(id string) (*dto.EmployeeResponse, error) {
 	if id == "" {
-		return model.Employee{}, errors.New("invalid employee ID")
+		return nil, errors.New("invalid employee ID")
 	}
 
 	employee, err := biz.repo.GetUserById(id)
 	if err != nil {
-		return model.Employee{}, fmt.Errorf("failed to get employee: %w", err)
+		return nil, fmt.Errorf("failed to get employee: %w", err)
 	}
 
-	return employee, nil
+	var role model.Role
+	if employee.AccountID != nil {
+		account, err := biz.account.GetAccountNoCtx(*employee.AccountID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get account: %w", err)
+		}
+		if account != nil && account.Role != nil {
+			role = *account.Role
+		}
+	}
+
+	employeeInfo := dto.EmployeeResponse{
+		Employee: &employee,
+		Role:     &role,
+	}
+	return &employeeInfo, nil
 }
 
-func (biz *EmployeeBiz) GetAllEmployees(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error) {
+func (biz *EmployeeBiz) GetAllEmployees(page, pageSize int, filters map[string]interface{}) ([]dto.EmployeeResponse, int64, error) {
 	employees, totalRecords, err := biz.repo.GetAllEmployeesPagination(page, pageSize, filters)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get all employees: %w", err)
 	}
 
-	return employees, totalRecords, nil
+	var employeeInfs []dto.EmployeeResponse
+	for _, employee := range employees {
+		var employeeInf dto.EmployeeResponse
+		acc, err := biz.account.GetAccountNoCtx(*employee.AccountID)
+		employeeInf.Employee = &employee
+		if err != nil {
+			return nil, 0, err
+		}
+		if acc != nil && acc.Role != nil {
+			employeeInf.Role = acc.Role
+		}
+		employeeInfs = append(employeeInfs, employeeInf)
+	}
+
+	return employeeInfs, totalRecords, nil
 }
 
 func (biz *EmployeeBiz) GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error) {
@@ -191,7 +222,7 @@ func (biz *EmployeeBiz) UpdateEmployee(ctx context.Context, id string, updatedEm
 		return errors.New("invalid employee ID")
 	}
 
-	emp, err := biz.GetUserById(id)
+	emp, err := biz.repo.GetUserById(id)
 	if err != nil {
 		return err
 	}
@@ -345,4 +376,16 @@ func (e *EmployeeBiz) ExportEmployeeTest(selectedFields []string) ([]byte, strin
 
 func (e *EmployeeBiz) GetUserByRoleID(roleID string) ([]model.ManagerResponse, error) {
 	return e.repo.GetUserByRoleID(roleID)
+}
+
+func (e *EmployeeBiz) UpdateStatus(employeeID, statusChange string) error {
+	//check exist
+	exist, err := e.repo.CheckExists(employeeID)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		return fmt.Errorf("not_found")
+	}
+	return e.repo.UpdateStatusEmployee(employeeID, statusChange)
 }

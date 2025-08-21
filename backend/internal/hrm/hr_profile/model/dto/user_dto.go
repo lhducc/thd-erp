@@ -38,3 +38,8 @@ func (dto *EmployeeDTO) ConvertToEmployeeModel() *model.Employee {
 		ScheduleID:   dto.ScheduleID,
 	}
 }
+
+type EmployeeResponse struct {
+	Employee *model.Employee `json:"employee"`
+	Role     *model.Role     `json:"role"`
+}

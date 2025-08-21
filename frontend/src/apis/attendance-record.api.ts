@@ -12,7 +12,6 @@ export const createAttendanceRecordByAdminId = async (payload: CreateManualRecor
 }
 
 export const createAttendanceRecord = async (payload): Promise<AttendanceRecord> => {
-    console.log(payload);
     const response = await api.post('/attendance-record', payload, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });

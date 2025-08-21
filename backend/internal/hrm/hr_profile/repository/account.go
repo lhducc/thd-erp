@@ -41,13 +41,24 @@ func (s *accountStore) CreateAccount(tx *gorm.DB, employee *hrmmodel.Employee, h
 }
 
 func (r *accountStore) GetAccount(ctx context.Context, id int64) (*hrmmodel.Account, error) {
-	var contract hrmmodel.Account
+	var account hrmmodel.Account
 	if err := r.db.WithContext(ctx).Table("account").
 		Where("id = ?", id).
-		First(&contract).Error; err != nil {
+		First(&account).Error; err != nil {
 		return nil, err
 	}
-	return &contract, nil
+	return &account, nil
+}
+
+func (r *accountStore) GetAccountNoCtx(id int64) (*hrmmodel.Account, error) {
+	var account hrmmodel.Account
+	if err := r.db.Table("account").
+		Preload("Role").
+		Where("id = ?", id).
+		First(&account).Error; err != nil {
+		return nil, err
+	}
+	return &account, nil
 }
 
 func (r *accountStore) GetAllAccount(ctx context.Context) ([]hrmmodel.Account, error) {

@@ -135,9 +135,9 @@ const SettingWorkScheduleRegister = () => {
 
     const { mutateAsync: assign, isPending: pendingAssign } = useMutation({
         mutationFn: (params: AssignParams) => assignWorkshiftSchedule(params.id, params.payload.managers),
-        onSuccess: () => {
+        onSuccess: async () => {
             toast.success("Cấu hình thành công");
-            queryClient.invalidateQueries({ queryKey: ["workScheduleRegisterById", id] })
+            await queryClient.invalidateQueries({queryKey: ["workScheduleRegisterById", "workScheduleRegister", id]})
             navigate("/setup-work-schedule-register");
         },
         onError: (error) => {

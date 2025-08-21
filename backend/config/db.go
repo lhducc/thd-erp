@@ -1,7 +1,6 @@
 package config
 
 import (
-	checkin_model "erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/hr_profile/model"
 	"fmt"
 	"log"
@@ -15,34 +14,34 @@ import (
 var DB *gorm.DB
 
 var AllModels = []interface{}{
-	&model.Office{},
-	&checkin_model.EmployeeWorkshift{},
-	&model.Position{},
-	&model.Department{},
-	&model.Office{},
-	&model.JobTitle{},
-	&checkin_model.WorkShifts{},
-	&checkin_model.EmployeeWorkshift{},
-	&model.EmployeeDocumentType{},
-	&model.Employee{},
-	&model.ContractType{},
-	&model.Contract{},
-	&model.DecisionType{},
-	&model.Decision{},
-	&model.DecisionEmployee{},
-	&model.Insurance{},
-	&checkin_model.WorkShifts{},
-	&model.Allowance{},
-	&model.Contract{},
-	&model.ContractAllowance{},
-	&checkin_model.AttendanceCategory{},
-	&checkin_model.AttendanceRecord{},
-	&checkin_model.WorkSchedule{},
-	&checkin_model.WorkScheduleShift{},
-	&checkin_model.WorkScheduleManager{},
-	&checkin_model.TimeSheetList{},
-	&checkin_model.TimeSheet{},
-	&checkin_model.TimeSheetDetail{},
+	//&model.Office{},
+	//&checkin_model.EmployeeWorkshift{},
+	//&model.Position{},
+	//&model.Department{},
+	//&model.Office{},
+	//&model.JobTitle{},
+	//&checkin_model.WorkShifts{},
+	//&checkin_model.EmployeeWorkshift{},
+	//&model.EmployeeDocumentType{},
+	//&model.Employee{},
+	//&model.ContractType{},
+	//&model.Contract{},
+	//&model.DecisionType{},
+	//&model.Decision{},
+	//&model.DecisionEmployee{},
+	//&model.Insurance{},
+	//&checkin_model.WorkShifts{},
+	//&model.Allowance{},
+	//&model.Contract{},
+	//&model.ContractAllowance{},
+	//&checkin_model.AttendanceCategory{},
+	//&checkin_model.AttendanceRecord{},
+	//&checkin_model.WorkSchedule{},
+	//&checkin_model.WorkScheduleShift{},
+	//&checkin_model.WorkScheduleManager{},
+	//&checkin_model.TimeSheetList{},
+	//&checkin_model.TimeSheet{},
+	//&checkin_model.TimeSheetDetail{},
 }
 
 func ConnectPostgres() {
@@ -90,11 +89,8 @@ func createEnums(db *gorm.DB) error {
 		-- enum contract_group_enum
 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'contract_group_enum') THEN
 			CREATE TYPE contract_group_enum AS ENUM (
-				'Hợp đồng xác định thời hạn',
-				'Hợp đồng không xác định thời hạn',
 				'Hợp đồng thử việc',
-				'Hợp đồng đào tạo nghề',
-				'Hợp đồng dịch vụ'
+				'Hợp đồng chính thức'
 			);
 		END IF;
 
@@ -130,19 +126,6 @@ func createEnums(db *gorm.DB) error {
 			CREATE TYPE decision_condition_enum AS ENUM (
 				'Chưa hiệu lực',
 				'Đang hiệu lực'
-			);
-		END IF;
-
-		-- enum decision_group_enum
-		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'decision_group_enum') THEN
-			CREATE TYPE decision_group_enum AS ENUM (
-				'Hình thức khen thưởng',
-				'Hình thức kỷ luật',
-				'Lý do điều chuyển',
-				'Lý do tiếp nhận',
-				'Lý do bổ nhiệm',
-				'Lý do miễn nhiệm',
-				'Lý do chấm dứt HĐLĐ'
 			);
 		END IF;
 

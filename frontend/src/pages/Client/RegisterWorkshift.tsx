@@ -73,18 +73,15 @@ const RegisterWorkshift = () => {
 
     const { currentUser } = useAuth();
 
-    // API Queries
     const {
         data: employeeWorkshifts,
-        isPending: pendingEmployeeWorkshifts,
     } = useQuery({
-        queryKey: ["employeeWorkshifts", currentUser?.user_id],
-        queryFn: () => getEmployeeWorkshiftsApi(currentUser?.user_id || ''),
+        queryKey: ["employeeWorkshifts", currentUser?.user_id, selectedMonth, selectedYear],
+        queryFn: () => getEmployeeWorkshiftsApi(selectedMonth + 1, selectedYear),
     });
 
     const {
         data: allWorkshifts,
-        isPending: pendingWorkshifts,
     } = useQuery({
         queryKey: ["workshifts"],
         queryFn: getAllWorkshiftApi,

@@ -19,4 +19,6 @@ type EmployeeWorkShiftRepo interface {
 	GetByID(id string) (*model.EmployeeWorkshift, error)
 	AssignmentShift(ctx context.Context, assigns []model.EmployeeWorkshift, scheduleID []int) error
 	CheckShiftConflict(ctx context.Context, employeeID string, workshiftID string, date time.Time) (bool, error)
+	SaveMany(assigns []*model.EmployeeWorkshift) error
+	GetAllEmployeeWorkShiftsByMonthYear(ctx context.Context, startDate, endDate time.Time) ([]model.EmployeeWorkshift, error)
 }

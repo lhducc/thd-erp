@@ -70,6 +70,31 @@ func (s *employeeWorkshiftService) Register(ctx context.Context, employeeID stri
 	return nil
 }
 
+func (s *employeeWorkshiftService) RegisterMany(assigns []*model.EmployeeWorkshift) error {
+	if len(assigns) == 0 {
+		return fmt.Errorf("no workshift assignments provided")
+	}
+
+	var newAssigns []*model.EmployeeWorkshift
+
+	for _, assign := range assigns {
+		existing := s.repo.IsExisting(assign.EmployeeID, assign.WorkShiftID, assign.Date)
+		if !existing {
+			newAssigns = append(newAssigns, assign)
+		}
+	}
+
+	if len(newAssigns) == 0 {
+		return nil
+	}
+
+	if err := s.repo.SaveMany(newAssigns); err != nil {
+		return fmt.Errorf("failed to save workshift assignments: %w", err)
+	}
+
+	return nil
+}
+
 func (s *employeeWorkshiftService) Delete(id string) error {
 	return s.repo.Delete(id)
 }
@@ -167,4 +192,14 @@ func (s *employeeWorkshiftService) Assign(ctx context.Context, empWorkshifts []m
 	}
 
 	return nil
+}
+
+func (s *employeeWorkshiftService) GetAllEmployeeWorkshiftsByMonthYear(ctx context.Context, month, year int) ([]model.EmployeeWorkshift, error) {
+	// Ngày bắt đầu là ngày 1 của tháng
+	startDate := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+
+	// Ngày kết thúc là ngày cuối tháng
+	endDate := startDate.AddDate(0, 1, -1)
+
+	return s.repo.GetAllEmployeeWorkShiftsByMonthYear(ctx, startDate, endDate)
 }

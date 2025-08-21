@@ -14,7 +14,8 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 import {Switch} from "@/components/ui/switch.tsx";
 import {TimeOfDayEnum} from "@/types/workshift.ts";
 import {createWorkshiftApi, updateWorkshiftApi} from "@/apis/workshift.api.ts";
-import {DialogDescription} from "@radix-ui/react-dialog";
+import Asterisk from "@/components/ui/Asterisk.tsx";
+import axios from "axios";
 
 type Props = {
     editBtn?: React.ReactNode;
@@ -24,6 +25,7 @@ type Props = {
 };
 
 export const formSchema = z.object({
+    workshift_id: z.string().min(1, "Mã ca làm việc là bắt buộc"),
     workshift_name: z.string().min(1, "Tên ca làm việc là bắt buộc"),
     start_time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/, "Định dạng thời gian không hợp lệ (HH:mm:ss)"),
     end_time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/, "Định dạng thời gian không hợp lệ (HH:mm:ss)"),
@@ -35,7 +37,7 @@ export const formSchema = z.object({
     break_start: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/, "Định dạng thời gian không hợp lệ (HH:mm:ss)").optional().or(z.literal("")),
     break_end: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/, "Định dạng thời gian không hợp lệ (HH:mm:ss)").optional().or(z.literal("")),
     work_hours: z.number().min(0.1, "Số giờ làm việc phải lớn hơn 0"),
-    work_day: z.number().min(0),
+    work_day: z.string().min(1, "Vui lòng chọn ngày công"),
     coef_normal_day: z.number().min(0.1, "Hệ số phải lớn hơn 0"),
     coef_weekend: z.number().min(0.1, "Hệ số phải lớn hơn 0"),
     coef_holiday: z.number().min(0.1, "Hệ số phải lớn hơn 0"),
@@ -60,6 +62,7 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            workshift_id: data?.workshift_id || "",
             workshift_name: data?.workshift_name || "",
             start_time: data?.start_time || "08:00:00",
             end_time: data?.end_time || "17:00:00",
@@ -71,7 +74,7 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
             break_start: data?.break_start || "",
             break_end: data?.break_end || "",
             work_hours: data?.work_hours || 8,
-            work_day: data?.work_day || 1,
+            work_day: data?.work_day.toString() || "1",
             coef_normal_day: data?.coef_normal_day || 1.0,
             coef_weekend: data?.coef_weekend || 1.5,
             coef_holiday: data?.coef_holiday || 2.0,
@@ -92,7 +95,11 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                 form.reset();
             },
             onError: (error) => {
-                toast.error(error.message);
+                if (axios.isAxiosError(error)) {
+                    toast.error(error?.response.data.message);
+                } else {
+                    toast.error(error.message);
+                }
             },
         });
 
@@ -107,7 +114,11 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                 form.reset();
             },
             onError: (error) => {
-                toast.error(error.message);
+                if (axios.isAxiosError(error)) {
+                    toast.error(error?.response.data.message);
+                } else {
+                    toast.error(error.message);
+                }
             },
         });
 
@@ -122,7 +133,7 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
 
         const payload: WorkShiftRequest = {
             ...values,
-            work_day: Number(values.work_day) || 1,
+            work_day: Number(values.work_day) || "1",
             checkin_from: values.checkin_from || null,
             checkin_to: values.checkin_to || null,
             checkout_from: values.checkout_from || null,
@@ -151,7 +162,12 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
     );
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(isOpen) => {
+            setOpen(isOpen);
+            if (!isOpen) {
+                form.reset();
+            }
+        }}>
             <DialogTrigger asChild>
                 {editBtn ? (
                     editBtn
@@ -171,9 +187,6 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                     ) : (
                         <DialogTitle>Tạo ca làm việc</DialogTitle>
                     )}
-                    <DialogDescription>
-                        This is a description of the dialog content.
-                    </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -188,7 +201,24 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                                         name="workshift_name"
                                         render={({field}) => (
                                             <FormItem>
-                                                <FormLabel>Tên ca</FormLabel>
+                                                <FormLabel>Tên ca <Asterisk /></FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Nhập tên ca làm việc" {...field} />
+                                                </FormControl>
+                                                <FormMessage/>
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+                                {type === "view" ? (
+                                    <ReadOnlyField label="Mã ca" value={form.watch('workshift_id')} />
+                                ) : (
+                                    <FormField
+                                        control={form.control}
+                                        name="workshift_id"
+                                        render={({field}) => (
+                                            <FormItem>
+                                                <FormLabel>Mã ca <Asterisk /></FormLabel>
                                                 <FormControl>
                                                     <Input placeholder="Nhập tên ca làm việc" {...field} />
                                                 </FormControl>
@@ -198,52 +228,52 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                                     />
                                 )}
 
-                                {type === "view" ? (
-                                    <ReadOnlyField
-                                        label="Buổi làm việc"
-                                        value={form.watch('time_of_day') === TimeOfDayEnum.Morning ? 'Buổi sáng' :
-                                            form.watch('time_of_day') === TimeOfDayEnum.Afternoon ? 'Buổi chiều' :
-                                                form.watch('time_of_day') === TimeOfDayEnum.Evening ? 'Buổi tối' : 'Cả ngày'}
-                                    />
-                                ) : (
-                                    <FormField
-                                        control={form.control}
-                                        name="time_of_day"
-                                        render={({field}) => (
-                                            <FormItem>
-                                                <FormLabel>Buổi làm việc</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Chọn buổi làm việc"/>
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value={TimeOfDayEnum.Morning}>Buổi sáng</SelectItem>
-                                                        <SelectItem value={TimeOfDayEnum.Afternoon}>Buổi chiều</SelectItem>
-                                                        <SelectItem value={TimeOfDayEnum.Evening}>Buổi tối</SelectItem>
-                                                        <SelectItem value={TimeOfDayEnum.AllDay}>Cả ngày</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage/>
-                                            </FormItem>
-                                        )}
-                                    />
-                                )}
+                            {/*    {type === "view" ? (*/}
+                            {/*        <ReadOnlyField*/}
+                            {/*            label="Buổi làm việc"*/}
+                            {/*            value={form.watch('time_of_day') === TimeOfDayEnum.Morning ? 'Buổi sáng' :*/}
+                            {/*                form.watch('time_of_day') === TimeOfDayEnum.Afternoon ? 'Buổi chiều' :*/}
+                            {/*                    form.watch('time_of_day') === TimeOfDayEnum.Evening ? 'Buổi tối' : 'Cả ngày'}*/}
+                            {/*        />*/}
+                            {/*    ) : (*/}
+                            {/*        <FormField*/}
+                            {/*            control={form.control}*/}
+                            {/*            name="time_of_day"*/}
+                            {/*            render={({field}) => (*/}
+                            {/*                <FormItem>*/}
+                            {/*                    <FormLabel>Buổi làm việc</FormLabel>*/}
+                            {/*                    <Select onValueChange={field.onChange} value={field.value}>*/}
+                            {/*                        <FormControl>*/}
+                            {/*                            <SelectTrigger>*/}
+                            {/*                                <SelectValue placeholder="Chọn buổi làm việc"/>*/}
+                            {/*                            </SelectTrigger>*/}
+                            {/*                        </FormControl>*/}
+                            {/*                        <SelectContent>*/}
+                            {/*                            <SelectItem value={TimeOfDayEnum.Morning}>Buổi sáng</SelectItem>*/}
+                            {/*                            <SelectItem value={TimeOfDayEnum.Afternoon}>Buổi chiều</SelectItem>*/}
+                            {/*                            <SelectItem value={TimeOfDayEnum.Evening}>Buổi tối</SelectItem>*/}
+                            {/*                            <SelectItem value={TimeOfDayEnum.AllDay}>Cả ngày</SelectItem>*/}
+                            {/*                        </SelectContent>*/}
+                            {/*                    </Select>*/}
+                            {/*                    <FormMessage/>*/}
+                            {/*                </FormItem>*/}
+                            {/*            )}*/}
+                            {/*        />*/}
+                            {/*    )}*/}
                             </div>
 
                             <div className={`flex flex-col gap-2`}>
-                                {
-                                    type === "view" ? (
-                                        <div>
-                                            <p>Mã ca</p>
-                                            <p className={`border border-blue-300 rounded-lg p-2 w-fit min-w-20`}>{data?.workshift_id}</p>
-                                        </div>
-                                    ) : null
-                                }
+                                {/*{*/}
+                                {/*    type === "view" ? (*/}
+                                {/*        <div>*/}
+                                {/*            <p>Mã ca</p>*/}
+                                {/*            <p className={`border border-blue-300 rounded-lg p-2 w-fit min-w-20`}>{data?.workshift_id}</p>*/}
+                                {/*        </div>*/}
+                                {/*    ) : null*/}
+                                {/*}*/}
 
                                 <div>
-                                    Ngày có hiệu lực
+                                    Ngày có hiệu lực <Asterisk />
                                     {/* Date Settings */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {type === "view" ? (
@@ -311,7 +341,7 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                                         name="start_time"
                                         render={({field}) => (
                                             <FormItem className={`w-full`}>
-                                                <FormLabel>Giờ bắt đầu</FormLabel>
+                                                <FormLabel>Giờ bắt đầu <Asterisk /></FormLabel>
                                                 <FormControl>
                                                     <Input type="time" step="1" {...field} />
                                                 </FormControl>
@@ -367,7 +397,7 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                                         name="end_time"
                                         render={({field}) => (
                                             <FormItem className={`w-full`}>
-                                                <FormLabel>Giờ kết thúc</FormLabel>
+                                                <FormLabel>Giờ kết thúc <Asterisk /></FormLabel>
                                                 <FormControl>
                                                     <Input className={`w-full`} type="time" step="1" {...field} />
                                                 </FormControl>
@@ -461,7 +491,7 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                                                     name="break_start"
                                                     render={({field}) => (
                                                         <FormItem>
-                                                            <FormLabel>Giờ bắt đầu nghỉ</FormLabel>
+                                                            <FormLabel>Giờ bắt đầu nghỉ <Asterisk /></FormLabel>
                                                             <FormControl>
                                                                 <Input type="time" step="1" {...field} />
                                                             </FormControl>
@@ -475,7 +505,7 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                                                     name="break_end"
                                                     render={({field}) => (
                                                         <FormItem>
-                                                            <FormLabel>Giờ kết thúc nghỉ</FormLabel>
+                                                            <FormLabel>Giờ kết thúc nghỉ <Asterisk /></FormLabel>
                                                             <FormControl>
                                                                 <Input type="time" step="1" {...field} />
                                                             </FormControl>
@@ -499,17 +529,17 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                                     name="work_day"
                                     render={({field}) => (
                                         <FormItem>
-                                            <FormLabel>Ngày công</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormLabel>Ngày công <Asterisk /></FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value.toString()}>
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Ngày công"/>
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value={1}>1</SelectItem>
-                                                    <SelectItem value={0.5}>0.5</SelectItem>
-                                                    <SelectItem value={0}>0</SelectItem>
+                                                    <SelectItem value={"1"}>1</SelectItem>
+                                                    <SelectItem value={"0.5"}>0.5</SelectItem>
+                                                    <SelectItem value={"0"}>0</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage/>
@@ -526,7 +556,7 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                                     name="work_hours"
                                     render={({field}) => (
                                         <FormItem>
-                                            <FormLabel>Giờ công</FormLabel>
+                                            <FormLabel>Giờ công <Asterisk /></FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
@@ -574,7 +604,7 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                                     name="coef_weekend"
                                     render={({field}) => (
                                         <FormItem>
-                                            <FormLabel>Hệ số cuối tuần</FormLabel>
+                                            <FormLabel>Hệ số cuối tuần <Asterisk /></FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
@@ -598,7 +628,7 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                                     name="coef_holiday"
                                     render={({field}) => (
                                         <FormItem>
-                                            <FormLabel>Hệ số ngày lễ</FormLabel>
+                                            <FormLabel>Hệ số ngày lễ <Asterisk /></FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"

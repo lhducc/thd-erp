@@ -12,7 +12,7 @@ type Contract struct {
 	Condition      string        `gorm:"type:condition_enum;column:condition" json:"condition"`
 	CreatedDate    time.Time     `gorm:"column:created_date" json:"created_date"`
 	IsDeleted      bool          `gorm:"column:is_deleted" json:"is_deleted"`
-	ContractTypeId string        `gorm:"type:varchar(6);column:contract_type_id" json:"contract_type"`
+	ContractTypeId string        `gorm:"type:varchar;column:contract_type_id" json:"contract_type"`
 	ContractType   *ContractType `gorm:"foreignKey:ContractTypeId;references:ContractTypeID" json:"contract_type_info,omitempty"`
 	ApproveStatus  string        `gorm:"type:approve_status_enum;column:approve_status" json:"approve_status"`
 	EmployeeID     string        `gorm:"type:varchar(8);column:employee_id" json:"employee_id"`
@@ -51,18 +51,19 @@ type ContractCreate struct {
 func (ContractCreate) TableName() string { return "contract" }
 
 type ContractResponse struct {
-	ContractID    string         `json:"contract_id"`
-	EffectiveDate time.Time      `json:"effective_date"`
-	ExpiredDate   time.Time      `json:"expired_date"`
-	SignDate      time.Time      `json:"sign_date"`
-	Note          string         `json:"note"`
-	AttachedFile  string         `json:"attached_file"`
-	Condition     string         `json:"condition"`
-	CreatedDate   time.Time      `json:"created_date"`
-	ContractType  string         `json:"contract_type"`
-	ApproveStatus string         `gorm:"column:approve_status" json:"approve_status"`
-	Employee      EmployeeSimple `json:"employee"`
-	Allowances    []*Allowance   `json:"allowances"`
+	ContractID      string         `json:"contract_id"`
+	EffectiveDate   time.Time      `json:"effective_date"`
+	ExpiredDate     time.Time      `json:"expired_date"`
+	SignDate        time.Time      `json:"sign_date"`
+	Note            string         `json:"note"`
+	AttachedFile    string         `json:"attached_file"`
+	Condition       string         `json:"condition"`
+	CreatedDate     time.Time      `json:"created_date"`
+	ContractType    string         `json:"contract_type"`
+	ApproveStatus   string         `gorm:"column:approve_status" json:"approve_status"`
+	Employee        EmployeeSimple `json:"employee"`
+	Allowances      []*Allowance   `json:"allowances"`
+	ContractTypeObj ContractType   `json:"contract_type_obj"`
 }
 
 type EmployeeSimple struct {
@@ -91,13 +92,19 @@ type ContractBasicInfo struct {
 
 func ConvertToBasicContracts(contracts []Contract) []ContractBasicInfo {
 	var result []ContractBasicInfo
+	var contactType ContractType
+	contactType.ContractTypeName = ""
 	for _, c := range contracts {
-		result = append(result, ContractBasicInfo{
-			ContractID:   c.ContractId,
-			ContractName: c.ContractType.ContractTypeName,
-			Condition:    c.Condition,
-			CreatedDate:  c.CreatedDate,
-		})
+		if c.ContractType == nil {
+			c.ContractType = &contactType
+		} else {
+			result = append(result, ContractBasicInfo{
+				ContractID:   c.ContractId,
+				ContractName: c.ContractType.ContractTypeName,
+				Condition:    c.Condition,
+				CreatedDate:  c.CreatedDate,
+			})
+		}
 	}
 	return result
 }

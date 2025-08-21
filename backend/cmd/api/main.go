@@ -6,9 +6,7 @@ import (
 	"erp/backend/config"
 	"erp/backend/pkg/job"
 	"log"
-	"net/http"
 	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -44,31 +42,6 @@ func main() {
 		c.JSON(200, gin.H{"message": "Hello, World!"})
 	})
 
-	// Luôn chạy HTTP
-	go func() {
-		if err := r.Run(":8080"); err != nil {
-			log.Fatalf("Failed to run HTTP server: %v", err)
-		}
-	}()
-
-	certPath := "./ssl/server.crt"
-	keyPath := "./ssl/server.key"
-
-	if config.AppConfig.Server.SSL && fileExists(certPath) && fileExists(keyPath) {
-		server := &http.Server{
-			Addr:         ":8443",
-			Handler:      r,
-			ReadTimeout:  15 * time.Second,
-			WriteTimeout: 15 * time.Second,
-		}
-		log.Println("HTTPS Server running at :8443")
-		if err := server.ListenAndServeTLS(certPath, keyPath); err != nil {
-			log.Fatalf("Failed to run HTTPS server: %v", err)
-		}
-	} else {
-		log.Println("⚠️ SSL disabled or certificate files not found — running HTTP only.")
-		select {}
-	}
 	// Start HTTP server on port 8080
 	go func() {
 		log.Println("HTTP Server running at :8080")
@@ -78,15 +51,18 @@ func main() {
 	}()
 
 	// Start HTTPS server on port 8443 if SSL is enabled
-	if config.AppConfig.Server.SSL {
+	certPath := "/app/ssl/server.crt"
+	keyPath := "/app/ssl/server.key"
+
+	if config.AppConfig.Server.SSL && fileExists(certPath) && fileExists(keyPath) {
 		log.Println("HTTPS Server running at :8443")
-		err = r.RunTLS(":8443", "/app/ssl/server.crt", "/app/ssl/server.key")
+		err := r.RunTLS(":8443", certPath, keyPath)
 		if err != nil {
 			log.Fatalf("HTTPS server failed: %v", err)
 		}
 	} else {
-		// If SSL is disabled, just run HTTP server and wait
+		log.Println("⚠️ SSL disabled or certificate files not found — running HTTP only.")
+		// Keep the HTTP server running
 		select {}
 	}
-
 }

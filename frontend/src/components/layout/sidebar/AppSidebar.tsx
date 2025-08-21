@@ -5,7 +5,7 @@ import type {ReactNode} from "react";
 
 const SIDEBAR_COMPONENTS: Record<string, ReactNode> = {
     admin: <HRSidebar/>,
-    HR: <HRSidebar/>,
+    manager: <HRSidebar/>,
     employee: <ClientSidebar/>,
 };
 

@@ -126,28 +126,6 @@ services:
       - erp-network
     restart: unless-stopped
 
-  nginx:
-    container_name: erp-nginx
-    # image: nginx:latest
-    build:
-      context: ../nginx
-      dockerfile: Dockerfile
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      frontend:
-        condition: service_healthy
-      backend:
-        condition: service_healthy
-    volumes:
-      - ../nginx/conf.d:/etc/nginx/conf.d
-      - ../ssl/thd.erp.com.crt:/etc/ssl/certs/nginx.crt:ro
-      - ../ssl/thd.erp.com.key:/etc/ssl/private/nginx.key:ro
-    networks:
-      - erp-network
-    restart: unless-stopped
-
 volumes:
   pgdata:
   pgdata_replica:

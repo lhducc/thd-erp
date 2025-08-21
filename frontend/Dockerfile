@@ -14,6 +14,3 @@ RUN npm install --legacy-peer-deps
 # Copy source code and build
 COPY . .
 RUN npm run build
-
-
-## Run stage ##

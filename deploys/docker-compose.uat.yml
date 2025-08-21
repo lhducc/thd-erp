@@ -41,8 +41,8 @@ services:
   # Note: Backend must be configured to connect to Postgres and MinIO using SSL/TLS (see below)
 
   postgres:
-    image: ${POSTGRES_IMAGE:-postgres:15-alpine}
-    # image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
+    # image: ${POSTGRES_IMAGE:-postgres:15-alpine}
+    image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
     container_name: erp-postgres
     ports:
       - "5432:5432"

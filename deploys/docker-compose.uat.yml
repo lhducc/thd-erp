@@ -41,8 +41,8 @@ services:
   # Note: Backend must be configured to connect to Postgres and MinIO using SSL/TLS (see below)
 
   postgres:
-    #image: ${POSTGRES_IMAGE:-postgres:15-alpine}
-    image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
+    image: ${POSTGRES_IMAGE:-postgres:15-alpine}
+    # image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
     container_name: erp-postgres
     ports:
       - "5432:5432"
@@ -74,8 +74,8 @@ services:
     # SSL environment variables commented out for initial setup
 
   postgres-replica:
-    image: ${POSTGRES_IMAGE:-postgres:15-alpine}
-    # image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
+    # image: ${POSTGRES_IMAGE:-postgres:15-alpine}
+    image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
     container_name: erp-postgres-replica
     ports:
       - "5433:5432"
@@ -103,8 +103,8 @@ services:
         condition: service_healthy
 
   minio:
-    image: ${MINIO_IMAGE:-minio/minio:latest}
-    # image: 192.168.1.76:5001/product/erp/erp/minio:latest
+    # image: ${MINIO_IMAGE:-minio/minio:latest}
+    image: 192.168.1.76:5001/product/erp/erp/minio:latest
     container_name: erp-minio
     command: server --console-address ":9001" /data
     env_file:

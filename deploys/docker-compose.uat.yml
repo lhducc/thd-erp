@@ -41,15 +41,15 @@ services:
   # Note: Backend must be configured to connect to Postgres and MinIO using SSL/TLS (see below)
 
   postgres:
-    image: ${POSTGRES_IMAGE:-postgres:15-alpine}
-    # image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
+    #image: ${POSTGRES_IMAGE:-postgres:15-alpine}
+    image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
     container_name: erp-postgres
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:-erp_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-erp_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-erp_db}
       POSTGRES_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-replicator}
       POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-replicator_pass}
     env_file:
@@ -80,13 +80,13 @@ services:
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:-erp_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-erp_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-erp_db}
       POSTGRES_MASTER_SERVICE: postgres
       POSTGRES_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-replicator}
       POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-replicator_pass}
-      PGUSER: ${POSTGRES_USER}
+      PGUSER: ${POSTGRES_USER:-erp_user}
     env_file:
       - ../.env
     healthcheck:

@@ -1,6 +1,6 @@
 ## Build stage ##
-FROM node:24.0.0-slim AS builder
-# FROM 192.168.1.76:5001/product/erp/erp/node:24.0.0-slim AS builder
+# FROM node:24.0.0-slim AS builder
+FROM 192.168.1.76:5001/product/erp/erp/node:24.0.0-slim AS builder
 WORKDIR /src
 
 # Accept build arguments
@@ -17,8 +17,8 @@ RUN npm run build
 
 
 ## Run stage ##
-FROM nginx:1.27-alpine
-# FROM 192.168.1.76:5001/product/erp/erp/nginx:1.27
+# FROM nginx:1.27-alpine
+FROM 192.168.1.76:5001/product/erp/erp/nginx:1.27
 
 COPY --from=builder /src/dist /usr/share/nginx/html
 

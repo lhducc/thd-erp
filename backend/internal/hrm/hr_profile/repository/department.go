@@ -64,8 +64,8 @@ func (s *DepartmentStore) GetLastDepartmentByCode(ctx context.Context, office *m
 		First(office).Error
 }
 
-func (s *DepartmentStore) GetDepartmentByOfficeID(officeID string) (model.Department, error) {
-	var department model.Department
+func (s *DepartmentStore) GetDepartmentByOfficeID(officeID string) ([]model.Department, error) {
+	var department []model.Department
 	err := s.db.Where("office_id = ?", officeID).Find(&department).Error
 	return department, err
 }

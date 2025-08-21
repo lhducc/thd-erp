@@ -10,7 +10,7 @@ export const useGetAllEmployee = () =>
 export const useGetEmployeeById = (employeeId: string) =>
     useQuery({
         queryKey: ["employeeId", employeeId],
-        queryFn: () => getEmployeeByIdApi(employeeId),
+        queryFn: () => getEmployeeByIdApi(),
         enabled: !!employeeId,
     });
 

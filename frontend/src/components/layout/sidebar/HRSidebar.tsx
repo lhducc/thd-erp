@@ -50,7 +50,7 @@ const HRSidebar = ({...props}: ComponentProps<typeof Sidebar>) => {
             icon: CheckinIcon,
             child: [
                 {
-                    name: "Quản lý ca làm việc",
+                    name: "Quản lý ca mẫu",
                     url: PATH.WORKSHIFT,
                 },
                 {
@@ -67,7 +67,7 @@ const HRSidebar = ({...props}: ComponentProps<typeof Sidebar>) => {
                     ]
                 },
                 {
-                    name: "Bản phân ca",
+                    name: "Bảng phân ca",
                     url: PATH.ROTA,
                 },
                 {
@@ -177,28 +177,28 @@ const HRSidebar = ({...props}: ComponentProps<typeof Sidebar>) => {
                                                     <SidebarMenuSubItem>
                                                         <SidebarMenuSubButton asChild>
                                                             <Link to={PATH.SETTING_CONTRACT}>
-                                                                <span>Hợp đồng</span>
+                                                                <span>Loại hợp đồng</span>
                                                             </Link>
                                                         </SidebarMenuSubButton>
                                                     </SidebarMenuSubItem>
                                                     <SidebarMenuSubItem>
                                                         <SidebarMenuSubButton asChild>
                                                             <Link to={PATH.SETTING_DECISION}>
-                                                                <span>Quyết định</span>
+                                                                <span>Loại quyết định</span>
                                                             </Link>
                                                         </SidebarMenuSubButton>
                                                     </SidebarMenuSubItem>
-                                                    <SidebarMenuSubItem>
-                                                        <SidebarMenuSubButton asChild>
-                                                            <Link to={PATH.INSURANCE}>
-                                                                <span>Thông tin bảo hiểm</span>
-                                                            </Link>
-                                                        </SidebarMenuSubButton>
-                                                    </SidebarMenuSubItem>
+                                                    {/*<SidebarMenuSubItem>*/}
+                                                    {/*    <SidebarMenuSubButton asChild>*/}
+                                                    {/*        <Link to={PATH.INSURANCE}>*/}
+                                                    {/*            <span>Thông tin bảo hiểm</span>*/}
+                                                    {/*        </Link>*/}
+                                                    {/*    </SidebarMenuSubButton>*/}
+                                                    {/*</SidebarMenuSubItem>*/}
                                                     <SidebarMenuSubItem>
                                                         <SidebarMenuSubButton asChild>
                                                             <Link to={PATH.SETTING_EMPLOYEE_DOCUMENT}>
-                                                                <span>Tài liệu nhân sự</span>
+                                                                <span>Loại tài liệu nhân sự</span>
                                                             </Link>
                                                         </SidebarMenuSubButton>
                                                     </SidebarMenuSubItem>

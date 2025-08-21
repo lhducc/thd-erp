@@ -129,7 +129,7 @@ const CreateHierarchyLevelForm = ({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="md:w-[800px] w-[90vw]">
         <DialogHeader>
           <DialogTitle>
             {type === "edit" ? "Cập nhật cấp bậc" : "Thêm cấp bậc"}

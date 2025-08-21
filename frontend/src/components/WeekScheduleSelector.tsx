@@ -160,13 +160,13 @@ export const WorkshiftScheduler = ({
                                                     <div className="flex">
                                                         <span className="w-24">Check-in:</span>
                                                         <span>
-                                                            {formatTime(shift.checkin_from)} - {formatTime(shift.checkin_to)}
+                                                            {formatTime(shift?.checkin_from)} - {formatTime(shift?.checkin_to)}
                                                         </span>
                                                     </div>
                                                     <div className="flex">
                                                         <span className="w-24">Check-out:</span>
                                                         <span>
-                                                            {formatTime(shift.checkout_from)} - {formatTime(shift.checkout_to)}
+                                                            {formatTime(shift?.checkout_from)} - {formatTime(shift?.checkout_to)}
                                                         </span>
                                                     </div>
                                                 </div>

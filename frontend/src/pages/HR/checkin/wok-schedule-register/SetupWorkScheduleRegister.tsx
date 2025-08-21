@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import {useMutation, useQuery} from "@tanstack/react-query";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Building2 } from "lucide-react";
@@ -65,17 +65,18 @@ const SetupWorkScheduleRegister = () => {
             setWeekdays(initialWeekdays);
         }
     }, [workSchedule, isEditMode, form, offices, pendingOffices]);
-
+    const queryClient = useQueryClient();
     const registerMutation = useMutation({
         mutationFn: isEditMode ?
             (data: any) => updateWorkScheduleRegisterApi(id, data) :
             registerWorkScheduleRegisterApi,
-        onSuccess: () => {
+        onSuccess: async () => {
             toast.success(isEditMode ? "Cập nhật lịch làm việc thành công" : "Đăng ký lịch làm việc thành công");
             if (!isEditMode) {
                 form.reset();
                 setWeekdays([]);
             }
+            await queryClient.invalidateQueries({queryKey: ["workScheduleRegisterById", "workScheduleRegister", id]})
             navigate("/setup-work-schedule-register")
         },
         onError: (error) => {

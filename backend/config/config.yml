@@ -3,16 +3,19 @@ server:
   Port: 0.0.0.0:8080
   SSL: true
 
-postgres:
-  #  host: "postgres"
 
-  #  port: "5432"
-  #  user: "erp_user"
-  #  password: "erp_pass"
-  #  dbname: "erp_db"
-  #  timezone: "Asia/Ho_Chi_Minh"
-  #  DBSource: postgresql://neondb_owner:npg_tkKa6Gfspq7w@ep-proud-sound-a49dcdxx-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&TimeZone=Asia/Ho_Chi_Minh
-  DBSource: postgresql://erp_user:erp_pass@postgres:5432/erp_db?sslmode=disable&TimeZone=Asia/Ho_Chi_Minh
+
+postgres:
+#  host: "postgres"
+#  port: "5432"
+#  user: "erp_user"
+#  password: "erp_pass"
+#  dbname: "erp_db"
+#  timezone: "Asia/Ho_Chi_Minh"
+  DBSource: postgresql://neondb_owner:npg_tkKa6Gfspq7w@ep-proud-sound-a49dcdxx-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&TimeZone=Asia/Ho_Chi_Minh
+
 
 cors:
-  AllowOrigins: [ 'http://erp.dev.thd.com:5173', 'https://192.168.1.58', 'http://192.168.1.58', 'https://192.168.1.58:443', 'http://localhost:5173', 'https://localhost:443', 'https://localhost', 'http://localhost' ]
+  AllowOrigins: ['http://erp.dev.thd.com:5173']
+
+

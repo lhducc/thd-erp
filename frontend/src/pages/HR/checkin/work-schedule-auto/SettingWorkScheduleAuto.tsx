@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -65,7 +65,6 @@ const SettingWorkScheduleAuto = () => {
     const { data: workSchedule, isLoading: pendingWorkSchedule } = useWorkScheduleById(id);
 
     // State management
-    const [selectedEmployees, setSelectedEmployees] = useState<Employee[]>([]);
     const [selectedManagers, setSelectedManagers] = useState<ManagerPermission[]>([]);
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -150,12 +149,14 @@ const SettingWorkScheduleAuto = () => {
     const availableManagers = managers?.filter(manager =>
         !selectedManagers.some(m => m.manager_id === manager.employee_id)
     ) || [];
+    const queryClient = useQueryClient();
 const navigate = useNavigate();
     const { mutateAsync: assign, isPending: pendingAssign } = useMutation({
         mutationFn: (params: AssignParams) => assignWorkshiftScheduleAuto(params.id, params.payload),
-        onSuccess: () => {
+        onSuccess: async () => {
             toast.success("Cấu hình thành công");
             form.reset();
+            await queryClient.invalidateQueries({queryKey: ["work-schedule", "work-schedules", id]})
             navigate("/setup-work-schedule")
         },
         onError: (error) => {

@@ -9,11 +9,8 @@ import (
 type ContractGroup string
 
 const (
-	ConfirmTime        ContractGroup = "Hợp đồng xác định thời hạn"
-	NoTimeConfirmation ContractGroup = "Hợp đồng không xác định thời hạn"
-	Trial              ContractGroup = "Hợp đồng thử việc"
-	VocationalTraining ContractGroup = "Hợp đồng đào tạo nghề"
-	Service            ContractGroup = "Hợp đồng dịch vụ"
+	Trial    ContractGroup = "Hợp đồng thử việc"
+	Official ContractGroup = "Hợp đồng chính thức"
 )
 
 // ENUM: Unit
@@ -73,7 +70,7 @@ func (ct ContractType) ValidateContractType() error {
 
 	// check enum ContractGroup
 	validContractGroups := []ContractGroup{
-		ConfirmTime, NoTimeConfirmation, Trial, VocationalTraining, Service,
+		Trial, Official,
 	}
 	validGroup := false
 	for _, v := range validContractGroups {

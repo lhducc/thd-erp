@@ -2,13 +2,12 @@ import { lazy, Suspense } from "react";
 import PATH from "@/constants/Path";
 import { settingRoutes } from "@/routes/setting";
 import Loading from "@/components/Loading";
-import HistoryAttendance from "@/pages/Client/history-attendance/HistoryAttendance.tsx";
 import AttendanceHistory from "@/pages/AttendanceHistory.tsx";
 
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
 const ContractPage = lazy(() => import("@/pages/HR/ContractPage"));
-const DetailEmployeePage = lazy(() => import("@/pages/detailProfilePage"));
+const DetailEmployeePage = lazy(() => import("@/pages/HR/profile/DetailEmployeePage.tsx"));
 const WorkScheduleAuto = lazy(() => import("@/pages/HR/checkin/work-schedule-auto/WorkScheduleAuto"));
 const WorkScheduleRegister = lazy(() => import("@/pages/HR/checkin/wok-schedule-register/WorkScheduleRegisterPage"));
 const SetupWorkScheduleAuto = lazy(() => import("@/pages/HR/checkin/work-schedule-auto/SetupWorkScheduleAuto"));

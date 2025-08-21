@@ -31,7 +31,6 @@ const DepartmentPage = () => {
       toast.error(error.message);
     },
   });
-
   const columns: ColumnDef<Department>[] = [
     {
       accessorKey: "department_name",

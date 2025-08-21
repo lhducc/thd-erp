@@ -128,6 +128,7 @@ export type TimesheetDetail = {
     is_weekend: boolean;
     checkin_record_id: string;
     checkout_record_id: string;
+    is_manually_adjusted: boolean;
     work_hours: number;
     work_days: number;
     is_additional_shift: boolean;

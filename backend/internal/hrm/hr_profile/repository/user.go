@@ -328,3 +328,15 @@ func (s *UserStore) GetUserByRoleID(roleID string) ([]model.ManagerResponse, err
 
 	return employees, nil
 }
+
+func (s *UserStore) UpdateStatusEmployee(employeeID, statusChange string) error {
+	err := s.db.
+		Model(&model.Employee{}).Table(model.Employee{}.TableName()).
+		Where("employee_id = ?", employeeID).
+		Update("status", statusChange).Error
+
+	if err != nil {
+		return err
+	}
+	return nil
+}

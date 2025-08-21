@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { SquarePen, Filter } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import export_file from "@/assets/export-file.svg";
 import { getAllDecisionsApi, deleteDecisionApi, createSampleDecisionApi, exportDecisionExcelApi } from "@/apis/decision.api";
 import ConfirmDelete from "@/components/ConfirmDelete";

@@ -12,6 +12,6 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: ['erp.dev.thd.com'],
+    allowedHosts: ['erp.dev.thd.com', 'borders-informational-ratings-detroit.trycloudflare.com'],
   }
 });

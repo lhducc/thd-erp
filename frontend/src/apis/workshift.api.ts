@@ -13,23 +13,13 @@ export const getAllWorkshiftApi = async (): Promise<Workshift[]> => {
 };
 
 export const createWorkshiftApi = async (payload: Omit<WorkShiftRequest, 'workshift_id'>): Promise<Workshift> => {
-    try {
-        const response = await api.post("/workshifts", payload);
-        return response.data.data
-    } catch (error) {
-        console.error("Error creating workshift API:", error);
-        throw error;
-    }
+    const response = await api.post("/workshifts", payload);
+    return response.data.data
 };
 
 export const updateWorkshiftApi = async (id: string, payload: WorkShiftRequest): Promise<Workshift> => {
-    try {
-        const response = await api.put(`/workshifts/${id}`, payload);
-        return response.data.data
-    } catch (error) {
-        console.error("Error updating workshift API:", error);
-        throw error;
-    }
+    const response = await api.put(`/workshifts/${id}`, payload);
+    return response.data.data
 };
 
 export const deleteWorkshiftApi = async (id: string): Promise<void> => {
@@ -74,9 +64,9 @@ export const deleteEmployeeWorkshiftApi = async (id: number): Promise<void> => {
     }
 };
 
-export const getEmployeeWorkshiftsApi = async (employee_id: string): Promise<EmployeeWorkshift[]> => {
+export const getEmployeeWorkshiftsApi = async (month: number, year: number): Promise<EmployeeWorkshift[]> => {
     try {
-        const response = await api.get(`/employee-workshifts/${employee_id}`);
+        const response = await api.get(`/employee-workshifts/personal?month=${month}&year=${year}`);
         return response.data.data;
     } catch (error) {
         console.error("Error fetching employee workshifts:", error);
@@ -99,7 +89,6 @@ export const updateEmployeeWorkshiftApi = async (
     newWorkshiftId: string
 ): Promise<EmployeeWorkshift> => {
     try {
-        console.log(employeeWorkshiftId, newWorkshiftId);
         const response = await api.put(`/employee-workshifts/${employeeWorkshiftId}`, {
             work_shift_id: newWorkshiftId
         });

@@ -14,7 +14,7 @@ type Account struct {
 	Password    string    `gorm:"column:password" json:"password"`
 	FirstLogin  bool      `gorm:"column:first_login" json:"first_login"`
 	RoleID      string    `gorm:"column:role_id" json:"role_id"`
-	EmployeeId  string    `gorm:"column:employee_id" json:"employee_id"`
+	EmployeeId  string    `gorm:"column:employee_id;index" json:"employee_id"`
 	CreatedDate time.Time `gorm:"column:created_date;autoCreateTime" json:"created_date"`
 
 	Role     *Role     `gorm:"foreignKey:RoleID;references:ID" json:"role,omitempty"`
@@ -47,13 +47,8 @@ type Employee struct {
 	Manager    *ManagerResponse  `gorm:"foreignKey:ManagerID;references:employee_id" json:"manager,omitempty"`
 	Department *Department       `gorm:"foreignKey:DepartmentID;references:department_id" json:"department,omitempty"`
 
-	Account    *Account         `gorm:"foreignKey:AccountID;references:id" json:"-"`
-	Position   *Position        `gorm:"foreignKey:PositionID;references:position_id" json:"position,omitempty"`
-	JobTitle   *JobTitle        `gorm:"foreignKey:JobTitleID;references:JobTitleID" json:"job_title,omitempty"`
-	Manager    *ManagerResponse `gorm:"foreignKey:ManagerID;references:employee_id" json:"manager,omitempty"`
-	Department *Department      `gorm:"foreignKey:DepartmentID;references:department_id" json:"department,omitempty"`
-	Contracts  []Contract       `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"contracts,omitempty"`
-	Decisions  []Decision       `gorm:"many2many:decision_employees;joinForeignKey:EmployeeID;joinReferences:DecisionID" json:"decisions,omitempty"`
+	Contracts []Contract `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"contracts,omitempty"`
+	Decisions []Decision `gorm:"many2many:decision_employees;joinForeignKey:EmployeeID;joinReferences:DecisionID" json:"decisions,omitempty"`
 }
 
 type ManagerResponse struct {

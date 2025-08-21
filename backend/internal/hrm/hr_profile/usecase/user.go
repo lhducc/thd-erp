@@ -5,6 +5,7 @@ import (
 	checkin_model "erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"erp/backend/internal/hrm/hr_profile/model"
+	"erp/backend/internal/hrm/hr_profile/model/dto"
 	"erp/backend/internal/hrm/hr_profile/repository"
 	utils "erp/backend/pkg"
 	"erp/backend/pkg/mail"
@@ -23,7 +24,7 @@ type EmployeeRepo interface {
 	GetAllEmployees() ([]model.Employee, error)
 	GetAllEmployeesPagination(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error)
 	GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error)
-	UpdateEmployee(tx *gorm.DB, id string, updatedEmployee model.Employee) error
+	UpdateEmployee(tx *gorm.DB, updatedEmployee model.Employee) error
 	DeleteEmployee(id string) error
 	GetLastEmployeeByCode(emp *model.Employee) error
 	CheckExistEmployees(employeeIDs []string) ([]string, error)
@@ -33,13 +34,16 @@ type EmployeeRepo interface {
 	GetEmployeesByOfficeID(ctx context.Context, officeID string) ([]*model.Employee, error)
 	CheckExistEmployeeID(employeeID string) (bool, error)
 	GetUserByRoleID(roleID string) ([]model.ManagerResponse, error)
+	UpdateStatusEmployee(employeeID, statusChange string) error
 }
 
 type AccountRepo interface {
 	CreateAccount(tx *gorm.DB, employee *model.Employee, hashedPassword, roleID string) (*model.Account, error)
 	GetAccount(ctx context.Context, id int64) (*model.Account, error)
+	GetAccountNoCtx(id int64) (*model.Account, error)
 	GetAllAccount(ctx context.Context) ([]model.Account, error)
 	UpdateAccount(ctx context.Context, id string, data *model.Account) error
+	UpdateAccountTrans(tx *gorm.DB, id int64, data *model.Account) error
 	DeleteAccount(ctx context.Context, id string) error
 	CheckExistEmail(email string) (bool, error)
 	CheckFirstLogin(email string) (bool, error)
@@ -153,26 +157,55 @@ func (s *EmployeeBiz) CreateEmployeeWithAccount(ctx context.Context, employee *m
 	})
 }
 
-func (biz *EmployeeBiz) GetUserById(id string) (model.Employee, error) {
+func (biz *EmployeeBiz) GetUserById(id string) (*dto.EmployeeResponse, error) {
 	if id == "" {
-		return model.Employee{}, errors.New("invalid employee ID")
+		return nil, errors.New("invalid employee ID")
 	}
 
 	employee, err := biz.repo.GetUserById(id)
 	if err != nil {
-		return model.Employee{}, fmt.Errorf("failed to get employee: %w", err)
+		return nil, fmt.Errorf("failed to get employee: %w", err)
 	}
 
-	return employee, nil
+	var role model.Role
+	if employee.AccountID != nil {
+		account, err := biz.account.GetAccountNoCtx(*employee.AccountID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get account: %w", err)
+		}
+		if account != nil && account.Role != nil {
+			role = *account.Role
+		}
+	}
+
+	employeeInfo := dto.EmployeeResponse{
+		Employee: &employee,
+		Role:     &role,
+	}
+	return &employeeInfo, nil
 }
 
-func (biz *EmployeeBiz) GetAllEmployees(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error) {
+func (biz *EmployeeBiz) GetAllEmployees(page, pageSize int, filters map[string]interface{}) ([]dto.EmployeeResponse, int64, error) {
 	employees, totalRecords, err := biz.repo.GetAllEmployeesPagination(page, pageSize, filters)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get all employees: %w", err)
 	}
 
-	return employees, totalRecords, nil
+	var employeeInfs []dto.EmployeeResponse
+	for _, employee := range employees {
+		var employeeInf dto.EmployeeResponse
+		acc, err := biz.account.GetAccountNoCtx(*employee.AccountID)
+		employeeInf.Employee = &employee
+		if err != nil {
+			return nil, 0, err
+		}
+		if acc != nil && acc.Role != nil {
+			employeeInf.Role = acc.Role
+		}
+		employeeInfs = append(employeeInfs, employeeInf)
+	}
+
+	return employeeInfs, totalRecords, nil
 }
 
 func (biz *EmployeeBiz) GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error) {
@@ -184,20 +217,22 @@ func (biz *EmployeeBiz) GetAllEmployeesByStatus(status string, page, pageSize in
 	return employees, nil
 }
 
-func (biz *EmployeeBiz) UpdateEmployee(ctx context.Context, id string, updatedEmployee model.Employee) error {
+func (biz *EmployeeBiz) UpdateEmployee(ctx context.Context, id string, updatedEmployee dto.EmployeeDTO) error {
 	if id == "" {
 		return errors.New("invalid employee ID")
 	}
 
-	emp, err := biz.GetUserById(id)
+	emp, err := biz.repo.GetUserById(id)
 	if err != nil {
 		return err
 	}
+
 	return transaction.WithTransaction(biz.db, ctx, func(ctx context.Context, tx *gorm.DB) error {
+		// Nếu đổi phòng ban thì xử lý timesheet
 		if emp.DepartmentID != updatedEmployee.DepartmentID {
 			department, err := biz.departmentRepo.GetDepartment(ctx, updatedEmployee.DepartmentID)
 			if err != nil {
-				return err
+				return fmt.Errorf("lỗi khi lấy dữ liệu Department: %w", err)
 			}
 
 			timeNow, err := utils.GetCurrentTimeHCMCity()
@@ -205,18 +240,20 @@ func (biz *EmployeeBiz) UpdateEmployee(ctx context.Context, id string, updatedEm
 				return err
 			}
 			month := int(timeNow.Month())
-			year := int(timeNow.Year())
+			year := timeNow.Year()
 
+			//get timesheet
 			timesheetList, err := biz.timesheetListRepo.GetTimeSheetByOfficeIDAndTime(department.OfficeID, month, year)
-			if timesheetList != nil {
-				departmentID := updatedEmployee.DepartmentID
-				if departmentID == "" {
-					return errors.New("giá trị mã phòng ban không hợp lệ")
-				}
-				department, err := biz.departmentRepo.GetDepartment(ctx, departmentID)
-				if err != nil {
-					return errors.New("Lỗi khi lấy dữ liệu Department")
-				}
+			if err != nil {
+				return fmt.Errorf("lỗi khi lấy timesheet list: %w", err)
+			}
+			//check exist
+			timesheet, err := biz.timesheetRepo.CheckExist(ctx, id, timesheetList.Month, timesheetList.Year)
+			if err != nil {
+				return err
+			}
+
+			if timesheetList != nil && timesheet == nil {
 				timesheet := checkin_model.TimeSheet{
 					TimeSheetListID: timesheetList.TimeSheetListID,
 					OfficeID:        department.OfficeID,
@@ -227,14 +264,28 @@ func (biz *EmployeeBiz) UpdateEmployee(ctx context.Context, id string, updatedEm
 					CreatedBy:       timesheetList.CreatedBy,
 				}
 				if err = biz.timesheetRepo.CreateEmployeeTimeSheet(tx, &timesheet); err != nil {
-					fmt.Printf(err.Error())
-					return errors.New("Lỗi trong quá trình thêm nhân viên vào bảng công")
+					return fmt.Errorf("lỗi khi thêm nhân viên vào bảng công: %w", err)
 				}
 			}
-
 		}
 
-		if err := biz.repo.UpdateEmployee(tx, id, updatedEmployee); err != nil {
+		// update date role if have
+		account, err := biz.GetAccount(ctx, *emp.AccountID)
+		if updatedEmployee.RoleID != "" {
+			if err != nil {
+				return err
+			}
+			account.RoleID = updatedEmployee.RoleID
+			if err := biz.account.UpdateAccountTrans(tx, account.ID, account); err != nil {
+				return fmt.Errorf("failed to update account role: %w", err)
+			}
+		}
+
+		// Convert DTO thành model và update employee
+		employee := updatedEmployee.ConvertToEmployeeModel()
+		employee.EmployeeID = id
+		employee.AccountID = &account.ID
+		if err := biz.repo.UpdateEmployee(tx, *employee); err != nil {
 			return fmt.Errorf("failed to update employee: %w", err)
 		}
 
@@ -325,4 +376,16 @@ func (e *EmployeeBiz) ExportEmployeeTest(selectedFields []string) ([]byte, strin
 
 func (e *EmployeeBiz) GetUserByRoleID(roleID string) ([]model.ManagerResponse, error) {
 	return e.repo.GetUserByRoleID(roleID)
+}
+
+func (e *EmployeeBiz) UpdateStatus(employeeID, statusChange string) error {
+	//check exist
+	exist, err := e.repo.CheckExists(employeeID)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		return fmt.Errorf("not_found")
+	}
+	return e.repo.UpdateStatusEmployee(employeeID, statusChange)
 }

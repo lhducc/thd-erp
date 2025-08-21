@@ -6,6 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const formatTime = (timeString: string) => {
+    if (!timeString) return ''
   // Convert "HH:mm:ss" to "HH:mm"
   return timeString.split(':').slice(0, 2).join(':');
 };
@@ -41,3 +42,15 @@ export const toRFC3339 = (date: Date) => {
 
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${sign}${tzHours}:${tzMinutes}`;
 };
+
+export function unwrap<T extends Record<string, any>>(obj: T): T[keyof T] {
+    const key = Object.keys(obj)[0] as keyof T;
+    return obj[key];
+}
+
+export function toVietnamISOString(date: Date = new Date()): string {
+    const offsetMs = 7 * 60 * 60 * 1000; // UTC+7
+    const localDate = new Date(date.getTime() + offsetMs);
+    return localDate.toISOString().replace("Z", "+07:00");
+}
+

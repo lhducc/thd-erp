@@ -36,7 +36,7 @@ const JobTitlePage = () => {
       cell: (info) => info.getValue(),
     },
     {
-      accessorKey: "hierarchy_level_id",
+      accessorKey: "hierarchy_level.hierarchy_level",
       header: "Cấp bậc",
       cell: (info) => info.getValue(),
     },

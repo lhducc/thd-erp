@@ -3,12 +3,11 @@ package minIO
 import (
 	"context"
 	"fmt"
-	"github.com/minio/minio-go/v7/pkg/lifecycle"
 	"log"
 	"mime/multipart"
-	"os"
-	"strings"
 	"time"
+
+	"github.com/minio/minio-go/v7/pkg/lifecycle"
 
 	"erp/backend/config"
 
@@ -45,6 +44,12 @@ func UploadImageToMinIO(
 		}
 		log.Println("Created bucket:", bucketName)
 
+		// Set bucket policy to allow public read access
+		err = SetBucketPublicReadPolicy(minioClient, bucketName)
+		if err != nil {
+			log.Printf("Warning: Failed to set public read policy for bucket %s: %v", bucketName, err)
+		}
+
 		if lifeCycleTimeDay > 0 {
 			err = SetupLifecycle(minioClient, bucketName, lifeCycleTimeDay)
 			if err != nil {
@@ -52,6 +57,12 @@ func UploadImageToMinIO(
 			}
 		} else {
 			return fmt.Errorf("lifecycle time must be greater than 0")
+		}
+	} else {
+		// Bucket exists, ensure it has public read policy
+		err = SetBucketPublicReadPolicy(minioClient, bucketName)
+		if err != nil {
+			log.Printf("Warning: Failed to set public read policy for existing bucket %s: %v", bucketName, err)
 		}
 	}
 
@@ -72,7 +83,11 @@ func GeneratePresignedURL(
 	objectName string,
 	expireTime time.Duration,
 ) (string, error) {
-	minioClient := config.MinioClient
+	// Use URL client for presigned URLs to ensure proper signatures
+	urlClient := config.MinioURLClient
+	if urlClient == nil {
+		return "", fmt.Errorf("MinIO URL client not available")
+	}
 
 	// MinIO only allows max 7 days for presigned URLs
 	if expireTime > 7*24*time.Hour {
@@ -81,15 +96,12 @@ func GeneratePresignedURL(
 
 	bucketNameStr := string(bucketName)
 
-	url, err := minioClient.PresignedGetObject(ctx, bucketNameStr, objectName, expireTime, nil)
+	url, err := urlClient.PresignedGetObject(ctx, bucketNameStr, objectName, expireTime, nil)
 	if err != nil {
 		return "", fmt.Errorf("generate presigned URL failed: %w", err)
 	}
 
-	if os.Getenv("APP_ENV") == "docker" {
-		finalURL := strings.Replace(url.String(), os.Getenv("MINIO_ENDPOINT"), os.Getenv("MINIO_PUBLIC_ENDPOINT"), 1)
-		return finalURL, nil
-	}
+	// URL should already be correct with localhost:9000
 	return url.String(), nil
 }
 
@@ -120,4 +132,37 @@ func SetupLifecycle(minioClient *minio.Client, bucketName Bucket, lifeTimeDay in
 
 	log.Printf("Đã thiết lập lifecycle rule cho bucket %s", bucketName)
 	return nil
+}
+
+// SetBucketPublicReadPolicy sets the bucket policy to allow public read access
+func SetBucketPublicReadPolicy(minioClient *minio.Client, bucketName Bucket) error {
+	ctx := context.Background()
+	bucketNameStr := string(bucketName)
+
+	// Use MinIO's predefined public read policy
+	policy := `{
+		"Version": "2012-10-17",
+		"Statement": [
+			{
+				"Effect": "Allow",
+				"Principal": {"AWS": ["*"]},
+				"Action": ["s3:GetObject"],
+				"Resource": ["arn:aws:s3:::` + bucketNameStr + `/*"]
+			}
+		]
+	}`
+
+	err := minioClient.SetBucketPolicy(ctx, bucketNameStr, policy)
+	if err != nil {
+		return fmt.Errorf("failed to set bucket policy: %w", err)
+	}
+
+	log.Printf("Set public read policy for bucket %s", bucketName)
+	return nil
+}
+
+// EnsureBucketPublicAccess ensures that the bucket has public read access
+func EnsureBucketPublicAccess(bucketName Bucket) error {
+	minioClient := config.MinioClient
+	return SetBucketPublicReadPolicy(minioClient, bucketName)
 }

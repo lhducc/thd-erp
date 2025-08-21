@@ -2,7 +2,7 @@ import {useMutation} from "@tanstack/react-query";
 import {toast} from "sonner";
 import type {ColumnDef} from "@tanstack/react-table";
 import {Button} from "@/components/ui/button.tsx";
-import {EditIcon, SettingsIcon, ViewIcon} from "lucide-react";
+import {EditIcon, SettingsIcon} from "lucide-react";
 import ConfirmDelete from "@/components/ConfirmDelete.tsx";
 import DataTable from "@/components/DataTable.tsx";
 import type {WorkSchedule} from "@/types/work-schedule.ts";
@@ -10,7 +10,6 @@ import {Link} from "react-router-dom";
 import {deleteWorkshiftSchedule} from "@/apis/work-schedule.api.ts";
 import {useWorkSchedule} from "@/query/useWorkSchedule.ts";
 import PATH from "@/constants/Path.ts";
-import {map} from "zod";
 
 const WorkScheduleAuto = () => {
     const {
@@ -21,8 +20,8 @@ const WorkScheduleAuto = () => {
 
     const {mutateAsync: deleteSchedule} = useMutation({
         mutationFn: (id: number) => deleteWorkshiftSchedule(id),
-        onSuccess: () => {
-            refetchSchedule();
+        onSuccess: async () => {
+            await refetchSchedule();
             toast.success("Xóa lịch làm việc thành công");
         },
         onError: (error) => {
@@ -51,7 +50,7 @@ const WorkScheduleAuto = () => {
                 return (
                     <div>
                         {managers.map((manager) => (
-                            <p>{manager.manager.full_name}</p>
+                            <p>{manager.manager?.full_name}</p>
                         ))}
                     </div>
                 )
@@ -78,22 +77,9 @@ const WorkScheduleAuto = () => {
             cell: ({row}) => {
                 return (
                     <div className="flex gap-4">
-                        {/*<CreateOfficeForm*/}
-                        {/*    editBtn={*/}
-                        {/*        <Button variant="outline">*/}
-                        {/*            <SquarePen />*/}
-                        {/*        </Button>*/}
-                        {/*    }*/}
-                        {/*    office={office}*/}
-                        {/*    type="edit"*/}
-                        {/*    refetch={refetchSchedule}*/}
-                        {/*/>*/}
                         <Link to={`${row.original.work_schedule_id}`}>
                             <EditIcon/>
                         </Link>
-                        {/*<Button>*/}
-                        {/*    <ViewIcon />*/}
-                        {/*</Button>*/}
                         <Link to={`${row.original.work_schedule_id}/setting`}>
                             <SettingsIcon/>
                         </Link>

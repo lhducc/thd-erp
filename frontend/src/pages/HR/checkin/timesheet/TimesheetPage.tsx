@@ -27,8 +27,6 @@ const TimesheetForm = ({refresh}: { refresh: () => void }) => {
     const {
         register,
         handleSubmit,
-        setValue,
-        getValues
     } = useForm<Inputs>()
     const [monthYearLabel, setMonthYearLabel] = useState<string>("");
 
@@ -78,7 +76,7 @@ const TimesheetForm = ({refresh}: { refresh: () => void }) => {
                 <label className="text-sm font-semibold text-gray-900">
                     Tên bảng công
                 </label>
-                <input className="border rounded-lg p-2" defaultValue="test" {...register("name", {required: true})} />
+                <input className="border rounded-lg p-2" defaultValue="" {...register("name", {required: true})} />
                 <label className="text-sm font-semibold text-gray-900">
                     Thời gian áp dụng
                 </label>
@@ -151,7 +149,7 @@ const TimesheetPage = () => {
             header: "Trạng thái ",
             cell: ({row}) => {
                 return (
-                    <>{row.original.is_locked ? "Đang áp dụng" : <p className="text-red-500">Đã chốt công</p>}</>
+                    <>{!row.original.is_locked ? "Đang áp dụng" : <p className="text-red-500">Đã chốt công</p>}</>
                 )
             }
         },

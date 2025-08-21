@@ -15,7 +15,6 @@ export const createWorkshiftSchedule = async (data: any): Promise<void> => {
 export const getWorkSchedule = async () : Promise<WorkSchedule[]> => {
     try {
         const response = await api.get("/work-schedule");
-        console.log(response.data.data)
         return response.data.data;
     } catch (error) {
         console.error("Error getting contract calendar:", error.message);
@@ -26,7 +25,6 @@ export const getWorkSchedule = async () : Promise<WorkSchedule[]> => {
 export const getAllWorkScheduleRegister = async () : Promise<WorkScheduleRegister[]> => {
     try {
         const response = await api.get("/work-schedule-register/register");
-        console.log(response.data)
         return response.data.data;
     } catch (error) {
         console.error("Error getting contract calendar:", error.message);
@@ -66,17 +64,12 @@ export const deleteWorkshiftSchedule = async (id: number): Promise<void> => {
 }
 
 export const updateWorkshiftSchedule = async (id: string, data: WorkScheduleRegisterPayload): Promise<void> => {
-    try {
-        const response = await api.post(`/work-schedule-schedule/${id}`, data);
-        return response.data;
-    } catch (error) {
-        console.error("Error assign work schedule API:", error);
-        throw new Error(error.response.data.message);
-    }
+    const response = await api.put(`/work-schedule/${id}`, data);
+    return response.data;
 }
 export const updateWorkScheduleRegisterApi = async (id?: number, data: WorkScheduleRegisterPayload): Promise<void> => {
     try {
-        const response = await api.put(`/work-schedule-schedule/${id}`, data);
+        const response = await api.put(`/work-schedule-register/${id}`, data);
         return response.data;
     } catch (error) {
         console.error("Error assign work schedule API:", error);

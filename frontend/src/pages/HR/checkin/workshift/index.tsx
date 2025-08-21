@@ -36,7 +36,7 @@ const Index = () => {
         }
     });
 
-    const columns = useMemo<ColumnDef<Workshift>[]>(() => [
+    const columns : ColumnDef<Workshift>[] = [
         {
             accessorKey: "workshift_name",
             header: "Tên ca làm việc",
@@ -78,7 +78,7 @@ const Index = () => {
                 );
             },
         },
-    ], [refetchWorkshifts, deleteWorkshift]);
+    ];
 
     return (
         <DataTable

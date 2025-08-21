@@ -5,7 +5,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import {Loader2, Plus} from "lucide-react";
+import {Building2, Loader2, Plus} from "lucide-react";
 import {z} from "zod";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm} from "react-hook-form";
@@ -24,10 +24,13 @@ import {useMutation} from "@tanstack/react-query";
 import {toast} from "sonner";
 import {createDecisionTypeApi, updateDecisionTypeApi} from "@/apis/decistion-type.api.ts";
 import type {DecisionType} from "@/types/decistion-type.ts";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
+import {Skeleton} from "@/components/ui/skeleton.tsx";
+import Asterisk from "@/components/ui/Asterisk.tsx";
 
 const formSchema = z.object({
     decision_type: z.string().min(1, "Tên loại quyết định không được để trống"),
-    decision_group: z.string().min(1, "Nhóm quyết định không được để trống"),
+    // decision_group: z.string().min(1, "Nhóm quyết định không được để trống"),
     description: z.string().optional(),
 });
 
@@ -38,6 +41,15 @@ type Props = {
     refetch?: () => void;
     buttonText?: string;
 };
+
+// const decistionGroup = [
+//     "Hình thức khen thưởng",
+//     "Hình thức kỷ luật",
+//     "Lý do điều chuyển",
+//     "Lý do bổ nhiệm",
+//     "Lý do miễn nhiệm",
+//     "Lý do chấm dứt HĐLĐ"
+// ]
 
 const CreateDecisionType = ({editBtn, data, type, refetch, buttonText = "Thêm loại quyết định"}: Props) => {
     const [open, setOpen] = useState(false);
@@ -78,7 +90,7 @@ const CreateDecisionType = ({editBtn, data, type, refetch, buttonText = "Thêm l
         resolver: zodResolver(formSchema),
         defaultValues: {
             decision_type: "",
-            decision_group: "",
+            // decision_group: "",
             description: "",
         },
     });
@@ -87,7 +99,7 @@ const CreateDecisionType = ({editBtn, data, type, refetch, buttonText = "Thêm l
         if (data) {
             form.reset({
                 decision_type: data.decision_type,
-                decision_group: data.decision_group,
+                // decision_group: data.decision_group,
                 description: data.description,
             });
         }
@@ -123,17 +135,17 @@ const CreateDecisionType = ({editBtn, data, type, refetch, buttonText = "Thêm l
             <DialogContent className="w-[95vw] max-w-2xl sm:max-w-3xl max-h-[90vh]">
                 <DialogHeader>
                     <div className={`flex justify-between md:flex-row flex-col p-5 items-center gap-2`}>
-                    <DialogTitle className="text-xl sm:text-2xl">
-                        {type === "edit" ? "Chỉnh sửa loại quyết định" : "Thêm loại quyết định"}
-                    </DialogTitle>
-                    {
-                        data?.decision_type_id ? (
-                                <div className="border p-3 w-fit rounded-lg border-black">
-                                    {data?.decision_type_id}
-                                </div>
-                            ) :
-                            null
-                    }
+                        <DialogTitle className="text-xl sm:text-2xl">
+                            {type === "edit" ? "Chỉnh sửa loại quyết định" : "Thêm loại quyết định"}
+                        </DialogTitle>
+                        {
+                            data?.decision_type_id ? (
+                                    <div className="border p-3 w-fit rounded-lg border-black">
+                                        {data?.decision_type_id}
+                                    </div>
+                                ) :
+                                null
+                        }
                     </div>
                 </DialogHeader>
                 <Form {...form}>
@@ -145,7 +157,7 @@ const CreateDecisionType = ({editBtn, data, type, refetch, buttonText = "Thêm l
                                     name="decision_type"
                                     render={({field}) => (
                                         <FormItem>
-                                            <FormLabel>Tên loại quyết định</FormLabel>
+                                            <FormLabel>Tên loại quyết định <Asterisk /></FormLabel>
                                             <FormControl>
                                                 <Input
                                                     className="border-primary border rounded-lg h-12"
@@ -157,23 +169,34 @@ const CreateDecisionType = ({editBtn, data, type, refetch, buttonText = "Thêm l
                                         </FormItem>
                                     )}
                                 />
-                                <FormField
-                                    control={form.control}
-                                    name="decision_group"
-                                    render={({field}) => (
-                                        <FormItem>
-                                            <FormLabel>Nhóm quyết định</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    className="border-primary border rounded-lg h-12"
-                                                    placeholder="Nhập nhóm quyết định"
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <FormMessage/>
-                                        </FormItem>
-                                    )}
-                                />
+                                {/*<FormField*/}
+                                {/*    control={form.control}*/}
+                                {/*    name="decision_group"*/}
+                                {/*    render={({field}) => (*/}
+                                {/*        <FormItem>*/}
+                                {/*            <FormLabel>Nhóm quyết định <Asterisk /></FormLabel>*/}
+                                {/*            <Select onValueChange={field.onChange} value={field.value}>*/}
+                                {/*                <FormControl>*/}
+                                {/*                    <SelectTrigger className="h-10 w-full">*/}
+                                {/*                        <SelectValue placeholder="Chọn nhóm quyết định" />*/}
+                                {/*                    </SelectTrigger>*/}
+                                {/*                </FormControl>*/}
+                                {/*                <SelectContent>*/}
+
+                                {/*                    {decistionGroup?.map((item, index) => (*/}
+                                {/*                        <SelectItem key={index} value={item}>*/}
+                                {/*                            <div className="flex items-center gap-2">*/}
+                                {/*                                {item}*/}
+                                {/*                            </div>*/}
+                                {/*                        </SelectItem>*/}
+                                {/*                    ))}*/}
+
+                                {/*                </SelectContent>*/}
+                                {/*            </Select>*/}
+                                {/*            <FormMessage />*/}
+                                {/*        </FormItem>*/}
+                                {/*    )}*/}
+                                {/*/>*/}
                             </div>
 
                             <div className="flex-1">

@@ -149,3 +149,14 @@ func (r *timesheetRepo) FindByEmployeeForExport(ctx context.Context, employeeID 
 	}
 	return &ts, err
 }
+
+func (r *timesheetRepo) CheckExist(ctx context.Context, employeeID string, month, year int) (*model.TimeSheet, error) {
+	var ts model.TimeSheet
+	err := r.db.WithContext(ctx).
+		Where("employee_id = ? AND month = ? AND year = ?", employeeID, month, year).
+		First(&ts).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &ts, err
+}

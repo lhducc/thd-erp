@@ -71,6 +71,11 @@ export const deleteContractById = async (contractId: string): Promise<Contract> 
     }
 }
 
+export const getContractByEmployeeId = async (employeeId: string): Promise<Contract[]> => {
+    const response = await api.get(`/contract/employee/${employeeId}`);
+    return response.data.data;
+}
+
 export const exportContractsFile = async (): Promise<File> => {
     try {
         const response = await api.get("/contract/export?fields=contract_id,effective_date", {
@@ -78,7 +83,7 @@ export const exportContractsFile = async (): Promise<File> => {
         });
 
         const fileName = "contracts.xlsx";
-        const file = new File([response.data], fileName, { type: response.data.type });
+        const file = new File([response.data], fileName, {type: response.data.type});
         return file;
     } catch (error: any) {
         console.error("Error exporting contracts:", error);

@@ -37,11 +37,8 @@ import {
 } from "@/components/ui/select";
 
 const ContractGroup = {
-    ConfirmTime: "Hợp đồng xác định thời hạn",
-    NoTimeConfirmation: "Hợp đồng không xác định thời hạn",
+    Offical: "Hợp đồng chính thức",
     Trial: "Hợp đồng thử việc",
-    VocationalTraining: "Hợp đồng đào tạo nghề",
-    Service: "Hợp đồng dịch vụ",
 } as const;
 
 const Unit = {

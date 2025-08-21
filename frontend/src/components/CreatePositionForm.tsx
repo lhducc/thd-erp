@@ -108,7 +108,7 @@ const CreatePositionForm = ({ refetch, editBtn, type, position }: Props) => {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="md:w-[800px] w-[90vw]">
         <DialogHeader>
           <DialogTitle>
             {type === "edit" ? "Cập nhật vị trí" : "Thêm vị trí"}

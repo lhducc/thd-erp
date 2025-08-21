@@ -15,13 +15,14 @@ import (
 
 type EmployeeBiz interface {
 	CreateEmployeeWithAccount(ctx context.Context, employee *model.Employee, roleID string) error
-	GetUserById(id string) (model.Employee, error)
-	UpdateEmployee(ctx context.Context, id string, updatedEmployee model.Employee) error
+	GetUserById(id string) (*dto.EmployeeResponse, error)
+	UpdateEmployee(ctx context.Context, id string, updatedEmployee dto.EmployeeDTO) error
 	DeleteEmployee(id string) error
-	GetAllEmployees(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error)
+	GetAllEmployees(page, pageSize int, filters map[string]interface{}) ([]dto.EmployeeResponse, int64, error)
 	GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error)
 	ExportEmployeeTest(selectedFields []string) ([]byte, string, error)
 	GetUserByRoleID(roleID string) ([]model.ManagerResponse, error)
+	UpdateStatus(employeeID, statusChange string) error
 }
 
 type EmployeeHandler struct {
@@ -174,7 +175,7 @@ func (biz *EmployeeHandler) UpdateEmployee() gin.HandlerFunc {
 		idParam := c.Param("id")
 		ctx := c.Request.Context()
 
-		var data model.Employee
+		var data dto.EmployeeDTO
 		if err := c.ShouldBindJSON(&data); err != nil {
 			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
 			return
@@ -208,5 +209,32 @@ func (biz *EmployeeHandler) GetEmployeesByRoleID() gin.HandlerFunc {
 		}
 
 		utils.ResponseMessage(c, "List Users", http.StatusOK, &emps)
+	}
+}
+
+func (biz *EmployeeHandler) UpdateStatusEmp() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		employeeID := c.Param("id")
+		status := c.Query("status")
+		if strings.TrimSpace(employeeID) == "" {
+			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: mã nhân viên không hợp lệ!!!"), http.StatusBadRequest, nil)
+			return
+		}
+		if strings.TrimSpace(status) == "" || status != "inactive" && status != "active" {
+			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: trạng thái không hợp lệ!!!"), http.StatusBadRequest, nil)
+			return
+		}
+
+		err := biz.employeeBiz.UpdateStatus(employeeID, status)
+		if err != nil {
+			if err.Error() == "not_found" {
+				utils.ResponseMessage(c, fmt.Sprintf("Lỗi: nhân viên %s không tồn tại.", employeeID), http.StatusNotFound, nil)
+				return
+			}
+			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusInternalServerError, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Update status successfully", http.StatusOK, nil)
 	}
 }

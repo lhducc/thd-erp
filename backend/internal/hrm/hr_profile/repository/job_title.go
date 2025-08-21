@@ -38,7 +38,9 @@ func (s *JobTitleStore) GetJobTitleById(ctx context.Context, id string) (*model.
 func (s *JobTitleStore) GetAllJobTitle(ctx context.Context) ([]model.JobTitle, error) {
 
 	var positions []model.JobTitle
-	if err := s.db.WithContext(ctx).Table("jobtitle").Find(&positions).Error; err != nil {
+	if err := s.db.WithContext(ctx).Table("jobtitle").
+		Preload("HierarchyLevel").
+		Find(&positions).Error; err != nil {
 		return nil, err
 	}
 

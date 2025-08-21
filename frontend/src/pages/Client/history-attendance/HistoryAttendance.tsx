@@ -1,6 +1,5 @@
 import {useGetPersonalTimesheet} from "@/query/timesheet.query.ts";
 import {useState} from "react";
-import {useQueryClient} from "@tanstack/react-query";
 import {useAuth} from "@/context/AuthContext.tsx";
 import lateAttendance from "@/assets/late-attendance.svg"
 import trueAttendance from "@/assets/true-attendance.svg"
@@ -18,7 +17,6 @@ const HistoryAttendance = () => {
     const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
     const [selectedDetail, setSelectedDetail] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
-    const queryClient = useQueryClient();
 
     // Vietnamese month names
     const months = [

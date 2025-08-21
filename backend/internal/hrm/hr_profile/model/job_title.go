@@ -10,9 +10,6 @@ type JobTitle struct {
 
 	// Quan hệ với HierarchyLevel
 	HierarchyLevel *HierarchyLevel `gorm:"foreignKey:HierarchyLevelID;references:ID" json:"hierarchy_level,omitempty"`
-
-	// Quan hệ với Employee
-	// Employees []Employee `gorm:"foreignKey:JobTitleID;references:JobTitleID" json:"employees,omitempty"`
 }
 
 func (JobTitle) TableName() string { return "jobtitle" }

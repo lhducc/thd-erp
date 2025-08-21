@@ -174,11 +174,13 @@ func setupEmployeeWorkshiftRoutes(adminRouter, managerRouter, userRouter *gin.Ro
 		adminGr.PUT("/:id", handler.Update())
 		adminGr.GET("/:employeeID", handler.GetAllByEmployeeID())
 		adminGr.POST("/assign", handler.AssignEmpShifts())
+		adminGr.POST("/register-many", handler.RegisterMany())
 	}
 	userGr := userRouter.Group("/employee-workshifts")
 	{
 		userGr.POST("", handler.RegisterPersonal())
 		userGr.GET("/register-shift", handler.GetListShiftAllowRegister())
+		userGr.GET("/all", handler.GetAllEmployeeWorkshift())
 		userGr.GET("/personal", handler.GetAllPersonal())
 		userGr.DELETE("/personal/:id", handler.DeletePersonalShift())
 
@@ -259,6 +261,7 @@ func setupEmployeeRouters(adminRouter, userRouter *gin.RouterGroup, handler *han
 		adminEmployeeRouter.DELETE("/:id", handler.DeleteEmployee())
 		adminEmployeeRouter.GET("/export", handler.ExportEmployees())
 		adminEmployeeRouter.GET("/user", handler.GetEmployeesByRoleID())
+		adminEmployeeRouter.PUT("/:id/status", handler.UpdateStatusEmp())
 	}
 
 	userEmployeeRouter := userRouter.Group("/employee")
@@ -348,7 +351,6 @@ func setupWorkShiftRoutes(router *gin.RouterGroup, workShiftHandler *checkin.Wor
 func setupAttandanceRecordRoutes(amdinRouter, userRouter *gin.RouterGroup, handler *checkin.AttendanceRecordHandler) {
 	adminGroup := amdinRouter.Group("/attendance-record")
 	{
-		adminGroup.POST("", handler.CreateAttendanceRecord())
 		adminGroup.GET("/:id", handler.GetAttendanceRecordByID())
 		adminGroup.GET("/employee/:employeeId", handler.GetRecordsByEmployee())
 		adminGroup.GET("/employee/:employeeId/date-range", handler.GetRequestsByDateRange())
@@ -360,6 +362,7 @@ func setupAttandanceRecordRoutes(amdinRouter, userRouter *gin.RouterGroup, handl
 	}
 	userGr := userRouter.Group("/attendance-record")
 	{
+		userGr.POST("", handler.CreateAttendanceRecord())
 		userGr.GET("/personal", handler.GetPersonalHistoryRecord())
 		userGr.GET("/:id/personal", handler.GetPersonalRecordDetailById())
 	}

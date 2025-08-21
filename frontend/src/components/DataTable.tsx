@@ -97,7 +97,7 @@ export default function DataTable<TData, TValue>({
     const skeletonRows = pagination.pageSize;
 
     return (
-        <div className="w-full">
+        <div className="md:max-w-[1580px] w-full]">
             <div className="flex lg:flex-row flex-col items-center py-4 gap-8">
                 <div className="lg:text-3xl text-lg font-bold text-nowrap uppercase">
                     {title}

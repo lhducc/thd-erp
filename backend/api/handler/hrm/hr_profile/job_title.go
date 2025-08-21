@@ -37,7 +37,7 @@ func (h *JobTitleHandler) Create() gin.HandlerFunc {
 		}
 
 		if err := h.jobTitleBiz.CreateJobTitle(c.Request.Context(), &data); err != nil {
-			utils.ResponseMessage(c, err.Error(), http.StatusBadRequest, nil)
+			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
 			return
 		}
 

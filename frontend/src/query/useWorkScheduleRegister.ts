@@ -6,7 +6,7 @@ export const useWorkScheduleRegister = () =>
         queryKey: ["workScheduleRegister"],
         queryFn: getAllWorkScheduleRegister,
         gcTime: Infinity,
-        staleTime: Infinity,
+        staleTime: 0,
     });
 
 export const useWorkScheduleRegisterById  = (id?: string) =>

@@ -18,7 +18,7 @@ const ClientProfilePage = () => {
         isLoading,
     } = useQuery({
         queryKey: ["employee", employeeId],
-        queryFn: () => getEmployeeByIdApi(employeeId!),
+        queryFn: () => getEmployeeByIdApi(),
         enabled: !!employeeId,
     });
 

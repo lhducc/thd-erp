@@ -28,6 +28,7 @@ import { Input } from '@/components/ui/input';
 import {createAttendanceRecord} from "@/apis/attendance-record.api.ts";
 import {toast} from "sonner";
 import axios from "axios";
+import {toVietnamISOString} from "@/lib/utils.ts";
 
 const formSchema = z.object({
     category_id: z.string({
@@ -45,17 +46,11 @@ const formSchema = z.object({
 
 const AttendancePage = () => {
     const {data: categories, isLoading: isCategoriesLoading} = useAttendanceCategories()
-    const [cameraReady, setCameraReady] = useState(false);
     const [position, setPosition] = useState<[number, number] | null>(null);
-    const [cameraError, setCameraError] = useState('');
+
     const [currentTime, setCurrentTime] = useState(new Date());
-    const [imageData, setImageData] = useState<string | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [isCamera, setIsCamera] = useState(true); // Thêm state này để kiểm soát việc sử dụng camera
-    const streamRef = useRef<MediaStream | null>(null); // Sử dụng useRef để lưu stream
-    const [cameraPermission, setCameraPermission] = useState<'prompt' | 'granted' | 'denied'>('prompt');
-    const [isCameraAvailable, setIsCameraAvailable] = useState(true);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -63,13 +58,82 @@ const AttendancePage = () => {
             category_id: '',
             office_id: '',
             note_request: '',
-            image: '',
+            image: undefined,
             gps_location: '',
             timestamp: new Date().toISOString()
         },
     });
 
     const {data: offices = [], isLoading: isOfficesLoading} = useOffice();
+
+    const startCamera = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            console.log("stream", stream);
+            if (videoRef.current) {
+                console.log('videoref')
+                videoRef.current.srcObject = stream;
+                console.log(videoRef.current);
+            }
+            return true;
+        } catch (err) {
+            console.error("Không thể mở camera:", err);
+            toast.error("Không thể mở camera");
+            return false;
+        }
+    };
+
+    const stopCamera = () => {
+        const stream = videoRef.current?.srcObject as MediaStream;
+        stream?.getTracks().forEach(track => track.stop());
+    };
+
+    useEffect(() => {
+        if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
+            let stream: MediaStream | null = null;
+            const initCamera = async () => {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'user' }
+                    });
+                    if (videoRef.current) {
+                        videoRef.current.srcObject = stream;
+                    }
+                } catch (err) {
+                    console.error("Camera error:", err);
+                    toast.error("Không thể mở camera");
+                }
+            };
+            initCamera();
+
+            return () => {
+                stream?.getTracks().forEach(track => track.stop());
+            };
+        } else {
+            console.error("Camera API không khả dụng");
+            toast.error("Trình duyệt không hỗ trợ camera hoặc cần HTTPS");
+        }
+    }, []);
+
+
+    const handleSubmit = async () => {
+        if (!canvasRef.current || !videoRef.current) return;
+        const context = canvasRef.current.getContext("2d");
+        if (!context) return;
+
+        context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+
+        canvasRef.current.toBlob(async (blob) => {
+            if (blob) {
+                const file = new File([blob], `attendance_${Date.now()}.jpg`, { type: "image/jpeg" });
+                form.setValue("image", file);
+
+                // submit form
+                await form.handleSubmit(onSubmit)();
+            }
+        }, "image/jpeg");
+    };
+
 
     const submitAttendanceMutation = useMutation({
         mutationFn: async (data: z.infer<typeof formSchema>) => {
@@ -80,31 +144,28 @@ const AttendancePage = () => {
             formData.append('gps_location', data.gps_location);
             formData.append('timestamp', data.timestamp);
             formData.append('image', data.image); // File here!
-
             return await createAttendanceRecord(formData);
         },
         onSuccess: () => {
             toast.success('Chấm công thành công!');
             form.reset();
-            setImageData(null);
         },
         onError: (error) => {
             if (axios.isAxiosError(error)) {
                 console.log(error.response);
-                toast.error(error.response.data.message);
             }
         }
     });
-
 
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
         try {
             const submissionData = {
                 ...data,
-                timestamp: new Date().toISOString(),
+                timestamp: toVietnamISOString(),
                 gps_location: position ? `${position[0]},${position[1]}` : ''
             };
-
+            console.log("hi")
+            console.log(submissionData)
             await submitAttendanceMutation.mutateAsync(submissionData);
         } catch (error) {
             console.error('Submission error:', error);
@@ -207,102 +268,9 @@ const AttendancePage = () => {
         }
     }, [position, offices, form]);
 
-    useEffect(() => {
-        const initCamera = async () => {
-            try {
-                // Kiểm tra quyền truy cập camera trước
-                const permissionStatus = await navigator.permissions.query({ name: 'camera' as any });
-                setCameraPermission(permissionStatus.state);
-
-                if (permissionStatus.state === 'denied') {
-                    setCameraError('Quyền truy cập camera bị từ chối. Vui lòng cấp quyền trong cài đặt trình duyệt.');
-                    setIsCameraAvailable(false);
-                    return;
-                }
-
-                // Kiểm tra thiết bị có camera không
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const hasCamera = devices.some(device => device.kind === 'videoinput');
-
-                if (!hasCamera) {
-                    setCameraError('Không tìm thấy camera trên thiết bị');
-                    setIsCameraAvailable(false);
-                    return;
-                }
-
-                // Khởi tạo camera
-                const mediaStream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        facingMode: 'user'
-                    }
-                });
-
-                streamRef.current = mediaStream;
-
-                if (videoRef.current) {
-                    videoRef.current.srcObject = mediaStream;
-                    videoRef.current.onloadedmetadata = () => {
-                        videoRef.current?.play();
-                        setCameraReady(true);
-                    };
-                }
-            } catch (err) {
-                console.error("Lỗi camera:", err);
-                setCameraError('Không thể khởi động camera. Vui lòng kiểm tra quyền truy cập hoặc thử lại.');
-                setIsCameraAvailable(false);
-            }
-        };
-
-        if (isCamera && isCameraAvailable) {
-            initCamera();
-        }
-
-        return () => {
-            if (streamRef.current) {
-                streamRef.current.getTracks().forEach(track => {
-                    track.stop();
-                });
-                streamRef.current = null;
-            }
-        };
-    }, [isCamera, isCameraAvailable]);
-
     if (isCategoriesLoading || isOfficesLoading) {
         return <Loading />;
     }
-
-    const handleSubmit = async () => {
-        if (videoRef.current && canvasRef.current) {
-            const ctx = canvasRef.current.getContext('2d');
-            if (!ctx) {
-                toast.error('Không thể xử lý ảnh từ camera.');
-                return;
-            }
-
-            ctx.drawImage(videoRef.current, 0, 0, 320, 240);
-            canvasRef.current.toBlob((blob) => {
-                if (!blob) {
-                    toast.error('Không thể chuyển ảnh sang File.');
-                    return;
-                }
-
-                const file = new File([blob], `attendance-${Date.now()}.png`, {
-                    type: 'image/png',
-                });
-
-                setImageData(URL.createObjectURL(file)); // preview nếu cần
-                form.setValue('image', file, { shouldValidate: true });
-
-                // Gọi submit sau khi đã có file
-                form.handleSubmit(onSubmit)();
-            }, 'image/png');
-        } else {
-            toast.error('Camera không sẵn sàng.');
-        }
-    };
-
 
     return (
         <div>
@@ -333,53 +301,16 @@ const AttendancePage = () => {
                     )}
                 </div>
 
-                {/* Camera */}
-                <div>
-                    {isCamera && isCameraAvailable ? (
-                        <div>
-                            {!cameraReady && !cameraError && (
-                                <div className="w-[320px] h-[240px] flex items-center justify-center bg-black rounded-lg">
-                                    <p className="text-white">Đang khởi tạo camera...</p>
-                                </div>
-                            )}
-                            <video
-                                ref={videoRef}
-                                width="320"
-                                height="240"
-                                autoPlay
-                                muted
-                                playsInline
-                                style={{
-                                    borderRadius: '8px',
-                                    backgroundColor: '#000',
-                                    display: cameraReady ? 'block' : 'none'
-                                }}
-                            />
-                            <canvas
-                                ref={canvasRef}
-                                width="320"
-                                height="240"
-                                style={{ display: 'none' }}
-                            />
-                        </div>
-                    ) : null}
-
-                    {cameraError && (
-                        <div className="w-[320px] p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-                            <p>{cameraError}</p>
-                            <button
-                                onClick={() => {
-                                    setCameraError('');
-                                    setIsCameraAvailable(true);
-                                    setCameraReady(false);
-                                }}
-                                className="mt-2 text-blue-600 hover:underline"
-                            >
-                                Thử lại
-                            </button>
-                        </div>
-                    )}
-                </div>
+                <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="rounded-lg border border-gray-300"
+                    width="300"
+                    height="300"
+                />
+                <canvas ref={canvasRef} width={300} height={300} className="hidden" />
 
                 <div>{formattedTime}</div>
 
@@ -513,13 +444,12 @@ const AttendancePage = () => {
                         >
                             {submitAttendanceMutation.isPending ? (
                                 <span className="flex items-center justify-center">
-            <Loading />
-        </span>
+                                    <Loading />
+                                </span>
                             ) : (
                                 'Chấm công'
                             )}
                         </button>
-
                     </form>
                 </Form>
             </div>

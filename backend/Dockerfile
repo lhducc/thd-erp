@@ -1,6 +1,6 @@
 ## BUILD STAGE##
-# FROM 192.168.1.76:5001/product/erp/erp/golang:1.24-alpine AS builder
 FROM golang:1.24-alpine AS builder
+# FROM 192.168.1.76:5001/product/erp/erp/golang:1.24-alpine AS builder
 
 ENV APPNAME erp-backend
 
@@ -11,8 +11,8 @@ COPY . .
 RUN CGO_ENABLED=0 go build -mod=vendor -v -o ./build/$APPNAME ./cmd/api/main.go
 
 ## RUN STAGE ##
-# FROM 192.168.1.76:5001/product/erp/erp/alpine:3.14
 FROM alpine:3.14
+# FROM 192.168.1.76:5001/product/erp/erp/alpine:3.14
 
 ENV APPNAME erp-backend
 

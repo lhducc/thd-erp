@@ -9,3 +9,13 @@ export type EmployeeWorkshift = {
     workshift_id: string;
     workshift: Workshift
 }
+
+export interface EmployeeWorkshiftResponse {
+    [employeeId: string]: EmployeeWorkshift[];
+}
+
+export interface RegisterWorkshiftRequest {
+    employee_id: string;
+    workshift_id: string;
+    date: string;
+}

@@ -127,7 +127,7 @@ const CreateJobTitleForm = ({ editBtn, type, refetch, jobTitle }: Props) => {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="md:w-[800px] w-[90vw]">
         {pendingGetHierarchyLevel ? (
           <Loading />
         ) : (

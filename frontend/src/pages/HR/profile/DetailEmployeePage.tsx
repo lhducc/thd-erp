@@ -1,13 +1,15 @@
-import {Button} from "@/components/ui/button";
-import {Label} from "@/components/ui/label";
+import {Button} from "@/components/ui/button.tsx";
+import {Label} from "@/components/ui/label.tsx";
 import {useState} from "react";
-import {Pencil, Trash2} from "lucide-react";
-import DocumentEmployeeForm from "@/components/DocumentEmployeeForm"
+import DocumentEmployeeForm from "@/components/DocumentEmployeeForm.tsx"
 import {useGetEmployeeById} from "@/query/employee.query.ts";
 import {useParams} from "react-router-dom";
 import Loading from "@/components/Loading.tsx";
 import {useDocumentEmployeeById} from "@/query/useDocumentEmployee.ts";
-import {formatDate} from "date-fns";
+import {formatDate} from "@/lib/utils.ts";
+import DataTable from "@/components/DataTable.tsx";
+import {contractColumns, documentColumn} from "@/pages/HR/profile/columns.tsx";
+import {useGetContractByEmployeeId} from "@/query/contract.ts";
 
 const DetailEmployeePage = () => {
     const [open, setOpen] = useState(false);
@@ -15,7 +17,8 @@ const DetailEmployeePage = () => {
 
     const { data: employee, isPending, isError } = useGetEmployeeById(id ?? "");
 
-    const { data: document, isPending: isDocumentPending, isDocumentError } = useDocumentEmployeeById(id ?? "");
+    const { data: document} = useDocumentEmployeeById(id ?? "");
+    const { data: contract} = useGetContractByEmployeeId(id ?? "");
 
     if (isPending) return <Loading />;
     if (isError || !employee) return <p>Không thể tải dữ liệu. Vui lòng thử lại.</p>;
@@ -23,7 +26,7 @@ const DetailEmployeePage = () => {
     const Header = () => (
         <div className="flex items-center justify-between bg-white p-4 border-b-1 border-gray-800">
             <Label className="text-2xl font-bold">CHI TIẾT HỒ SƠ NHÂN VIÊN</Label>
-            <DocumentEmployeeForm className="w-[1261px]" open={open} setOpen={setOpen}/>
+            <DocumentEmployeeForm open={open} setOpen={setOpen}/>
             <div className="flex space-x-2">
                 <span
                     className={`px-4 py-2 border-2 rounded-full font-bold transition ${
@@ -33,18 +36,18 @@ const DetailEmployeePage = () => {
                     }`}>
                     {employee.status === "active" ? "ACTIVE" : "INACTIVE"}
                 </span>
-                {["Chỉnh sửa thông tin", "Tạo hợp đồng", "Thêm tài liệu", "Xóa hồ sơ"].map((text, idx) => (
-                    text === "Thêm tài liệu" ? (
-                        <Button onClick={() => setOpen(true)} key={idx}
-                                className="bg-red-500 hover:bg-red-600 text-white rounded-full px-3 py-2">
-                            {text}
-                        </Button>
-                    ) : (
-                        <Button key={idx} className="bg-red-500 hover:bg-red-600 text-white rounded-full px-3 py-2">
-                            {text}
-                        </Button>
-                    )
-                ))}
+                {/*{["Chỉnh sửa thông tin", "Tạo hợp đồng", "Thêm tài liệu", "Xóa hồ sơ"].map((text, idx) => (*/}
+                {/*    text === "Thêm tài liệu" ? (*/}
+                {/*        <Button onClick={() => setOpen(true)} key={idx}*/}
+                {/*                className="bg-red-500 hover:bg-red-600 text-white rounded-full px-3 py-2">*/}
+                {/*            {text}*/}
+                {/*        </Button>*/}
+                {/*    ) : (*/}
+                {/*        <Button key={idx} className="bg-red-500 hover:bg-red-600 text-white rounded-full px-3 py-2">*/}
+                {/*            {text}*/}
+                {/*        </Button>*/}
+                {/*    )*/}
+                {/*))}*/}
             </div>
         </div>
     );
@@ -78,51 +81,53 @@ const DetailEmployeePage = () => {
         </div>
     );
 
-    const DataTable = ({title, columns, data}: any) => (
-        <div className="bg-white p-4 rounded-md w-full">
-            <h2 className="text-lg font-bold mb-2">{title}</h2>
-            <table className="w-full border text-sm">
-                <thead className="bg-gray-100">
-                <tr>
-                    {columns.map((col: string, i: number) => (
-                        <th key={i} className="border px-3 py-2 text-left">{col}</th>
-                    ))}
-                    <th className="border px-3 py-2">Chỉnh sửa</th>
-                </tr>
-                </thead>
-                <tbody>
-                {data.map((row: any, idx: number) => (
-                    <tr key={idx}>
-                        {Object.values(row).map((val: any, i: number) => (
-                            <td key={i} className="border px-3 py-2">{val}</td>
-                        ))}
-                        <td className="border px-3 py-2 text-center">
-                            <div className="flex justify-center gap-2">
-                                <Pencil className="w-4 h-4 cursor-pointer"/>
-                                <Trash2 className="w-4 h-4 cursor-pointer text-red-500"/>
-                            </div>
-                        </td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
-            <div className="flex justify-center mt-3 space-x-1">
-                <button className="px-2 py-1 border rounded hover:bg-gray-200">
-                    {"<"}
-                </button>
-
-                {[1, 2, 3, 4, 5].map((page) => (
-                    <button key={page} className="px-2 py-1 border rounded hover:bg-gray-200">
-                        {page}
-                    </button>
-                ))}
-
-                <button className="px-2 py-1 border rounded hover:bg-gray-200">
-                    {">"}
-                </button>
-            </div>
-        </div>
-    );
+    // const DataTable = ({title, columns, data}: any) => {
+    //     return (
+    //         <div className="bg-white p-4 rounded-md w-full">
+    //             <h2 className="text-lg font-bold mb-2">{title}</h2>
+    //             <table className="w-full border text-sm">
+    //                 <thead className="bg-gray-100">
+    //                 <tr>
+    //                     {columns?.map((col: string, i: number) => (
+    //                         <th key={i} className="border px-3 py-2 text-left">{col}</th>
+    //                     ))}
+    //                     <th className="border px-3 py-2">Chỉnh sửa</th>
+    //                 </tr>
+    //                 </thead>
+    //                 <tbody>
+    //                 {data?.map((row: any, idx: number) => (
+    //                     <tr key={idx}>
+    //                         {Object.values(row)?.map((val: any, i: number) => (
+    //                             <td key={i} className="border px-3 py-2">{val}</td>
+    //                         ))}
+    //                         <td className="border px-3 py-2 text-center">
+    //                             <div className="flex justify-center gap-2">
+    //                                 <Pencil className="w-4 h-4 cursor-pointer"/>
+    //                                 <Trash2 className="w-4 h-4 cursor-pointer text-red-500"/>
+    //                             </div>
+    //                         </td>
+    //                     </tr>
+    //                 ))}
+    //                 </tbody>
+    //             </table>
+    //             <div className="flex justify-center mt-3 space-x-1">
+    //                 <button className="px-2 py-1 border rounded hover:bg-gray-200">
+    //                     {"<"}
+    //                 </button>
+    //
+    //                 {[1, 2, 3, 4, 5].map((page) => (
+    //                     <button key={page} className="px-2 py-1 border rounded hover:bg-gray-200">
+    //                         {page}
+    //                     </button>
+    //                 ))}
+    //
+    //                 <button className="px-2 py-1 border rounded hover:bg-gray-200">
+    //                     {">"}
+    //                 </button>
+    //             </div>
+    //         </div>
+    //     );
+    // }
 
     // const documentData = [
     //     {type: "Chứng chỉ HSK6", status: "Hết hiệu lực", condition: "Chờ duyệt", expired: "13/05/2025"},
@@ -132,33 +137,21 @@ const DetailEmployeePage = () => {
     //     {type: "Chứng chỉ HSK6", status: "Đang hiệu lực", condition: "Đang hiệu lực", expired: "13/05/2025"},
     // ];
 
-    const contractData = [
-        {id: "HD000009", name: "Hợp đồng XYZ", date: "10/07/2025", status: "Hết hiệu lực"},
-        {id: "HD000001", name: "Hợp đồng lao động", date: "10/07/2025", status: "Đang hiệu lực"},
-        {id: "HD000001", name: "Hợp đồng lao động", date: "10/07/2025", status: "Đang hiệu lực"},
-        {id: "HD000001", name: "Hợp đồng lao động", date: "10/07/2025", status: "Đang hiệu lực"},
-        {id: "HD000001", name: "Hợp đồng lao động", date: "10/07/2025", status: "Đang hiệu lực"},
-    ];
-
     return (
         <div className="space-y-4">
             <Header/>
             <div className="flex">
                 <InfoSection/>
-                <div className="flex flex-col w-[55%] gap-4">
+                <div className="flex flex-col w-[55%] gap-4 p-5">
                     <DataTable
                         title="Hồ sơ nhân viên"
-                        columns={["Loại tài liệu", "Trạng thái", "Tình trạng", "Ngày hết hạn"]}
-                        data={document?.map(item => ({
-                            ...item
-                        }))}
+                        columns={documentColumn}
+                        data={document || []}
                     />
                     <DataTable
                         title="Hợp đồng liên quan"
-                        columns={["Mã Hợp đồng", "Tên hợp đồng", "Ngày tạo", "Trạng thái"]}
-                        data={contractData.map(item => ({
-                            ...item
-                        }))}
+                        columns={contractColumns}
+                        data={contract|| []}
                     />
                 </div>
             </div>

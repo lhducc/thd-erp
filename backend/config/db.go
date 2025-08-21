@@ -12,13 +12,48 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 var DB *gorm.DB
 
+var AllModels = []interface{}{
+	//&model.Office{},
+	//&checkin_model.EmployeeWorkshift{},
+	//&model.Position{},
+	//&model.Department{},
+	//&model.Office{},
+	//&model.JobTitle{},
+	//&checkin_model.WorkShifts{},
+	//&checkin_model.EmployeeWorkshift{},
+	//&model.EmployeeDocumentType{},
+	//&model.Employee{},
+	//&model.ContractType{},
+	//&model.Contract{},
+	//&model.DecisionType{},
+	//&model.Decision{},
+	//&model.DecisionEmployee{},
+	//&model.Insurance{},
+	//&checkin_model.WorkShifts{},
+	//&model.Allowance{},
+	//&model.Contract{},
+	//&model.ContractAllowance{},
+	//&checkin_model.AttendanceCategory{},
+	//&checkin_model.AttendanceRecord{},
+	//&checkin_model.WorkSchedule{},
+	//&checkin_model.WorkScheduleShift{},
+	//&checkin_model.WorkScheduleManager{},
+	//&checkin_model.TimeSheetList{},
+	//&checkin_model.TimeSheet{},
+	//&checkin_model.TimeSheetDetail{},
+}
+
 func ConnectPostgres() {
 	dsn := AppConfig.Postgres.DBSource
 
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
+	})
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true, // ⟵ TẮT tạo FK khi AutoMigrate
 		NamingStrategy:                           schema.NamingStrategy{},
@@ -31,6 +66,9 @@ func ConnectPostgres() {
 	if err := createEnums(db); err != nil {
 		log.Fatal("Không thể tạo enum types:", err)
 	}
+	errT := db.AutoMigrate(AllModels...)
+	if errT != nil {
+		fmt.Print(errT)
 
 	// Run AutoMigrate to create tables
 	if err := AutoMigrate(db); err != nil {
@@ -43,6 +81,10 @@ func ConnectPostgres() {
 		log.Fatal("Không thể tạo vai trò mặc định:", err)
 	}
 
+	if err := CreateForeignKeysFromModels(db, AllModels); err != nil {
+		log.Fatalf("Không tạo được FK cho bảng: %v", err)
+	}
+
 	fmt.Println("Đã kết nối PostgreSQL!")
 	DB = db
 
@@ -51,17 +93,21 @@ func ConnectPostgres() {
 
 // Create ENUM types for AutoMigrate
 func createEnums(db *gorm.DB) error {
+	extensionSQL := `
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    `
+	if err := db.Exec(extensionSQL).Error; err != nil {
+		return fmt.Errorf("không thể tạo extension uuid-ossp: %w", err)
+	}
+
 	enumSQL := `
 	DO $$
 	BEGIN
 		-- enum contract_group_enum
 		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'contract_group_enum') THEN
 			CREATE TYPE contract_group_enum AS ENUM (
-				'Hợp đồng xác định thời hạn',
-				'Hợp đồng không xác định thời hạn',
 				'Hợp đồng thử việc',
-				'Hợp đồng đào tạo nghề',
-				'Hợp đồng dịch vụ'
+				'Hợp đồng chính thức'
 			);
 		END IF;
 
@@ -97,19 +143,6 @@ func createEnums(db *gorm.DB) error {
 			CREATE TYPE decision_condition_enum AS ENUM (
 				'Chưa hiệu lực',
 				'Đang hiệu lực'
-			);
-		END IF;
-
-		-- enum decision_group_enum
-		IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'decision_group_enum') THEN
-			CREATE TYPE decision_group_enum AS ENUM (
-				'Hình thức khen thưởng',
-				'Hình thức kỷ luật',
-				'Lý do điều chuyển',
-				'Lý do tiếp nhận',
-				'Lý do bổ nhiệm',
-				'Lý do miễn nhiệm',
-				'Lý do chấm dứt HĐLĐ'
 			);
 		END IF;
 
@@ -214,6 +247,12 @@ func createEnums(db *gorm.DB) error {
 	return db.Exec(enumSQL).Error
 }
 
+func GetDB() *gorm.DB {
+	return DB
+}
+
+func AutoMigrateModels(db *gorm.DB, models []interface{}) error {
+	err := db.AutoMigrate(models...)
 // AutoMigrate creates all database tables
 func AutoMigrate(db *gorm.DB) error {
 	// First pass - create tables without relationships to avoid circular dependencies
@@ -289,6 +328,90 @@ func createDefaultRoles(db *gorm.DB) error {
 		}
 	}
 	return nil
+}
+
+func CreateForeignKeysFromModels(db *gorm.DB, models []interface{}) error {
+	tx := db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	for _, m := range models {
+		stmt := &gorm.Statement{DB: tx}
+		if err := stmt.Parse(m); err != nil {
+			tx.Rollback()
+			return fmt.Errorf("parse model lỗi: %w", err)
+		}
+		tableName := stmt.Schema.Table
+
+		for _, rel := range stmt.Schema.Relationships.Relations {
+			if rel.Type == schema.BelongsTo || rel.Type == schema.HasOne || rel.Type == schema.HasMany {
+				for _, ref := range rel.References {
+					// Bỏ qua tự tham chiếu
+					if tableName == ref.PrimaryKey.Schema.Table {
+						continue
+					}
+
+					// Kiểm tra cột tham chiếu có phải là PK hoặc Unique
+					isReferenceValid := false
+					for _, field := range ref.PrimaryKey.Schema.Fields {
+						if field.DBName == ref.PrimaryKey.DBName && (field.PrimaryKey || field.Unique) {
+							isReferenceValid = true
+							break
+						}
+					}
+					if !isReferenceValid {
+						log.Printf("Info: Bỏ qua FK từ %s.%s vì %s.%s không phải PK/Unique",
+							tableName, ref.ForeignKey.DBName,
+							ref.PrimaryKey.Schema.Table, ref.PrimaryKey.DBName)
+						continue
+					}
+
+					constraintName := fmt.Sprintf("fk_%s_%s", tableName, ref.ForeignKey.DBName)
+
+					// Kiểm tra constraint đã tồn tại (phiên bản tối ưu cho single schema)
+					var constraintExists bool
+					checkSQL := `
+                        SELECT EXISTS (
+                            SELECT 1 FROM pg_constraint 
+                            JOIN pg_class ON conrelid = pg_class.oid
+                            WHERE conname = $1 AND pg_class.relname = $2
+                        )`
+					if err := tx.Raw(checkSQL, constraintName, tableName).Scan(&constraintExists).Error; err != nil {
+						log.Printf("Warning: Không thể kiểm tra constraint %s: %v", constraintName, err)
+						continue
+					}
+
+					if constraintExists {
+						continue
+					}
+
+					// Tạo foreign key constraint
+					sql := fmt.Sprintf(`
+                        ALTER TABLE %s
+                        ADD CONSTRAINT %s FOREIGN KEY (%s)
+                        REFERENCES %s (%s)
+                        ON DELETE CASCADE ON UPDATE CASCADE;
+                    `,
+						tableName,
+						constraintName,
+						ref.ForeignKey.DBName,
+						ref.PrimaryKey.Schema.Table,
+						ref.PrimaryKey.DBName,
+					)
+
+					if err := tx.Exec(sql).Error; err != nil {
+						log.Printf("Error: Không thể tạo FK %s: %v", constraintName, err)
+						continue
+					}
+				}
+			}
+		}
+	}
+
+	return tx.Commit().Error
 }
 
 func CreateAllContraints(db *gorm.DB) {

@@ -3,20 +3,19 @@ import {
     useCalculatorTimesheet,
     useExportTimesheet,
     useGetTimesheet,
-    useLockTimesheet, useResetTimesheet,
+    useLockTimesheet,
+    useResetTimesheet,
     useUpdateTimesheetDetail
-} from "@/query/timesheet.query.ts";
-import {useState} from "react";
-import type {TimesheetDetail, TimesheetInfor, TimesheetList} from "@/types/timesheet.ts";
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription} from "@/components/ui/dialog.tsx";
-import {Button} from "@/components/ui/button.tsx";
-import {Edit, Save, TimerReset, X} from "lucide-react";
-import {Input} from "@/components/ui/input.tsx";
-import {Label} from "@/components/ui/label.tsx";
-import {useForm} from "react-hook-form";
+} from "@/query/timesheet.query";
+import {useCallback, useMemo, useState} from "react";
+import type {TimesheetDetail, TimesheetInfor, TimesheetList} from "@/types/timesheet";
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
+import {Button} from "@/components/ui/button";
+import {Edit, TimerReset} from "lucide-react";
 import {toast} from "sonner";
 import axios from "axios";
-import Loading from "@/components/Loading.tsx";
+import Loading from "@/components/Loading";
+import EditDialog from "@/pages/HR/checkin/timesheet/components/EditDialog";
 
 interface AdjustWorkDayForm {
     adjusted_work_day: number;
@@ -25,101 +24,20 @@ interface AdjustWorkDayForm {
 const TimesheetDetailPage = () => {
     const {id} = useParams();
     const {data, isLoading, refetch} = useGetTimesheet(id || "");
-    const {mutate: updateTimesheetDetail} = useUpdateTimesheetDetail();
+    const {mutate: updateTimesheetDetail, isPending: isUpdatingTimesheet} = useUpdateTimesheetDetail();
     const {mutate: lockTimesheet, isPending: isLockTimesheet} = useLockTimesheet();
     const {mutate: exportTimesheet} = useExportTimesheet();
-    const {mutate: calculatorTimesheet} = useCalculatorTimesheet();
+    const {mutate: calculatorTimesheet, isPending: isCalculatorTimesheet} = useCalculatorTimesheet();
     const {mutate: resetTimesheet, isPending: isResetTimesheet} = useResetTimesheet();
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
     const [selectedDetail, setSelectedDetail] = useState<TimesheetDetail | null>(null);
     const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-    const toggleRowExpansion = (timesheetId: number) => {
-        const newExpanded = new Set(expandedRows);
-        if (newExpanded.has(timesheetId)) {
-            newExpanded.delete(timesheetId);
-        } else {
-            newExpanded.add(timesheetId);
-        }
-        setExpandedRows(newExpanded);
-    };
-
-    const openDetailDialog = (detail: TimesheetDetail) => {
-        setSelectedDetail(detail);
-        setIsDetailDialogOpen(true);
-    };
-
-    const openEditDialog = () => {
-        setIsEditDialogOpen(true);
-    };
-
-    const handleReset = (timesheetDetailId: number) => {
-        resetTimesheet({
-            timesheetDetailId: timesheetDetailId,
-        }, {
-            onSuccess: async () => {
-                setIsDetailDialogOpen(false);
-                toast.success("Reset số công thành công");
-                await refetch();
-            },
-            onError: (error) => {
-                if (axios.isAxiosError(error)) {
-                    toast.error(error.message);
-                }
-                setIsDetailDialogOpen(false);
-            }
-        })
-    }
-
-    const handleEditSubmit = (formData: AdjustWorkDayForm) => {
-        if (!selectedDetail) return;
-
-        updateTimesheetDetail(
-            {
-                timesheetDetailId: selectedDetail.timesheet_detail_id,
-                data: {adjusted_work_day: Number(formData.adjusted_work_day)}
-            },
-            {
-                onSuccess: async () => {
-                    setIsEditDialogOpen(false);
-                    setIsDetailDialogOpen(false);
-                    await refetch(); // Refresh the data
-                }
-            }
-        );
-    };
-
-    const handleLockTimesheet = () => {
-        lockTimesheet({
-                timesheetDetailId: id,
-            },
-            {
-                onSuccess: async () => {
-                    toast.success("Chốt công thành công")
-                },
-                onError: (error) => {
-                    if (axios.isAxiosError(error)) {
-                        toast.error(error.message);
-                    }
-                }
-            })
-    }
-
-    const handleExport = () => {
-        exportTimesheet({
-            timesheetDetailId: id,
-        })
-    }
-
-    const handleCalculatorTimesheet = () => {
-        calculatorTimesheet({
-            timesheetDetailId: id,
-        })
-    }
+    const timesheetData = data as unknown as TimesheetList;
 
     // Generate columns for each day in the month
-    const generateDayColumns = (timesheetData: TimesheetList) => {
+    const generateDayColumns = useCallback((timesheetData: TimesheetList) => {
         const startDate = new Date(timesheetData.start_date);
         const endDate = new Date(timesheetData.end_date);
         const days = [];
@@ -185,7 +103,10 @@ const TimesheetDetailPage = () => {
                         <div
                             className={`p-1 text-center rounded ${bgColor} cursor-pointer hover:opacity-80`}
                             title={tooltip}
-                            onClick={() => openDetailDialog(detail)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                openDetailDialog(detail);
+                            }}
                         >
                             {text}
                         </div>
@@ -197,10 +118,119 @@ const TimesheetDetailPage = () => {
         }
 
         return days;
-    };
+    }, []);
+
+    // Tối ưu generateDayColumns với useMemo
+    const dayColumns = useMemo(() => {
+        if (!timesheetData) return [];
+        return generateDayColumns(timesheetData);
+    }, [timesheetData, generateDayColumns]);
+
+    // Tối ưu các hàm xử lý sự kiện với useCallback
+    const toggleRowExpansion = useCallback((timesheetId: number) => {
+        setExpandedRows(prev => {
+            const newExpanded = new Set(prev);
+            if (newExpanded.has(timesheetId)) {
+                newExpanded.delete(timesheetId);
+            } else {
+                newExpanded.add(timesheetId);
+            }
+            return newExpanded;
+        });
+    }, []);
+
+    const openDetailDialog = useCallback((detail: TimesheetDetail) => {
+        setSelectedDetail(detail);
+        setIsDetailDialogOpen(true);
+    }, []);
+
+    const openEditDialog = useCallback((detail: TimesheetDetail) => {
+        setSelectedDetail(detail);
+        setIsEditDialogOpen(true);
+    }, []);
+
+    const handleReset = useCallback((timesheetDetailId: number) => {
+        resetTimesheet({
+            timesheetDetailId: timesheetDetailId,
+        }, {
+            onSuccess: async () => {
+                setIsDetailDialogOpen(false);
+                toast.success("Reset số công thành công");
+                await refetch();
+            },
+            onError: (error) => {
+                if (axios.isAxiosError(error)) {
+                    toast.error(error.response?.data?.message || error.message);
+                }
+                setIsDetailDialogOpen(false);
+            }
+        });
+    }, [resetTimesheet, refetch]);
+
+    const handleEditSubmit = useCallback((formData: AdjustWorkDayForm) => {
+        if (!selectedDetail) return;
+
+        updateTimesheetDetail(
+            {
+                timesheetDetailId: selectedDetail.timesheet_detail_id,
+                data: {adjusted_work_day: Number(formData.adjusted_work_day)}
+            },
+            {
+                onSuccess: async () => {
+                    setIsEditDialogOpen(false);
+                    setIsDetailDialogOpen(false);
+                    await refetch();
+                },
+            }
+        );
+    }, [selectedDetail, updateTimesheetDetail, refetch]);
+
+    const handleLockTimesheet = useCallback(() => {
+        if (!id) return;
+
+        lockTimesheet({
+            timesheetDetailId: id,
+        }, {
+            onSuccess: async () => {
+                toast.success("Chốt công thành công");
+                await refetch();
+            },
+            onError: (error) => {
+                if (axios.isAxiosError(error)) {
+                    toast.error(error.response?.data?.message || error.message);
+                }
+            }
+        });
+    }, [id, lockTimesheet, refetch]);
+
+    const handleExport = useCallback(() => {
+        if (!id) return;
+
+        exportTimesheet({
+            timesheetDetailId: id,
+        });
+    }, [id, exportTimesheet]);
+
+    const handleCalculatorTimesheet = useCallback(() => {
+        if (!id) return;
+
+        calculatorTimesheet({
+            timesheetDetailId: id,
+        }, {
+            onSuccess: async () => {
+                toast.success("Đồng bộ bảng công thành công");
+                await refetch();
+            },
+            onError: (error) => {
+                if (axios.isAxiosError(error)) {
+                    toast.error(error.response?.data?.message || error.message);
+                }
+            }
+        });
+    }, [id, calculatorTimesheet, refetch]);
 
     // Render expanded row with detailed daily information
-    const renderRowExpansion = (timesheet: TimesheetInfor) => {
+    const renderRowExpansion = useCallback((timesheet: TimesheetInfor) => {
         if (!timesheet.details || timesheet.details.length === 0) return null;
 
         return (
@@ -209,7 +239,7 @@ const TimesheetDetailPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {timesheet.details.map((detail: TimesheetDetail, idx: number) => (
                         <div
-                            key={idx}
+                            key={`${detail.timesheet_detail_id}-${idx}`}
                             className="bg-white p-3 rounded shadow-sm cursor-pointer hover:shadow-md transition-shadow"
                             onClick={() => openDetailDialog(detail)}
                         >
@@ -253,10 +283,10 @@ const TimesheetDetailPage = () => {
                 </div>
             </div>
         );
-    };
+    }, [openDetailDialog]);
 
     // Detail Dialog Component
-    const DetailDialog = () => {
+    const DetailDialog = useCallback(() => {
         if (!selectedDetail) return null;
 
         return (
@@ -264,35 +294,37 @@ const TimesheetDetailPage = () => {
                 <DialogContent className="max-w-xl">
                     <DialogHeader>
                         <DialogTitle className="flex justify-between items-center gap-2">
-              <span>
-                Chi tiết ngày {selectedDetail.date && new Date(selectedDetail.date).toLocaleDateString('vi-VN')}
-              </span>
-                            <Button size="sm" onClick={openEditDialog}>
-                                <Edit className="h-4 w-4 mr-1"/>
-                                Sửa công
-                            </Button>
-                            {
-                                selectedDetail.is_manually_adjusted && (
-                                    <Button size="sm" onClick={() => handleReset(selectedDetail?.timesheet_detail_id)}>
+                            <span>
+                                Chi tiết ngày {selectedDetail.date && new Date(selectedDetail.date).toLocaleDateString('vi-VN')}
+                            </span>
+                            <div className="flex gap-2">
+                                <Button size="sm" onClick={() => openEditDialog(selectedDetail)}>
+                                    <Edit className="h-4 w-4 mr-1"/>
+                                    Sửa công
+                                </Button>
+                                {selectedDetail.is_manually_adjusted && (
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleReset(selectedDetail.timesheet_detail_id)}
+                                        disabled={isResetTimesheet}
+                                    >
                                         <TimerReset className="h-4 w-4 mr-1"/>
                                         {isResetTimesheet ? <Loading/> : "Reset công"}
                                     </Button>
-                                )
-                            }
+                                )}
+                            </div>
                         </DialogTitle>
                     </DialogHeader>
 
                     <div className="space-y-3">
                         <div>
-                            <span
-                                className="font-semibold">Ca làm việc:</span> {selectedDetail.work_shift?.workshift_name || "N/A"}
+                            <span className="font-semibold">Ca làm việc:</span> {selectedDetail.work_shift?.workshift_name || "N/A"}
                         </div>
 
                         <div>
                             <span className="font-semibold">Trạng thái:</span>{" "}
                             {selectedDetail.is_absent ? (
-                                <span
-                                    className="text-red-600">Vắng mặt ({selectedDetail.absent_reason || "Không có lý do"})</span>
+                                <span className="text-red-600">Vắng mặt ({selectedDetail.absent_reason || "Không có lý do"})</span>
                             ) : selectedDetail.work_days > 0 ? (
                                 <span className="text-green-600">Đi làm</span>
                             ) : selectedDetail.leave_type ? (
@@ -307,8 +339,7 @@ const TimesheetDetailPage = () => {
                                 <span className="font-semibold">Check-in:</span>{" "}
                                 {new Date(selectedDetail.checkin_record.timestamp).toLocaleTimeString('vi-VN')}
                                 {selectedDetail.is_late && (
-                                    <span
-                                        className="text-orange-600 ml-2">(Trễ: {selectedDetail.late_minutes} phút)</span>
+                                    <span className="text-orange-600 ml-2">(Trễ: {selectedDetail.late_minutes} phút)</span>
                                 )}
                             </div>
                         )}
@@ -343,87 +374,23 @@ const TimesheetDetailPage = () => {
                 </DialogContent>
             </Dialog>
         );
-    };
-
-    // Edit Dialog Component
-    const EditDialog = () => {
-        const {register, handleSubmit, formState: {errors}} = useForm<AdjustWorkDayForm>({
-            defaultValues: {
-                adjusted_work_day: selectedDetail?.work_days || 0
-            }
-        });
-
-        if (!selectedDetail) return null;
-
-        return (
-            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>
-                            Sửa công
-                            ngày {selectedDetail.date && new Date(selectedDetail.date).toLocaleDateString('vi-VN')}
-                        </DialogTitle>
-                        <DialogDescription>
-                            Điều chỉnh số công cho nhân viên {selectedDetail &&
-                            timesheetData?.timesheets.find(t => t.timesheet_id === selectedDetail.timesheet_id)?.employee.full_name
-                        }
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <form onSubmit={handleSubmit(handleEditSubmit)} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="adjusted_work_day">Số công điều chỉnh</Label>
-                            <Input
-                                id="adjusted_work_day"
-                                type="number"
-                                step="0.5"
-                                min="0"
-                                max="2"
-                                {...register("adjusted_work_day", {
-                                    required: "Vui lòng nhập số công",
-                                    min: {value: 0, message: "Số công không thể âm"},
-                                    max: {value: 2, message: "Số công tối đa là 2"}
-                                })}
-                            />
-                            {errors.adjusted_work_day && (
-                                <p className="text-sm text-red-500">{errors.adjusted_work_day.message}</p>
-                            )}
-                        </div>
-
-                        <div className="flex justify-end space-x-2">
-                            <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                                <X className="h-4 w-4 mr-1"/>
-                                Hủy
-                            </Button>
-                            <Button type="submit">
-                                <Save className="h-4 w-4 mr-1"/>
-                                Lưu thay đổi
-                            </Button>
-                        </div>
-                    </form>
-                </DialogContent>
-            </Dialog>
-        );
-    };
+    }, [selectedDetail, isDetailDialogOpen, isResetTimesheet, openEditDialog, handleReset]);
 
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                <Loading />
             </div>
         );
     }
 
-    if (!data) {
+    if (!data || !timesheetData) {
         return (
             <div className="p-4 text-center text-red-500">
                 Không tìm thấy dữ liệu bảng công
             </div>
         );
     }
-
-    const timesheetData = data as unknown as TimesheetList;
-    const dayColumns = generateDayColumns(timesheetData);
 
     return (
         <div className="container mx-auto p-4">
@@ -433,28 +400,28 @@ const TimesheetDetailPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <p><span className="font-semibold">Văn phòng:</span> {timesheetData.office.office_name}</p>
-                        <p><span className="font-semibold">Tháng/Năm:</span> {timesheetData.month}/{timesheetData.year}
-                        </p>
-                        <p><span
-                            className="font-semibold">Khoảng thời gian:</span> {new Date(timesheetData.start_date).toLocaleDateString('vi-VN')} - {new Date(timesheetData.end_date).toLocaleDateString('vi-VN')}
-                        </p>
+                        <p><span className="font-semibold">Tháng/Năm:</span> {timesheetData.month}/{timesheetData.year}</p>
+                        <p><span className="font-semibold">Khoảng thời gian:</span> {new Date(timesheetData.start_date).toLocaleDateString('vi-VN')} - {new Date(timesheetData.end_date).toLocaleDateString('vi-VN')}</p>
                     </div>
                     <div>
                         <p><span className="font-semibold">Trạng thái:</span>
-                            <span
-                                className={`px-2 py-1 rounded ml-2 ${timesheetData.is_locked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                {timesheetData.is_locked ? 'Đã khóa' : 'Chưa khóa'}
-              </span>
+                            <span className={`px-2 py-1 rounded ml-2 ${timesheetData.is_locked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                                {timesheetData.is_locked ? 'Đã khóa' : 'Chưa khóa'}
+                            </span>
                         </p>
                         <p><span className="font-semibold">Người tạo:</span> {timesheetData.created_by}</p>
-                        <p><span
-                            className="font-semibold">Ngày tạo:</span> {new Date(timesheetData.created_at).toLocaleDateString('vi-VN')}
-                        </p>
+                        <p><span className="font-semibold">Ngày tạo:</span> {new Date(timesheetData.created_at).toLocaleDateString('vi-VN')}</p>
                     </div>
-                    <div className={`flex gap-10`}>
-                        <Button onClick={handleCalculatorTimesheet}>Đồng bộ</Button>
-                        <Button onClick={handleLockTimesheet}>{!isLockTimesheet ? "Chốt công" : <Loading/>}</Button>
-                        <Button onClick={handleExport}>Xuất file</Button>
+                    <div className="flex gap-4 flex-wrap">
+                        <Button onClick={handleCalculatorTimesheet}>
+                            {isCalculatorTimesheet ? <Loading /> : "Đồng bộ"}
+                        </Button>
+                        <Button onClick={handleLockTimesheet}>
+                            {isLockTimesheet ? <Loading/> : "Chốt công"}
+                        </Button>
+                        <Button onClick={handleExport}>
+                            Xuất file
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -556,8 +523,13 @@ const TimesheetDetailPage = () => {
             {/* Detail Dialog */}
             <DetailDialog/>
 
-            {/* Edit Dialog */}
-            <EditDialog/>
+            <EditDialog
+                open={isEditDialogOpen}
+                onOpenChange={setIsEditDialogOpen}
+                detail={selectedDetail}
+                onSubmit={handleEditSubmit}
+                isLoading={isUpdatingTimesheet}
+            />
         </div>
     );
 };

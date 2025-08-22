@@ -2,6 +2,7 @@ import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {getAllTimesheets, getEmployeeTimesheetApi, getTimesheetById} from "@/apis/timesheet.api.ts";
 import api from "@/apis/api.ts";
 import {toast} from "sonner";
+import axios from "axios";
 
 export const useGetAllTimesheets = (params?: {
     page?: number;
@@ -33,6 +34,12 @@ export const useUpdateTimesheetDetail = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['timesheet'] });
+            toast.success("Sửa công thành công")
+        },
+        onError: (error) => {
+            if (axios.isAxiosError(error)) {
+                toast.error(error.response?.data?.message || "Có lỗi xảy ra");
+            }
         }
     });
 };

@@ -90,6 +90,14 @@ func (s *shiftAllocationService) GetListShiftAllocation(ctx context.Context, req
 			wsTimeline := dto.ConvertToTimeLine(&workShift)
 			workShiftTimelines = append(workShiftTimelines, *wsTimeline)
 		}
+
+		var hierarchyLevel *model.HierarchyLevel
+		if employee.JobTitle == nil || employee.JobTitle.HierarchyLevel == nil {
+			hierarchyLevel = &model.HierarchyLevel{}
+		} else {
+			hierarchyLevel = employee.JobTitle.HierarchyLevel
+		}
+
 		if employee.Department != nil {
 			empSchedule := dto.EmployeeScheduleResponse{
 				EmployeeID:     employee.EmployeeID,
@@ -97,6 +105,7 @@ func (s *shiftAllocationService) GetListShiftAllocation(ctx context.Context, req
 				WorkShifts:     workShiftTimelines,
 				Schedules:      scheduleInfors,
 				DepartmentName: employee.Department.Name,
+				HierarchyLevel: hierarchyLevel,
 			}
 			employeeSchedules = append(employeeSchedules, empSchedule)
 		}

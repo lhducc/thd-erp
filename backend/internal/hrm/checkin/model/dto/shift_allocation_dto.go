@@ -2,17 +2,19 @@ package dto
 
 import (
 	"erp/backend/internal/hrm/checkin/model"
+	hrm_model "erp/backend/internal/hrm/hr_profile/model"
 	"errors"
 	"fmt"
 	"time"
 )
 
 type EmployeeScheduleResponse struct {
-	EmployeeID     string               `json:"employee_id"`
-	Fullname       string               `json:"full_name"`
-	DepartmentName string               `json:"department_name"`
-	Schedules      []model.WorkSchedule `json:"schedules"`
-	WorkShifts     []WorkShiftTimeline  `json:"work_shifts"`
+	EmployeeID     string                    `json:"employee_id"`
+	Fullname       string                    `json:"full_name"`
+	DepartmentName string                    `json:"department_name"`
+	HierarchyLevel *hrm_model.HierarchyLevel `json:"hierarchy_name"`
+	Schedules      []model.WorkSchedule      `json:"schedules"`
+	WorkShifts     []WorkShiftTimeline       `json:"work_shifts"`
 }
 
 func ConvertToTimeLine(ew *model.EmployeeWorkshift) *WorkShiftTimeline {

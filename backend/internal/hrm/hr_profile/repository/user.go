@@ -226,29 +226,37 @@ func (s *UserStore) CheckExistEmployees(employeeIDs []string) ([]string, error) 
 
 func (s *UserStore) GetBySchedule(ctx context.Context, scheduleIDs []int, managerID string, filter string) ([]model.Employee, error) {
 	var employees []model.Employee
-	query := s.db.WithContext(ctx).Model(model.Employee{}).
-		Select("employee.employee_id", "employee.full_name", "employee.schedule_id", "employee.department_id").
-		Preload("Department")
+	query := s.db.WithContext(ctx).Model(&model.Employee{}).
+		Select("employee.employee_id", "employee.full_name", "employee.schedule_id", "employee.department_id", "employee.job_title_id").
+		Preload("Department").
+		Preload("JobTitle").
+		Preload("JobTitle.HierarchyLevel")
 
+	// Xử lý managerID trước
 	if strings.TrimSpace(managerID) != "" {
-		query = query.Joins("JOIN work_schedule_manager ON employee.schedule_id = work_schedule_manager.work_schedule_id").
-			Where("work_schedule_manager.employee_id = ?", managerID)
+		query = query.
+			Joins("JOIN work_schedule_manager wsm ON employee.schedule_id = wsm.work_schedule_id AND wsm.employee_id = ?", managerID)
 	}
 
-	if filter != "" {
+	// Xử lý filter
+	if strings.TrimSpace(filter) != "" {
 		switch filter {
 		case "register":
-			query = query.Joins("JOIN work_schedule ON employee.schedule_id = work_schedule.work_schedule_id").
-				Where("work_schedule.is_schedule_auto = ?", false)
+			query = query.
+				Joins("LEFT JOIN work_schedule ws ON employee.schedule_id = ws.work_schedule_id").
+				Where("ws.is_schedule_auto = ? OR ws.is_schedule_auto IS NULL", false)
 		case "auto":
-			query = query.Joins("JOIN work_schedule ON employee.schedule_id = work_schedule.work_schedule_id").
-				Where("work_schedule.is_schedule_auto = ?", true)
+			query = query.
+				Joins("LEFT JOIN work_schedule ws ON employee.schedule_id = ws.work_schedule_id").
+				Where("ws.is_schedule_auto = ?", true)
 		case "no_schedule":
 			query = query.Where("employee.schedule_id IS NULL")
+		default:
+			// Filter không hợp lệ, có thể log lại hoặc bỏ qua
 		}
 	}
 
-	// Xử lý lọc theo scheduleIDs nếu có
+	// Xử lý lọc theo scheduleIDs
 	if len(scheduleIDs) > 0 {
 		query = query.Where("employee.schedule_id IN (?)", scheduleIDs)
 	}

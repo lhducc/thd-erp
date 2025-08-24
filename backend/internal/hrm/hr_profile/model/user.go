@@ -9,7 +9,7 @@ import (
 )
 
 type Account struct {
-	ID          int64     `gorm:"primaryKey;column:id" json:"account_id"`
+	ID          int64     `gorm:"primaryKey;column:id;autoincrement" json:"account_id"`
 	LoginMail   string    `gorm:"column:login_mail;index" json:"login_mail"`
 	Password    string    `gorm:"column:password" json:"password"`
 	FirstLogin  bool      `gorm:"column:first_login" json:"first_login"`
@@ -29,7 +29,7 @@ type Employee struct {
 	Birthday     string    `gorm:"column:birthday;type:date" json:"birthday"`
 	Gender       string    `gorm:"column:gender;type:varchar(10)" json:"gender" validate:"oneof=Nam Nữ Khác"`
 	WorkType     string    `gorm:"column:work_type;type:varchar(255);type:work_type_enum" json:"work_type"`
-	PhoneNumber  string    `gorm:"column:phone_number;type:varchar(20)" json:"phone_number" validate:"omitempty,e164"`
+	PhoneNumber  string    `gorm:"column:phone_number;type:varchar(20)" json:"phone_number"`
 	Email        string    `gorm:"column:email;type:varchar(255)" json:"email" validate:"omitempty,email"`
 	Address      string    `gorm:"column:address;type:text" json:"address"`
 	AccountID    *int64    `gorm:"column:account_id" json:"account_id"`
@@ -41,11 +41,11 @@ type Employee struct {
 	CreatedDate  time.Time `gorm:"column:created_date;autoCreateTime" json:"created_date"`
 	ScheduleID   *int      `gorm:"column:schedule_id" json:"schedule_id"`
 
-	Account    *Account          `gorm:"foreignKey:AccountID;references:id" json:"-"`
-	Position   *Position         `gorm:"foreignKey:PositionID;references:position_id" json:"position,omitempty"`
-	JobTitle   *JobTitleResponse `gorm:"foreignKey:JobTitleID;references:job_title_id" json:"job_title,omitempty"`
-	Manager    *ManagerResponse  `gorm:"foreignKey:ManagerID;references:employee_id" json:"manager,omitempty"`
-	Department *Department       `gorm:"foreignKey:DepartmentID;references:department_id" json:"department,omitempty"`
+	Account    *Account         `gorm:"foreignKey:AccountID;references:id" json:"-"`
+	Position   *Position        `gorm:"foreignKey:PositionID;references:position_id" json:"position,omitempty"`
+	JobTitle   *JobTitle        `gorm:"foreignKey:JobTitleID;references:job_title_id" json:"job_title,omitempty"`
+	Manager    *ManagerResponse `gorm:"foreignKey:ManagerID;references:employee_id" json:"manager,omitempty"`
+	Department *Department      `gorm:"foreignKey:DepartmentID;references:department_id" json:"department,omitempty"`
 
 	Contracts []Contract `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"contracts,omitempty"`
 	Decisions []Decision `gorm:"many2many:decision_employees;joinForeignKey:EmployeeID;joinReferences:DecisionID" json:"decisions,omitempty"`

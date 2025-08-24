@@ -9,15 +9,15 @@ import (
 type WorkShifts struct {
 	WorkShiftID   string               `gorm:"column:workshift_id;type:varchar(20);primaryKey;" json:"workshift_id"`
 	WorkShiftName string               `gorm:"column:workshift_name;type:varchar(255);not null;unique" json:"workshift_name" validate:"required,max=255"`
-	StartTime     string               `gorm:"column:start_time;type:time;not null;index:idx_time_range" json:"start_time" validate:"required"`
-	EndTime       string               `gorm:"column:end_time;type:time;not null;index:idx_time_range" json:"end_time" validate:"required"`
-	CheckinFrom   *string              `gorm:"column:checkin_from;type:time" json:"checkin_from"`
-	CheckinTo     *string              `gorm:"column:checkin_to;type:time" json:"checkin_to"`
-	CheckoutFrom  *string              `gorm:"column:checkout_from;type:time" json:"checkout_from"`
-	CheckoutTo    *string              `gorm:"column:checkout_to;type:time" json:"checkout_to"`
+	StartTime     string               `gorm:"column:start_time;type:timestamp;not null;index:idx_time_range" json:"start_time" validate:"required"`
+	EndTime       string               `gorm:"column:end_time;type:timestamp;not null;index:idx_time_range" json:"end_time" validate:"required"`
+	CheckinFrom   *string              `gorm:"column:checkin_from;type:timestamp" json:"checkin_from"`
+	CheckinTo     *string              `gorm:"column:checkin_to;type:timestamp" json:"checkin_to"`
+	CheckoutFrom  *string              `gorm:"column:checkout_from;type:timestamp" json:"checkout_from"`
+	CheckoutTo    *string              `gorm:"column:checkout_to;type:timestamp" json:"checkout_to"`
 	HasBreak      bool                 `gorm:"column:has_break;type:boolean" json:"has_break"`
-	BreakStart    *string              `gorm:"column:break_start;type:time" json:"break_start"`
-	BreakEnd      *string              `gorm:"column:break_end;type:time" json:"break_end"`
+	BreakStart    *string              `gorm:"column:break_start;type:timestamp" json:"break_start"`
+	BreakEnd      *string              `gorm:"column:break_end;type:timestamp" json:"break_end"`
 	WorkHours     float64              `gorm:"column:work_hours;type:decimal(4,2)" json:"work_hours" validate:"gte=0"`
 	WorkDay       variable.WorkDayEnum `gorm:"column:work_day;type:int;default:0" json:"work_day" validate:"required"`
 	CoefNormalDay float64              `gorm:"column:coef_normal_day;type:decimal(3,2);default:1.00" json:"coef_normal_day" validate:"gte=0"`

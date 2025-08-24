@@ -31,8 +31,11 @@ import {useGetRoles} from "@/query/role.query.ts";
 import {useWorkSchedule} from "@/query/useWorkSchedule.ts";
 import {useWorkScheduleRegister} from "@/query/useWorkScheduleRegister.ts";
 import {useEmployeeByRoleNameQuery} from "@/query/employee.query.ts";
+import axios from "axios";
+import type {Department} from "@/types";
 
 const employee = z.object({
+    employee_id: z.string().optional(),
     full_name: z.string().nonempty("Vui lòng nhập họ và tên"),
     birth_date: z.string().nonempty("Vui lòng nhập ngày sinh"),
     gender: z.string().nonempty("Vui lòng chọn giới tính"),
@@ -70,6 +73,7 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
     const form = useForm<z.infer<typeof employee>>({
         resolver: zodResolver(employee),
         defaultValues: {
+            employee_id: data.employee_id,
             full_name: data.full_name,
             birth_date: toYMD(data.birthday),
             gender: data.gender,
@@ -119,7 +123,10 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
             toast.success("Cập nhật nhân viên thành công")
             setOpen(false);
         } catch (error) {
-            console.error("Error submitting form:", error);
+            if (axios.isAxiosError(error)) {
+                toast.error(error.message);
+            }
+            setIsLoading(false);
         }
     }
 
@@ -135,15 +142,33 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <div className="w-full p-6 flex items-center justify-center gap-5">
-                            <div className="flex flex-col gap-6 w-full">
-                                <div className="w-full mt-9">
+                        <div className="w-full p-6 flex flex-col gap-3">
+                            <div className="w-full flex gap-5">
+                                <div className="w-full">
+                                    <FormField
+                                        control={form.control}
+                                        name="employee_id"
+                                        render={({field}) => (
+                                            <FormItem>
+                                                <FormLabel className="font-medium">Mã nhân
+                                                    viên <Asterisk/></FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        disabled={true}
+                                                        {...field}
+                                                        className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                                    />
+                                                </FormControl>
+                                                <FormMessage className="text-red-500 text-sm"/>
+                                            </FormItem>
+                                        )}
+                                    />
                                     <FormField
                                         control={form.control}
                                         name="full_name"
                                         render={({field}) => (
-                                            <FormItem>
-                                                <FormLabel className="font-medium">Họ và tên</FormLabel>
+                                            <FormItem className="mt-[20px]">
+                                                <FormLabel className="font-medium">Họ và tên <Asterisk/></FormLabel>
                                                 <FormControl>
                                                     <Input
                                                         {...field}
@@ -160,7 +185,7 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
                                         name="birth_date"
                                         render={({field}) => (
                                             <FormItem className="mt-[20px]">
-                                                <FormLabel className="font-medium">Ngày sinh</FormLabel>
+                                                <FormLabel className="font-medium">Ngày sinh <Asterisk/></FormLabel>
                                                 <FormControl>
                                                     <Input
                                                         type="date"
@@ -178,15 +203,15 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
                                         name="gender"
                                         render={({field}) => (
                                             <FormItem className="mt-[20px]">
-                                                <FormLabel className="font-medium">Giới tính</FormLabel>
+                                                <FormLabel className="font-medium">Giới tính <Asterisk/></FormLabel>
                                                 <FormControl>
                                                     <select
                                                         {...field}
                                                         className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
                                                     >
                                                         <option value="">Chọn giới tính</option>
-                                                        <option value="male">Nam</option>
-                                                        <option value="female">Nữ</option>
+                                                        <option value="Nam">Nam</option>
+                                                        <option value="Nữ">Nữ</option>
                                                     </select>
                                                 </FormControl>
                                                 <FormMessage className="text-red-500 text-sm"/>
@@ -199,7 +224,8 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
                                         name="phone"
                                         render={({field}) => (
                                             <FormItem className="mt-[20px]">
-                                                <FormLabel className="font-medium">Số điện thoại</FormLabel>
+                                                <FormLabel className="font-medium">Số điện
+                                                    thoại <Asterisk/></FormLabel>
                                                 <FormControl>
                                                     <Input
                                                         {...field}
@@ -216,7 +242,7 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
                                         name="email"
                                         render={({field}) => (
                                             <FormItem className="mt-[20px]">
-                                                <FormLabel className="font-medium">Email</FormLabel>
+                                                <FormLabel className="font-medium">Email <Asterisk/></FormLabel>
                                                 <FormControl>
                                                     <Input
                                                         {...field}
@@ -227,31 +253,26 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
                                             </FormItem>
                                         )}
                                     />
-
                                     <FormField
                                         control={form.control}
-                                        name="job_title_id"
+                                        name="current_address"
                                         render={({field}) => (
                                             <FormItem className="mt-[20px]">
-                                                <FormLabel className="font-medium">Chức vụ <Asterisk/> </FormLabel>
+                                                <FormLabel className="font-medium">Địa chỉ hiện
+                                                    tại <Asterisk/></FormLabel>
                                                 <FormControl>
-                                                    <select
+                                                    <Input
                                                         {...field}
                                                         className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
-                                                    >
-                                                        <option value="">Chọn chức vụ</option>
-                                                        {jobTitle?.map((item) => {
-                                                            return <option
-                                                                value={item.job_title_id}>{item.job_title} - {item.hierarchy_level.hierarchy_level}</option>
-                                                        })}
-                                                    </select>
+                                                    />
                                                 </FormControl>
                                                 <FormMessage className="text-red-500 text-sm"/>
                                             </FormItem>
                                         )}
                                     />
                                     <FormItem className="mt-[20px]">
-                                        <FormLabel className="font-medium">Loại lịch làm việc</FormLabel>
+                                        <FormLabel className="font-medium">Loại lịch làm
+                                            việc <Asterisk/></FormLabel>
                                         <div className="flex items-center space-x-4">
                                             <div className="flex items-center">
                                                 <input
@@ -284,7 +305,7 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
 
                                     <FormField
                                         control={form.control}
-                                        name="schedule_id"
+                                        name="work_schedule_id"
                                         render={({field}) => (
                                             <FormItem className="mt-[20px]">
                                                 {/*<FormLabel className="font-medium">Lịch làm việc</FormLabel>*/}
@@ -304,16 +325,15 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
                                             </FormItem>
                                         )}
                                     />
+
                                 </div>
-                            </div>
-                            <div className="flex flex-col gap-6 w-full">
                                 <div className="w-full">
                                     <FormField
                                         control={form.control}
                                         name="position"
                                         render={({field}) => (
                                             <FormItem>
-                                                <FormLabel className="font-medium">Vị trí</FormLabel>
+                                                <FormLabel className="font-medium">Vị trí <Asterisk/></FormLabel>
                                                 <FormControl>
                                                     <select
                                                         {...field}
@@ -333,27 +353,32 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
 
                                     <FormField
                                         control={form.control}
-                                        name="current_address"
+                                        name="job_title_id"
                                         render={({field}) => (
                                             <FormItem className="mt-[20px]">
-                                                <FormLabel className="font-medium">Địa chỉ hiện tại</FormLabel>
+                                                <FormLabel className="font-medium">Chức vụ <Asterisk/></FormLabel>
                                                 <FormControl>
-                                                    <Input
+                                                    <select
                                                         {...field}
                                                         className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
-                                                    />
+                                                    >
+                                                        <option value="">Chọn chức vụ</option>
+                                                        {jobTitle?.map((item) => {
+                                                            return <option
+                                                                value={item.job_title_id}>{item.job_title} - {item.hierarchy_level.hierarchy_level}</option>
+                                                        })}
+                                                    </select>
                                                 </FormControl>
                                                 <FormMessage className="text-red-500 text-sm"/>
                                             </FormItem>
                                         )}
                                     />
-
                                     <FormField
                                         control={form.control}
                                         name="start_date"
                                         render={({field}) => (
                                             <FormItem className="mt-[20px]">
-                                                <FormLabel className="font-medium">Ngày bắt đầu</FormLabel>
+                                                <FormLabel className="font-medium">Ngày bắt đầu <Asterisk/></FormLabel>
                                                 <FormControl>
                                                     <Input
                                                         type="date"
@@ -372,16 +397,18 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
                                         render={({field}) => (
                                             <FormItem className="mt-[20px]">
                                                 <FormLabel className="font-medium">Văn phòng <Asterisk/></FormLabel>
-                                                <select
-                                                    {...field}
-                                                    className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
-                                                >
-                                                    <option value="">Chọn văn phòng <Asterisk/></option>
-                                                    {offices?.map((office) => {
-                                                        return <option
-                                                            value={office.office_id}>{office.office_name}</option>
-                                                    })}
-                                                </select>
+                                                <FormControl>
+                                                    <select
+                                                        {...field}
+                                                        className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                                    >
+                                                        <option value="">Chọn văn phòng</option>
+                                                        {offices?.map((office) => {
+                                                            return <option
+                                                                value={office.office_id}>{office.office_name}</option>
+                                                        })}
+                                                    </select>
+                                                </FormControl>
                                                 <FormMessage className="text-red-500 text-sm"/>
                                             </FormItem>
                                         )}
@@ -392,17 +419,22 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
                                         name="department"
                                         render={({field}) => (
                                             <FormItem className="mt-[20px]">
-                                                <FormLabel className="font-medium">Phòng ban</FormLabel>
+                                                <FormLabel className="font-medium">Phòng ban <Asterisk/></FormLabel>
                                                 <FormControl>
                                                     <select
                                                         {...field}
                                                         className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
                                                     >
                                                         <option value="">Chọn phòng ban</option>
-                                                        {departments?.map((department) => {
-                                                            return <option
-                                                                value={department.department_id}>{department.department_name}</option>
-                                                        })}
+                                                        {departments?.length > 0 ? (
+                                                            departments?.map((department: Department) => (
+                                                                <option key={department.department_id} value={department.department_id}>
+                                                                    {department.department_name}
+                                                                </option>
+                                                            ))
+                                                        ) : (
+                                                            <option disabled>Vui lòng chọn văn phòng</option>
+                                                        )}
                                                     </select>
                                                 </FormControl>
                                                 <FormMessage className="text-red-500 text-sm"/>
@@ -434,11 +466,30 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
                                     />
                                     <FormField
                                         control={form.control}
+                                        name="work_type"
+                                        render={({field}) => (
+                                            <FormItem className="mt-[20px]">
+                                                <FormLabel className="font-medium">Hình thức làm
+                                                    việc <Asterisk/></FormLabel>
+                                                <FormControl>
+                                                    <select
+                                                        {...field}
+                                                        className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                                    >
+                                                        <option value="ca hành chính">Ca hành chính</option>
+                                                        <option value="ca kíp">Ca kíp</option>
+                                                    </select>
+                                                </FormControl>
+                                                <FormMessage className="text-red-500 text-sm"/>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
                                         name="role_id"
                                         render={({field}) => (
                                             <FormItem className="mt-[20px]">
-                                                <FormLabel className="font-medium">Phân
-                                                    quyền <Asterisk/></FormLabel>
+                                                <FormLabel className="font-medium">Phân quyền <Asterisk/></FormLabel>
                                                 <FormControl>
                                                     <select
                                                         {...field}
@@ -456,16 +507,16 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
                                     />
                                 </div>
                             </div>
-                        </div>
-                        <div className="flex items-center justify-center w-full gap-5">
-                            <Button type="button" onClick={() => setOpen(false)}
-                                    className="w-[250px] h-[40px] bg-gray-400 hover:bg-gray-500">
-                                Hủy bỏ
-                            </Button>
-                            <Button type="submit"
-                                    className="w-[250px] h-[40px] bg-[#DB3B21] hover:bg-[#b83a1a]">
-                                {!isLoading ? "Lưu thông tin" : <Loading/>}
-                            </Button>
+                            <div className="mt-[20px] w-full flex items-center justify-center gap-5">
+                                <Button type="button" onClick={() => setOpen(false)}
+                                        className="w-[250px] h-[40px] bg-gray-400 hover:bg-gray-500">
+                                    Hủy bỏ
+                                </Button>
+                                <Button type="submit"
+                                        className="w-[250px] h-[40px] bg-[#DB3B21] hover:bg-[#b83a1a]">
+                                    {isLoading ? <Loading/> : "Lưu thông tin"}
+                                </Button>
+                            </div>
                         </div>
                     </form>
                 </Form>

@@ -117,12 +117,13 @@ const CreateEmployeeForm = ({open, setOpen, refetchEmployee}: Props) => {
             };
             await createEmployeeApi(payload);
             refetchEmployee();
-            setOpen(false);
             setIsLoading(false);
+            setOpen(false);
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 toast.error(error.message);
             }
+            setIsLoading(false);
         }
     }
 

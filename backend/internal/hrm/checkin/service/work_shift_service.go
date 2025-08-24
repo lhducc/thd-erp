@@ -39,7 +39,7 @@ func (sv *WorkShiftService) CreateWorkShift(ctx context.Context, w *model.WorkSh
 	isDup, err := sv.repo.IsDuplicateTimeRange(ctx, w.StartTime, w.EndTime, "")
 	if err != nil {
 		fmt.Errorf("Lỗi: " + err.Error())
-		return errors.New("Lỗi hệ thống khi kiểm tra tùng lặp khung thời gian bắt đầu, kết thúc")
+		return errors.New("Lỗi hệ thống khi kiểm tra trùng lặp khung thời gian bắt đầu, kết thúc")
 	}
 	if isDup {
 		return fmt.Errorf("Ca làm việc với StartTime %s và EndTime %s đã tồn tại", w.StartTime, w.EndTime)

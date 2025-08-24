@@ -5,8 +5,9 @@ import (
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	utils "erp/backend/pkg"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type AttendanceCategoryHandler struct {

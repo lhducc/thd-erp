@@ -2,6 +2,7 @@ package dto
 
 import (
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/pkg/timeonly"
 	"erp/backend/pkg/variable"
 	"errors"
 	"fmt"
@@ -11,15 +12,15 @@ import (
 type WorkShiftsRequest struct {
 	WorkShiftID    string               `json:"workshift_id"`
 	WorkShiftName  string               `json:"workshift_name"`
-	StartTime      string               `json:"start_time"`
-	EndTime        string               `json:"end_time"`
-	CheckinFrom    *string              `json:"checkin_from"`
-	CheckinTo      *string              `json:"checkin_to"`
-	CheckoutFrom   *string              `json:"checkout_from"`
-	CheckoutTo     *string              `json:"checkout_to"`
+	StartTime      timeonly.TimeOnly    `json:"start_time"`
+	EndTime        timeonly.TimeOnly    `json:"end_time"`
+	CheckinFrom    *timeonly.TimeOnly   `json:"checkin_from"`
+	CheckinTo      *timeonly.TimeOnly   `json:"checkin_to"`
+	CheckoutFrom   *timeonly.TimeOnly   `json:"checkout_from"`
+	CheckoutTo     *timeonly.TimeOnly   `json:"checkout_to"`
 	HasBreak       bool                 `json:"has_break"`
-	BreakStart     *string              `json:"break_start"`
-	BreakEnd       *string              `json:"break_end"`
+	BreakStart     *timeonly.TimeOnly   `json:"break_start"`
+	BreakEnd       *timeonly.TimeOnly   `json:"break_end"`
 	WorkHours      float64              `json:"work_hours"`
 	WorkDay        variable.WorkDayEnum `json:"work_day"`
 	CoefNormalDay  float64              `json:"coef_normal_day"`
@@ -49,11 +50,11 @@ func (w *WorkShiftsRequest) Validate() error {
 		return errors.New("Tên ca làm việc không được vượt quá 255 ký tự")
 	}
 
-	if w.StartTime == "" {
+	if w.StartTime.IsZero() {
 		return errors.New("Thời gian bắt đầu là bắt buộc")
 	}
 
-	if w.EndTime == "" {
+	if w.EndTime.IsZero() {
 		return errors.New("Thời gian kết thúc là bắt buộc")
 	}
 

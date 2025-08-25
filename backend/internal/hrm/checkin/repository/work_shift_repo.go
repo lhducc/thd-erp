@@ -4,6 +4,7 @@ import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
+	"erp/backend/pkg/timeonly"
 	"errors"
 	"fmt"
 
@@ -96,10 +97,10 @@ func (s *WorkShiftStore) CheckExistByName(ctx context.Context, nameWS string, ex
 	return true, nil
 }
 
-func (r *WorkShiftStore) IsDuplicateTimeRange(ctx context.Context, startTime, endTime, excludeID string) (bool, error) {
+func (r *WorkShiftStore) IsDuplicateTimeRange(ctx context.Context, startTime, endTime timeonly.TimeOnly, excludeID string) (bool, error) {
 	var count int64
 	query := r.db.WithContext(ctx).Model(&model.WorkShifts{}).
-		Where("start_time = ? AND end_time = ? AND is_deleted = false", startTime, endTime)
+		Where("start_time = ? AND end_time = ? AND is_deleted = false", startTime.String(), endTime.String())
 
 	if excludeID != "" {
 		query = query.Where("workshift_id != ?", excludeID)

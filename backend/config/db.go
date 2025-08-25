@@ -20,7 +20,7 @@ var AllModels = []interface{}{
 	//&model.Department{},
 	//&model.Office{},
 	//&model.JobTitle{},
-	//&checkin_model.WorkShifts{},
+	//&checkin_model.WorkShiftss{},
 	//&checkin_model.EmployeeWorkshift{},
 	//&model.EmployeeDocumentType{},
 	//&model.Employee{},

@@ -28,7 +28,7 @@ export const formSchema = z.object({
   effective_date: z.string().nonempty('Vui lòng chọn ngày hiệu lực'),
   sign_date: z.string().nonempty('Vui lòng chọn ngày ký'),
   condition: z.string().nonempty('Vui lòng chọn tình trạng'),
-  description: z.string().nonempty('Vui lòng nhập mô tả'),
+  description: z.string().optional(),
   attached_file: z.any().optional(),
   decision_type_id: z.string().nonempty('Vui lòng chọn loại quyết định'),
   employee_ids: z.string().nonempty('Vui lòng nhập id'),
@@ -65,7 +65,7 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
     formData.append("decision_name", values.decision_name);
     formData.append("effective_date", values.effective_date);
     formData.append("sign_date", values.sign_date);
-    formData.append("content", values.description);
+    formData.append("content", values.description ?? "");
     formData.append("condition", values.condition);
     formData.append("decision_type_id", values.decision_type_id);
 

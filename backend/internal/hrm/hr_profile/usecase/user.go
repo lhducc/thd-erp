@@ -111,10 +111,7 @@ func (s *EmployeeBiz) CreateEmployeeWithAccount(ctx context.Context, employee *m
 		}
 
 		// add employee into timesheet
-		timeNow, err := utils.GetCurrentTimeHCMCity()
-		if err != nil {
-			return err
-		}
+		timeNow := utils.GetCurrentTimeHCMCity()
 		month := int(timeNow.Month())
 		year := int(timeNow.Year())
 
@@ -235,10 +232,7 @@ func (biz *EmployeeBiz) UpdateEmployee(ctx context.Context, id string, updatedEm
 				return fmt.Errorf("lỗi khi lấy dữ liệu Department: %w", err)
 			}
 
-			timeNow, err := utils.GetCurrentTimeHCMCity()
-			if err != nil {
-				return err
-			}
+			timeNow := utils.GetCurrentTimeHCMCity()
 			month := int(timeNow.Month())
 			year := timeNow.Year()
 

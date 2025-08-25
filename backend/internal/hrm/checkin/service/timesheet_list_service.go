@@ -9,8 +9,9 @@ import (
 	utils "erp/backend/pkg"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	time2 "time"
+
+	"gorm.io/gorm"
 )
 
 type timesheetListService struct {
@@ -83,10 +84,7 @@ func (s *timesheetListService) Update(ctx context.Context, timesheet *model.Time
 	if ts.IsLocked {
 		return errors.New("bảng công đã chốt, không thể sửa đổi")
 	}
-	timeNowVN, err := utils.GetCurrentTimeHCMCity()
-	if err != nil {
-		return err
-	}
+	timeNowVN := utils.GetCurrentTimeHCMCity()
 	timesheet.UpdatedAt = &timeNowVN
 
 	return s.timesheetListRepo.Update(ctx, timesheet)

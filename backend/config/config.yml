@@ -16,6 +16,7 @@ postgres:
 
 
 cors:
-  AllowOrigins: ['http://erp.dev.thd.com:5173']
+  AllowOrigins: ['http://erp.dev.thd.com:5173',
+  'http://localhost:5173']
 
 

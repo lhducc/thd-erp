@@ -97,7 +97,7 @@ func processImageIfRequired(c *gin.Context, record *model.AttendanceRecord, empl
 	defer file.Close()
 
 	fileName := uuid.New().String()
-	imageName := utils.GenerateImageName(employeeID, record.Timestamp, fileName)
+	imageName := utils.GenerateFileName(employeeID, record.Timestamp, fileName)
 	record.ImageName = imageName
 
 	job.EnqueueUploadJob(file, employeeID, header, record.Timestamp, imageName)
@@ -143,10 +143,16 @@ func (h *AttendanceRecordHandler) GetAttendanceRecordByID() gin.HandlerFunc {
 			return
 		}
 
-		// Construct direct object URL if ImageName exists
+		// Generate presigned or fallback object URL if ImageName exists
 		if record.ImageName != "" {
-			// Replace with your MinIO HTTPS endpoint and bucket
-			record.ImageURL = fmt.Sprintf("https://localhost:9000/%s/%s", minIO.AttendanceBucket, record.ImageName)
+			url, err := minIO.GeneratePresignedURL(c.Request.Context(), minIO.AttendanceBucket, record.ImageName, 15*time.Minute)
+			if err != nil {
+				// Log and fallback to empty URL
+				log.Printf("Failed to generate image URL for record %s: %v", id, err)
+				record.ImageURL = ""
+			} else {
+				record.ImageURL = url
+			}
 		} else {
 			record.ImageURL = ""
 		}

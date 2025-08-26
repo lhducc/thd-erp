@@ -40,11 +40,27 @@ func LoadMinIOConfig() {
 	MinIO.PublicMinioEndPoint = os.Getenv("MINIO_PUBLIC_ENDPOINT")
 	MinIO.AccessKey = os.Getenv("MINIO_ACCESS_KEY")
 	MinIO.SecretKey = os.Getenv("MINIO_SECRET_KEY")
-	MinIO.UseSSL = true // Enable SSL for HTTPS MinIO
 
-	// Create transport to skip SSL verification
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	// Determine whether to use SSL. Prefer explicit env var MINIO_USE_SSL if provided.
+	// Otherwise default to false when running in docker or when endpoint looks like internal docker name.
+	sslEnv := os.Getenv("MINIO_USE_SSL")
+	if sslEnv != "" {
+		MinIO.UseSSL = strings.ToLower(sslEnv) == "true"
+	} else {
+		// If running in docker or endpoint points to internal service, assume HTTP (no SSL) by default.
+		if os.Getenv("APP_ENV") == "docker" || strings.Contains(MinIO.MinioEndpoint, "minio:") || strings.Contains(MinIO.MinioEndpoint, "localhost:9000") {
+			MinIO.UseSSL = false
+		} else {
+			MinIO.UseSSL = true
+		}
+	}
+
+	// Create transport. When using SSL skip verification only if SSL is enabled.
+	var tr *http.Transport
+	if MinIO.UseSSL {
+		tr = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	} else {
+		tr = &http.Transport{}
 	}
 
 	// Internal client for operations (uses Docker service name)
@@ -59,8 +75,8 @@ func LoadMinIOConfig() {
 
 	// URL client for generating presigned URLs (uses localhost but redirects to host IP)
 	customDialer := &net.Dialer{}
+	// URL transport: preserve the custom dialer redirection, and set TLS config only when SSL is enabled.
 	urlTransport := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			// Redirect localhost:9000 to the actual MinIO container via host IP
 			if strings.Contains(addr, "localhost:9000") {
@@ -68,6 +84,9 @@ func LoadMinIOConfig() {
 			}
 			return customDialer.DialContext(ctx, network, addr)
 		},
+	}
+	if MinIO.UseSSL {
+		urlTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
 	urlClient, err := minio.New("localhost:9000", &minio.Options{

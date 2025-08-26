@@ -2,13 +2,21 @@ package handler
 
 import (
 	"context"
+	"path/filepath"
 	"strconv"
 	"strings"
 
+	// ...existing code...
+
+	"github.com/google/uuid"
+
 	"erp/backend/internal/hrm/hr_profile/model"
 	utils "erp/backend/pkg"
+	"erp/backend/pkg/minIO"
 	"fmt"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,10 +44,67 @@ func (h *DecisionHandler) CreateDecision() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var data model.DecisionCreate
 
-		if err := c.ShouldBindJSON(&data); err != nil {
-			utils.ResponseMessage(c, fmt.Sprintf("%+v", data), http.StatusBadRequest, data)
-			return
+		// Support multipart/form-data so client can upload a file
+		if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
+			// if not multipart, fall back to JSON bind
+			if err := c.ShouldBindJSON(&data); err != nil {
+				utils.ResponseMessage(c, fmt.Sprintf("Invalid input: %v", err), http.StatusBadRequest, nil)
+				return
+			}
+		} else {
+			// Bind form fields to struct
+			if err := c.ShouldBind(&data); err != nil {
+				utils.ResponseMessage(c, fmt.Sprintf("Invalid form input: %v", err), http.StatusBadRequest, nil)
+				return
+			}
+
+			// Handle attached file if provided
+			file, header, err := c.Request.FormFile("file")
+			if err == nil && file != nil {
+				defer file.Close()
+				// Validate extension and allow .pdf and .docx (and common images)
+				ext := strings.ToLower(filepath.Ext(header.Filename))
+				allowed := map[string]bool{
+					".pdf":  true,
+					".docx": true,
+					".jpg":  true,
+					".jpeg": true,
+					".png":  true,
+				}
+				if !allowed[ext] {
+					utils.ResponseMessage(c, "Định dạng file không được hỗ trợ. Chỉ cho phép pdf, docx, jpg, jpeg, png", http.StatusBadRequest, nil)
+					return
+				}
+
+				// Determine content type; fall back based on extension if header is missing
+				contentType := header.Header.Get("Content-Type")
+				if contentType == "" {
+					switch ext {
+					case ".pdf":
+						contentType = "application/pdf"
+					case ".docx":
+						contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+					case ".jpg", ".jpeg":
+						contentType = "image/jpeg"
+					case ".png":
+						contentType = "image/png"
+					default:
+						contentType = "application/octet-stream"
+					}
+				}
+
+				// generate unique object name (uuid + original ext)
+				objectName := uuid.New().String() + ext
+				// use UploadImageToMinIO helper
+				if err := minIO.UploadImageToMinIO(c.Request.Context(), minIO.DecisionBucket, objectName, file, header.Size, contentType, 30); err != nil {
+					utils.ResponseMessage(c, fmt.Sprintf("Upload file failed: %v", err), http.StatusInternalServerError, nil)
+					return
+				}
+				// store object name in DB; GET will generate presigned URL when serving
+				data.AttachedFile = objectName
+			}
 		}
+
 		code, err := h.decisionBiz.CreateDecision(c.Request.Context(), &data)
 		if err != nil {
 			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusInternalServerError, nil)
@@ -61,12 +126,18 @@ func (h *DecisionHandler) GetDecision() gin.HandlerFunc {
 			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusInternalServerError, nil)
 			return
 		}
+		var decisionTypeName string
+		if d.DecisionType != nil {
+			decisionTypeName = d.DecisionType.DecisionType
+		} else {
+			decisionTypeName = ""
+		}
 
 		response := model.DecisionResponse{
 			DecisionID:       d.DecisionID,
 			DecisionName:     d.DecisionName,
 			DecisionTypeID:   d.DecisionTypeID,
-			DecisionTypeName: "",
+			DecisionTypeName: decisionTypeName,
 			EffectiveDate:    d.EffectiveDate.Format("2006-01-02"),
 			SignDate:         d.SignDate.Format("2006-01-02"),
 			Condition:        d.Condition,
@@ -83,6 +154,15 @@ func (h *DecisionHandler) GetDecision() gin.HandlerFunc {
 		}
 		if d.DecisionType != nil {
 			response.DecisionTypeName = d.DecisionType.DecisionType
+		}
+		// If AttachedFile is present but not a full URL, try to generate presigned/fallback URL
+		if response.AttachedFile != "" && !strings.HasPrefix(response.AttachedFile, "http") {
+			if url, err := minIO.GeneratePresignedURL(c.Request.Context(), minIO.DecisionBucket, response.AttachedFile, 15*time.Minute); err == nil {
+				response.AttachedFile = url
+			} else {
+				log.Printf("Warning: failed to generate decision attached file URL for %s: %v", response.AttachedFile, err)
+				// keep original object name or set empty; here we keep original name
+			}
 		}
 
 		utils.ResponseMessage(c, "Thông tin quyết định", http.StatusOK, response)
@@ -150,7 +230,15 @@ func (h *DecisionHandler) GetAllDecision() gin.HandlerFunc {
 			if d.DecisionType != nil {
 				response.DecisionTypeName = d.DecisionType.DecisionType
 			}
-			decisionResponses = append(decisionResponses, response)
+			// convert attached file object name to presigned/fallback URL like attendance handler
+			// if response.AttachedFile != "" && !strings.HasPrefix(response.AttachedFile, "http") {
+			// 	if url, err := minIO.GeneratePresignedURL(ctx.Request.Context(), minIO.DecisionBucket, response.AttachedFile, 15*time.Minute); err == nil {
+			// 		response.AttachedFile = url
+			// 	} else {
+			// 		log.Printf("Warning: failed to generate decision attached file URL for %s: %v", response.AttachedFile, err)
+			// 	}
+			// }
+			// decisionResponses = append(decisionResponses, response)
 		}
 		// Calculate the total number of pages
 		totalPages := (totalRecords + int64(pageSize) - 1) / int64(pageSize)
@@ -170,9 +258,60 @@ func (h *DecisionHandler) UpdateDecision() gin.HandlerFunc {
 		idParam := c.Param("id")
 
 		var data model.DecisionCreate
-		if err := c.ShouldBindJSON(&data); err != nil {
-			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
-			return
+		// Support multipart/form-data for update as well
+		if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
+			if err := c.ShouldBindJSON(&data); err != nil {
+				utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
+				return
+			}
+		} else {
+			if err := c.ShouldBind(&data); err != nil {
+				utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusBadRequest, nil)
+				return
+			}
+
+			file, header, err := c.Request.FormFile("attached_file")
+			if err == nil && file != nil {
+				defer file.Close()
+				// Validate extension and allow .pdf and .docx (and common images)
+				ext := strings.ToLower(filepath.Ext(header.Filename))
+				allowed := map[string]bool{
+					".pdf":  true,
+					".docx": true,
+					".jpg":  true,
+					".jpeg": true,
+					".png":  true,
+				}
+				if !allowed[ext] {
+					utils.ResponseMessage(c, "Định dạng file không được hỗ trợ. Chỉ cho phép pdf, docx, jpg, jpeg, png", http.StatusBadRequest, nil)
+					return
+				}
+
+				// Determine content type; fall back based on extension if header is missing
+				contentType := header.Header.Get("Content-Type")
+				if contentType == "" {
+					switch ext {
+					case ".pdf":
+						contentType = "application/pdf"
+					case ".docx":
+						contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+					case ".jpg", ".jpeg":
+						contentType = "image/jpeg"
+					case ".png":
+						contentType = "image/png"
+					default:
+						contentType = "application/octet-stream"
+					}
+				}
+
+				objectName := uuid.New().String() + ext
+				if err := minIO.UploadImageToMinIO(c.Request.Context(), minIO.DecisionBucket, objectName, file, header.Size, contentType, 30); err != nil {
+					utils.ResponseMessage(c, fmt.Sprintf("Upload file failed: %v", err), http.StatusInternalServerError, nil)
+					return
+				}
+				// store object name in DB
+				data.AttachedFile = objectName
+			}
 		}
 
 		if err := h.decisionBiz.UpdateDecision(c.Request.Context(), idParam, &data); err != nil {

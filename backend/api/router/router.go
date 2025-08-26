@@ -79,7 +79,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	officeUsecase := usecase.NewOfficeBiz(officeRepo)
 	jobTitleUsecase := usecase.NewJobTitleBiz(jobTitleRepo, hierarchyLevelRepo)
 	employeeUsecase := usecase.NewEmployeeBiz(db, userRepo, accountManagementRepo, timesheetRepo, timesheetListRepo, departmentRepo)
-	contractUsecase := usecase.NewContractBiz(contractRepo, userRepo)
+	contractUsecase := usecase.NewContractBiz(contractRepo, userRepo, contractTypeRepo)
 	employeeDocumentUsecase := usecase.NewEmployeeDocumentBiz(employeeDocumentRepo)
 	positionUsecase := usecase.NewPositionBiz(positionRepo)
 	decisionUsecase := usecase.NewDecisionBiz(decisionRepo, userRepo)

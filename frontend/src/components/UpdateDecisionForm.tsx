@@ -21,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateDecisionApi } from '@/apis/decision.api';
-import { getAllDecisionTypeApi } from '@/apis/decistion-type.api';
+import { getAllDecisionTypeApi } from '@/apis/decision-type.api.ts';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 

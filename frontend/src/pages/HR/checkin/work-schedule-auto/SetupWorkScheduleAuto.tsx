@@ -18,6 +18,7 @@ import {useEffect} from "react";
 import Loading from "@/components/Loading.tsx";
 import {Skeleton} from "@/components/ui/skeleton.tsx";
 import {Building2} from "lucide-react";
+import {useAuth} from "@/context/AuthContext.tsx";
 
 // Strongly typed enums
 export const RepeatTypeEnum = z.enum(["weekly", "monthly"]);
@@ -124,7 +125,7 @@ const SetupWorkScheduleAuto = () => {
                     day_of_week: dayOfWeek,
                     enabled: shiftsForDay.length > 0,
                     shift_count: shiftsForDay.length || 1,
-                    shifts: shiftsForDay.map(shift => shift.workshift_id)
+                    shifts: shiftsForDay?.map(shift => shift?.workshift_id)
                 };
             });
 

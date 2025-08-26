@@ -3,6 +3,7 @@ import api from "./api";
 
 export const createDecisionApi = async (payload: FormData) => {
   try {
+      console.log(payload);
     const response = await api.post("/decision", payload);
     return response.data.data;
   } catch (error: any) {

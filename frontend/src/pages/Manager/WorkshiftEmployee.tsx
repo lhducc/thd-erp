@@ -13,7 +13,6 @@ import {isToday} from "date-fns";
 import { getAllEmployeeWorkshiftsApi, registerManyWorkshiftsApi } from "@/apis/employee-workshift.api";
 import { type EmployeeWorkshift, type RegisterWorkshiftRequest } from "@/types/employee-workshift";
 import { toast } from "sonner";
-import {useAuth} from "@/context/AuthContext.tsx";
 
 // Memoized components để tránh re-render không cần thiết
 const Nav = memo(() => {
@@ -46,7 +45,6 @@ const DayCell = memo(({
     columnWidths: number[];
     onResizeColumn: (index: number, width: number) => void;
 }) => {
-    const {currentUser} = useAuth();
     const dayKey = `${employee.employee_id}-${dayIndex}`;
     const [isResizing, setIsResizing] = useState(false);
     const resizeRef = useRef<HTMLDivElement>(null);
@@ -108,7 +106,7 @@ const DayCell = memo(({
                     ))}
 
                     {/* Hiển thị ca dự đoán */}
-                    {scheduledShift && !hasOverlap && currentUser?.role !== "manager" && (
+                    {scheduledShift && !hasOverlap && (
                         <div className="mb-2 p-2 bg-blue-100 border border-blue-300 rounded">
                             <p className="text-sm font-medium text-blue-800">{scheduledShift.workshift_name}</p>
                             <p className="text-xs text-blue-600">
@@ -219,7 +217,7 @@ const EmployeeRow = memo(({
     );
 });
 
-const Rota = () => {
+const WorkshiftEmployee = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [employeeShifts, setEmployeeShifts] = useState<Record<string, Workshift[]>>({});
@@ -230,7 +228,6 @@ const Rota = () => {
     const [columnWidths, setColumnWidths] = useState<number[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
     const [draggingItem, setDraggingItem] = useState<string | null>(null);
-    const {currentUser} = useAuth()
 
     useEffect(() => {
         const handleMouseUp = () => setIsDraggingColumns(false);
@@ -322,7 +319,7 @@ const Rota = () => {
 
     const scheduleNames = useMemo(() => {
         const names = new Set<string>();
-        shiftAllocation?.forEach(employee => {
+        shiftAllocation.forEach(employee => {
             employee.schedules?.forEach(schedule => {
                 if (schedule.work_schedule_name) {
                     names.add(schedule.work_schedule_name);
@@ -550,6 +547,7 @@ const Rota = () => {
         // Gọi API
         registerManyMutation.mutate(shiftsToRegister);
     }, [employeeShifts, monthDays, registerManyMutation]);
+
     // Hàm phân ca tự động từ schedule
     const handleAssignFromSchedule = useCallback(() => {
         const shiftsToRegister: RegisterWorkshiftRequest[] = [];
@@ -656,7 +654,7 @@ const Rota = () => {
                                 <Loading/>
                             </div>
                         ) : (
-                            filteredEmployees?.map((employee) => (
+                            filteredEmployees.map((employee) => (
                                 <EmployeeRow
                                     key={employee.employee_id}
                                     employee={employee}
@@ -744,7 +742,7 @@ const Rota = () => {
             </DragDropContext>
 
             {/* Nút phân ca cố định ở góc */}
-            <div className={`fixed bottom-6 right-6 z-50 flex flex-col gap-2`}>
+            <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
                 <Button
                     onClick={handleAssignShifts}
                     disabled={registerManyMutation.isPending || totalAssignedShifts === 0}
@@ -766,7 +764,6 @@ const Rota = () => {
                     disabled={registerManyMutation.isPending}
                     variant="outline"
                     size="sm"
-                    className={`shadow-lg ${currentUser?.role === "manager" ? "hidden" : ""} `}
                 >
                     Phân ca tự động từ lịch
                 </Button>
@@ -782,4 +779,4 @@ const Rota = () => {
     );
 }
 
-export default Rota;
+export default WorkshiftEmployee;

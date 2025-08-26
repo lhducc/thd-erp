@@ -20,6 +20,7 @@ type Bucket string
 const (
 	AttendanceBucket Bucket = "attendance"
 	DecisionBucket   Bucket = "decision"
+	ContractBucket   Bucket = "contract"
 )
 
 func UploadImageToMinIO(

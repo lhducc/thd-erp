@@ -9,8 +9,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/google/uuid"
+
+	"erp/backend/pkg/minIO"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,10 +46,58 @@ func (h *ContractHandler) CreateContract() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var data model.ContractCreate
 
-		err := c.ShouldBindJSON(&data)
-		if err != nil {
-			utils.ResponseError(c, "Dữ liệu đầu vào không hợp lệ", err, http.StatusBadRequest)
-			return
+		// Support multipart/form-data so client can upload a file; fall back to JSON
+		if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
+			if err := c.ShouldBindJSON(&data); err != nil {
+				utils.ResponseError(c, "Dữ liệu đầu vào không hợp lệ", err, http.StatusBadRequest)
+				return
+			}
+		} else {
+			if err := c.ShouldBind(&data); err != nil {
+				utils.ResponseError(c, "Dữ liệu đầu vào không hợp lệ", err, http.StatusBadRequest)
+				return
+			}
+
+			// Handle attached file if provided (field name: attached_file)
+			file, header, err := c.Request.FormFile("attached_file")
+			if err == nil && file != nil {
+				defer file.Close()
+				ext := strings.ToLower(filepath.Ext(header.Filename))
+				allowed := map[string]bool{
+					".pdf":  true,
+					".docx": true,
+					// ".jpg":  true,
+					// ".jpeg": true,
+					// ".png":  true,
+				}
+				if !allowed[ext] {
+					utils.ResponseMessage(c, "Định dạng file không được hỗ trợ. Chỉ cho phép pdf, docx, jpg, jpeg, png", http.StatusBadRequest, nil)
+					return
+				}
+
+				contentType := header.Header.Get("Content-Type")
+				if contentType == "" {
+					switch ext {
+					case ".pdf":
+						contentType = "application/pdf"
+					case ".docx":
+						contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+					//case ".jpg", ".jpeg":
+					//	contentType = "image/jpeg"
+					//case ".png":
+					//	contentType = "image/png"
+					default:
+						contentType = "application/octet-stream"
+					}
+				}
+
+				objectName := uuid.New().String() + ext
+				if err := minIO.UploadImageToMinIO(c.Request.Context(), minIO.ContractBucket, objectName, file, header.Size, contentType, 30); err != nil {
+					utils.ResponseMessage(c, fmt.Sprintf("Upload file failed: %v", err), http.StatusInternalServerError, nil)
+					return
+				}
+				data.AttachedFile = objectName
+			}
 		}
 
 		if err := h.ContractBiz.CreateContract(c.Request.Context(), &data); err != nil {
@@ -107,6 +161,15 @@ func (h *ContractHandler) GetContract() gin.HandlerFunc {
 			},
 			ContractTypeObj: *result.ContractType,
 		}
+		// If AttachedFile is present but not a full URL, try to generate presigned/fallback URL
+		if res.AttachedFile != "" && !strings.HasPrefix(res.AttachedFile, "http") {
+			if url, err := minIO.GeneratePresignedURL(c.Request.Context(), minIO.ContractBucket, res.AttachedFile, 15*time.Minute); err == nil {
+				res.AttachedFile = url
+			} else {
+				log.Printf("Warning: failed to generate contract attached file URL for %s: %v", res.AttachedFile, err)
+			}
+		}
+
 		utils.ResponseMessage(c, errors.MsgListData, http.StatusOK, []model.ContractResponse{res})
 	}
 }
@@ -204,9 +267,51 @@ func (h *ContractHandler) UpdateContract() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idParam := c.Param("id")
 		var data model.ContractCreate
-		if err := c.ShouldBindJSON(&data); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
+		// Support multipart/form-data for update as well
+		if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
+			if err := c.ShouldBindJSON(&data); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+		} else {
+			if err := c.ShouldBind(&data); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+
+			file, header, err := c.Request.FormFile("attached_file")
+			if err == nil && file != nil {
+				defer file.Close()
+				ext := strings.ToLower(filepath.Ext(header.Filename))
+				// Allow only .pdf and .docx for contract attachments
+				allowed := map[string]bool{
+					".pdf":  true,
+					".docx": true,
+				}
+				if !allowed[ext] {
+					utils.ResponseMessage(c, "Định dạng file không được hỗ trợ. Chỉ cho phép pdf, docx, jpg, jpeg, png", http.StatusBadRequest, nil)
+					return
+				}
+
+				contentType := header.Header.Get("Content-Type")
+				if contentType == "" {
+					switch ext {
+					case ".pdf":
+						contentType = "application/pdf"
+					case ".docx":
+						contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+					default:
+						contentType = "application/octet-stream"
+					}
+				}
+
+				objectName := uuid.New().String() + ext
+				if err := minIO.UploadImageToMinIO(c.Request.Context(), minIO.ContractBucket, objectName, file, header.Size, contentType, 30); err != nil {
+					utils.ResponseMessage(c, fmt.Sprintf("Upload file failed: %v", err), http.StatusInternalServerError, nil)
+					return
+				}
+				data.AttachedFile = objectName
+			}
 		}
 
 		err := h.ContractBiz.UpdateContract(c.Request.Context(), idParam, &data)

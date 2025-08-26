@@ -178,7 +178,7 @@ const DecisionPage = () => {
 
     const ButtonCreate = () => (
         <div className="button-container flex items-center justify-center space-x-4 text-[17px]">
-            <CreateDecisionForm open={openCreate} setOpen={setOpenCreate} createDecision={createDecision} />
+            <CreateDecisionForm open={openCreate} setOpen={setOpenCreate} onSuccess={refetch} />
             <Button
                 onClick={() => setOpenCreate(true)}
                 variant="default" className={`px-8 py-5 text-[17px] rounded-[15px]`}

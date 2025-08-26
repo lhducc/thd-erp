@@ -238,7 +238,7 @@ func (h *DecisionHandler) GetAllDecision() gin.HandlerFunc {
 			// 		log.Printf("Warning: failed to generate decision attached file URL for %s: %v", response.AttachedFile, err)
 			// 	}
 			// }
-			// decisionResponses = append(decisionResponses, response)
+			decisionResponses = append(decisionResponses, response)
 		}
 		// Calculate the total number of pages
 		totalPages := (totalRecords + int64(pageSize) - 1) / int64(pageSize)

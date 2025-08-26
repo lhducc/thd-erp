@@ -24,21 +24,24 @@ import { useQuery } from "@tanstack/react-query";
 import {useGetAllEmployee} from "@/query/employee.query.ts";
 import {getAllDecisionTypeApi} from "@/apis/decision-type.api.ts";
 import * as React from "react";
+import axios from "axios";
+import {toast} from "sonner";
 
 export const formSchema = z.object({
-    decision_name: z.string().nonempty('Vui lòng nhập tên quyết định'),
-    effective_date: z.string().nonempty('Vui lòng chọn ngày hiệu lực'),
-    sign_date: z.string().nonempty('Vui lòng chọn ngày ký'),
-    condition: z.string().nonempty('Vui lòng chọn tình trạng'),
-    description: z.string().optional(),
+    decision_name: z.string().min(1, 'Vui lòng nhập tên quyết định'),
+    effective_date: z.string().min(1, 'Vui lòng chọn ngày hiệu lực'),
+    sign_date: z.string().min(1, 'Vui lòng chọn ngày ký'),
+    condition: z.string().min(1, 'Vui lòng chọn tình trạng'),
+    content: z.string().optional(),
     attached_file: z.any().optional(),
-    decision_type_id: z.string().nonempty('Vui lòng chọn loại quyết định'),
-    employee_ids: z.array(z.string()).nonempty('Vui lòng chọn ít nhất 1 nhân viên'),
+    decision_type_id: z.string().min(1, 'Vui lòng chọn loại quyết định'),
+    employee_ids: z.array(z.string()).min(1, 'Vui lòng chọn ít nhất 1 nhân viên'),
 });
 
 type Props = {
     open: boolean;
     setOpen: (open: boolean) => void;
+    onSuccess?: () => void;
 };
 
 type Employee = {
@@ -62,6 +65,18 @@ function MultiSelectEmployeeComponent({
                                           disabled,
                                       }: MultiSelectEmployeeProps) {
     const [open, setOpen] = React.useState(false);
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const selectedEmployees = employees.filter((e) =>
         value.includes(e.employee_id)
@@ -76,7 +91,7 @@ function MultiSelectEmployeeComponent({
     };
 
     return (
-        <div className="w-full relative">
+        <div className="w-full relative" ref={dropdownRef}>
             <div
                 className="w-full h-[51px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21] cursor-pointer flex items-center justify-between"
                 onClick={() => !disabled && setOpen(!open)}
@@ -88,8 +103,8 @@ function MultiSelectEmployeeComponent({
                                 key={employee.employee_id}
                                 className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded"
                             >
-                {employee.full_name}
-              </span>
+                                {employee.full_name}
+                            </span>
                         ))
                     ) : (
                         <span className="text-gray-500">{placeholder}</span>
@@ -125,8 +140,8 @@ function MultiSelectEmployeeComponent({
     );
 }
 
-const CreateDecisionForm = ({ open, setOpen }: Props) => {
-    const { data: decisions, isLoading } = useQuery({
+const CreateDecisionForm = ({ open, setOpen, onSuccess }: Props) => {
+    const { data: decisionTypes, isLoading: isLoadingDecisionTypes } = useQuery({
         queryKey: ["decisionTypes"],
         queryFn: getAllDecisionTypeApi,
     });
@@ -140,7 +155,7 @@ const CreateDecisionForm = ({ open, setOpen }: Props) => {
             effective_date: '',
             sign_date: '',
             condition: "Đang hiệu lực",
-            description: '',
+            content: '',
             attached_file: undefined,
             employee_ids: [],
             decision_type_id: '',
@@ -150,27 +165,46 @@ const CreateDecisionForm = ({ open, setOpen }: Props) => {
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         try {
             const formData = new FormData();
+
+            // Format dates to ISO string for backend
+            const effectiveDate = new Date(values.effective_date);
+            const signDate = new Date(values.sign_date);
+
+            // Append all required fields
             formData.append("decision_name", values.decision_name);
-            formData.append("effective_date", values.effective_date);
-            formData.append("sign_date", values.sign_date);
-            formData.append("content", values.description || '');
+            formData.append("effective_date", effectiveDate.toISOString());
+            formData.append("sign_date", signDate.toISOString());
+            formData.append("content", values.content || '');
             formData.append("condition", values.condition);
             formData.append("decision_type_id", values.decision_type_id);
 
-            if (values.attached_file?.[0]) {
-                formData.append("attached_file", values.attached_file[0]);
-            }
+            // Add current date as created_date
+            formData.append("created_date", new Date().toISOString());
 
+            // Add employee IDs
             values.employee_ids.forEach((id) => {
                 formData.append("employee_ids", id);
             });
 
+            // Handle file upload
+            if (values.attached_file?.[0]) {
+                formData.append("attached_file", values.attached_file[0]);
+            }
+
             await createDecisionApi(formData);
             form.reset();
             setOpen(false);
+            onSuccess?.();
         } catch (error) {
-            console.error("Failed to create decision:", error);
+            if (axios.isAxiosError(error)) {
+                toast.error(error?.response?.data.message);
+            }
         }
+    };
+
+    const handleClose = () => {
+        form.reset();
+        setOpen(false);
     };
 
     return (
@@ -195,7 +229,12 @@ const CreateDecisionForm = ({ open, setOpen }: Props) => {
                                     <FormItem>
                                         <FormLabel className="font-medium">Tên quyết định</FormLabel>
                                         <FormControl>
-                                            <Input {...field} type="text" className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]" />
+                                            <Input
+                                                {...field}
+                                                type="text"
+                                                className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                                placeholder="Nhập tên quyết định"
+                                            />
                                         </FormControl>
                                         <FormMessage className="text-red-500 text-sm" />
                                     </FormItem>
@@ -209,7 +248,11 @@ const CreateDecisionForm = ({ open, setOpen }: Props) => {
                                     <FormItem>
                                         <FormLabel className="font-medium">Ngày ký quyết định</FormLabel>
                                         <FormControl>
-                                            <Input {...field} type="datetime-local" className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]" />
+                                            <Input
+                                                {...field}
+                                                type="datetime-local"
+                                                className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                            />
                                         </FormControl>
                                         <FormMessage className="text-red-500 text-sm" />
                                     </FormItem>
@@ -223,7 +266,11 @@ const CreateDecisionForm = ({ open, setOpen }: Props) => {
                                     <FormItem>
                                         <FormLabel className="font-medium">Ngày hiệu lực</FormLabel>
                                         <FormControl>
-                                            <Input {...field} type="datetime-local" className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]" />
+                                            <Input
+                                                {...field}
+                                                type="datetime-local"
+                                                className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                            />
                                         </FormControl>
                                         <FormMessage className="text-red-500 text-sm" />
                                     </FormItem>
@@ -233,7 +280,7 @@ const CreateDecisionForm = ({ open, setOpen }: Props) => {
                             <FormField
                                 control={form.control}
                                 name="attached_file"
-                                render={({ field }) => (
+                                render={({ field: { value, onChange, ...fieldProps } }) => (
                                     <FormItem>
                                         <FormLabel className="font-medium">File đính kèm</FormLabel>
                                         <FormControl>
@@ -241,14 +288,15 @@ const CreateDecisionForm = ({ open, setOpen }: Props) => {
                                                 <input
                                                     id="file-upload"
                                                     type="file"
-                                                    onChange={(e) => field.onChange(e.target.files)}
+                                                    {...fieldProps}
+                                                    onChange={(e) => onChange(e.target.files)}
                                                     className="w-full h-[140px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21] opacity-0 cursor-pointer"
                                                 />
                                                 <label
                                                     htmlFor="file-upload"
                                                     className="absolute inset-0 p-2 bg-[#EFEFEF] rounded-md flex items-center justify-center text-center font-medium text-black cursor-pointer border-2 border-dashed border-gray-300"
                                                 >
-                                                    ĐÍNH KÈM FILE
+                                                    {value?.[0] ? value[0].name : 'ĐÍNH KÈM FILE'}
                                                 </label>
                                             </div>
                                         </FormControl>
@@ -267,7 +315,10 @@ const CreateDecisionForm = ({ open, setOpen }: Props) => {
                                     <FormItem>
                                         <FormLabel className="font-medium">Tình trạng</FormLabel>
                                         <FormControl>
-                                            <select {...field} className="w-full h-[51px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]">
+                                            <select
+                                                {...field}
+                                                className="w-full h-[51px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                            >
                                                 <option value="" disabled>Chọn tình trạng</option>
                                                 {["Đang hiệu lực", "Hết hiệu lực", "Chưa hiệu lực"].map((item, index) => (
                                                     <option key={index} value={item}>
@@ -288,12 +339,15 @@ const CreateDecisionForm = ({ open, setOpen }: Props) => {
                                     <FormItem>
                                         <FormLabel className="font-medium">Loại quyết định</FormLabel>
                                         <FormControl>
-                                            <select {...field} className="w-full h-[51px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]">
+                                            <select
+                                                {...field}
+                                                className="w-full h-[51px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                            >
                                                 <option value="" disabled>Chọn loại quyết định</option>
-                                                {isLoading ? (
+                                                {isLoadingDecisionTypes ? (
                                                     <option value="">Đang tải...</option>
                                                 ) : (
-                                                    decisions?.map((item) => (
+                                                    decisionTypes?.map((item) => (
                                                         <option key={item.decision_type_id} value={item.decision_type_id}>
                                                             {item.decision_type}
                                                         </option>
@@ -327,12 +381,16 @@ const CreateDecisionForm = ({ open, setOpen }: Props) => {
 
                             <FormField
                                 control={form.control}
-                                name="description"
+                                name="content"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="font-medium">Mô tả</FormLabel>
+                                        <FormLabel className="font-medium">Nội dung</FormLabel>
                                         <FormControl>
-                                            <textarea {...field} className="w-full h-[140px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21] resize-none" />
+                                            <textarea
+                                                {...field}
+                                                className="w-full h-[140px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21] resize-none"
+                                                placeholder="Nhập nội dung quyết định"
+                                            />
                                         </FormControl>
                                         <FormMessage className="text-red-500 text-sm" />
                                     </FormItem>
@@ -344,7 +402,7 @@ const CreateDecisionForm = ({ open, setOpen }: Props) => {
                         <div className="w-full flex justify-end gap-4 pt-6">
                             <Button
                                 type="button"
-                                onClick={() => setOpen(false)}
+                                onClick={handleClose}
                                 className="bg-gray-400 hover:bg-gray-500 w-[120px] h-[40px]"
                             >
                                 Hủy bỏ
@@ -352,8 +410,9 @@ const CreateDecisionForm = ({ open, setOpen }: Props) => {
                             <Button
                                 type="submit"
                                 className="bg-[#DB3B21] hover:bg-[#b83a1a] w-[120px] h-[40px]"
+                                disabled={form.formState.isSubmitting}
                             >
-                                Lưu thông tin
+                                {form.formState.isSubmitting ? 'Đang xử lý...' : 'Lưu thông tin'}
                             </Button>
                         </div>
                     </form>

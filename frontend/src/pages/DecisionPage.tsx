@@ -121,7 +121,7 @@ const DecisionPage = () => {
         variant="default" className={`px-8 py-5 text-[17px] rounded-[15px]`}
       >
         <span className={`mb-1 text-[24px]`}>+</span>
-        Thêm hợp đồng
+        Thêm quyết định
       </Button>
       <Button
           onClick={exportFile}

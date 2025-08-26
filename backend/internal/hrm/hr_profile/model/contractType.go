@@ -37,7 +37,7 @@ const (
 )
 
 type ContractType struct {
-	ContractTypeID   string        `gorm:"column:contract_type_id;primaryKey;type:char(6)" json:"contract_type_id"`
+	ContractTypeID   string        `gorm:"column:contract_type_id;primaryKey;type:char(10)" json:"contract_type_id"`
 	ContractTypeName string        `gorm:"column:contract_type;type:varchar(50)" json:"contract_type"`
 	ContractGroup    ContractGroup `gorm:"column:contract_group;type:contract_group_enum" json:"contract_group"`
 	Duration         int           `gorm:"column:duration" json:"duration"`

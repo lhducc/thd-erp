@@ -43,10 +43,6 @@ const SettingDecisionPage = () => {
             header: "Tên quyết định",
         },
         {
-            accessorKey: "decision_group",
-            header: "Nhóm đơn quyết định",
-        },
-        {
             accessorKey: "description",
             header: "Mô tả",
         },

@@ -7,6 +7,7 @@ import (
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	utils "erp/backend/pkg"
 	"erp/backend/pkg/pointer"
+	"erp/backend/pkg/timeonly"
 	"erp/backend/pkg/variable"
 	"errors"
 	"fmt"
@@ -231,19 +232,13 @@ func (t *timesheetServiceImp) calculateForEmployee(
 				workHours := lastCheckOut.Sub(firstCheckIn).Hours()
 				detail.WorkHours = math.Round(workHours*100) / 100
 
-				// Convert string time to time.Time
-				startTime, err := time.ParseInLocation("15:04:05", shift.WorkShift.StartTime, dateKey.Location())
-				if err != nil {
-					currentDate = currentDate.AddDate(0, 0, 1)
-					continue
-				}
-
+				// Convert TimeOnly to time.Time on the given date
 				shiftStart := time.Date(
 					dateKey.Year(),
 					dateKey.Month(),
 					dateKey.Day(),
-					startTime.Hour(),
-					startTime.Minute(),
+					shift.WorkShift.StartTime.Hour(),
+					shift.WorkShift.StartTime.Minute(),
 					0, 0, dateKey.Location(),
 				)
 
@@ -322,22 +317,16 @@ func isWeekend(date time.Time) bool {
 func (t *timesheetServiceImp) getShiftTimeRange(workShift model.WorkShifts, date time.Time) (checkinFrom, checkinTo, checkoutFrom, checkoutTo *time.Time, err error) {
 	location := vietnamLoc
 
-	parseTime := func(timeStr *string) (*time.Time, error) {
-		if timeStr == nil || *timeStr == "" {
+	parseTime := func(ti *timeonly.TimeOnly) (*time.Time, error) {
+		if ti == nil || ti.IsZero() {
 			return nil, nil
 		}
-
-		parsed, err := time.ParseInLocation("15:04:05", *timeStr, location)
-		if err != nil {
-			return nil, err
-		}
-
 		result := time.Date(
 			date.Year(),
 			date.Month(),
 			date.Day(),
-			parsed.Hour(),
-			parsed.Minute(),
+			ti.Hour(),
+			ti.Minute(),
 			0, 0, location,
 		)
 		return &result, nil
@@ -498,10 +487,7 @@ func (b *timesheetServiceImp) ExportTimeSheet(ctx context.Context, timesheetList
 	exporter := utils.NewExcelExporter(fmt.Sprintf("Timesheet_%d_%02d", year, month))
 
 	// get localtime
-	timeNow, err := utils.GetCurrentTimeHCMCity()
-	if err != nil {
-		return nil, "", err
-	}
+	timeNow := utils.GetCurrentTimeHCMCity()
 
 	// Các trường cố định
 	exporter.RegisterField("employee_id", "Mã MV", "employee_id",

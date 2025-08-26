@@ -7,6 +7,7 @@ import (
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	"errors"
 	"fmt"
+
 	"gorm.io/gorm"
 )
 
@@ -39,10 +40,10 @@ func (sv *WorkShiftService) CreateWorkShift(ctx context.Context, w *model.WorkSh
 	isDup, err := sv.repo.IsDuplicateTimeRange(ctx, w.StartTime, w.EndTime, "")
 	if err != nil {
 		fmt.Errorf("Lỗi: " + err.Error())
-		return errors.New("Lỗi hệ thống khi kiểm tra tùng lặp khung thời gian bắt đầu, kết thúc")
+		return errors.New("Lỗi hệ thống khi kiểm tra trùng lặp khung thời gian bắt đầu, kết thúc")
 	}
 	if isDup {
-		return fmt.Errorf("Ca làm việc với StartTime %s và EndTime %s đã tồn tại", w.StartTime, w.EndTime)
+		return fmt.Errorf("Ca làm việc với StartTime %s và EndTime %s đã tồn tại", w.StartTime.String(), w.EndTime.String())
 	}
 
 	if err := sv.repo.SaveWorkShift(ctx, w); err != nil {
@@ -99,7 +100,7 @@ func (sv *WorkShiftService) UpdateWorkShift(ctx context.Context, workshift *mode
 		return errors.New("Lỗi hệ thống khi kiểm tra tùng lặp khung thời gian bắt đầu, kết thúc")
 	}
 	if isDup {
-		return fmt.Errorf("ca làm việc với StartTime %s và EndTime %s đã tồn tại", workshift.StartTime, workshift.EndTime)
+		return fmt.Errorf("ca làm việc với StartTime %s và EndTime %s đã tồn tại", workshift.StartTime.String(), workshift.EndTime.String())
 	}
 
 	if err := sv.repo.SaveWorkShift(ctx, workshift); err != nil {

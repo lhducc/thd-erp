@@ -40,7 +40,7 @@ import {useEmployeeByRoleNameQuery} from "@/query/employee.query.ts";
 
 const formSchema = z.object({
     department_name: z.string().nonempty("Tên phòng ban không được để trống"),
-    manager: z.string().nonempty("Người quản lý không được để trống"),
+    manager: z.string().optional(),
     office_id: z.string().nonempty("Văn phòng không được để trống"),
 });
 
@@ -147,7 +147,7 @@ const CreateDepartmentForm = ({
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className={`md:max-w-2xl`}>
                 {pendingOffices ? (
                     <Loading/>
                 ) : (

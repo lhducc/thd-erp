@@ -214,6 +214,7 @@ const HRDocumentPage = () => {
           open={Boolean(editEmployee)}
           setOpen={setEditEmployee}
           data={editEmployee}
+          refetchEmployee={refetchEmployee}
         />
       )}
     </>

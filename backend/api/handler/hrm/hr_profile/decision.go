@@ -62,14 +62,11 @@ func (h *DecisionHandler) CreateDecision() gin.HandlerFunc {
 			file, header, err := c.Request.FormFile("file")
 			if err == nil && file != nil {
 				defer file.Close()
-				// Validate extension and allow .pdf and .docx (and common images)
+				// Validate extension and allow only .pdf and .docx
 				ext := strings.ToLower(filepath.Ext(header.Filename))
 				allowed := map[string]bool{
 					".pdf":  true,
 					".docx": true,
-					".jpg":  true,
-					".jpeg": true,
-					".png":  true,
 				}
 				if !allowed[ext] {
 					utils.ResponseMessage(c, "Định dạng file không được hỗ trợ. Chỉ cho phép pdf, docx, jpg, jpeg, png", http.StatusBadRequest, nil)
@@ -84,10 +81,6 @@ func (h *DecisionHandler) CreateDecision() gin.HandlerFunc {
 						contentType = "application/pdf"
 					case ".docx":
 						contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-					case ".jpg", ".jpeg":
-						contentType = "image/jpeg"
-					case ".png":
-						contentType = "image/png"
 					default:
 						contentType = "application/octet-stream"
 					}
@@ -278,9 +271,9 @@ func (h *DecisionHandler) UpdateDecision() gin.HandlerFunc {
 				allowed := map[string]bool{
 					".pdf":  true,
 					".docx": true,
-					".jpg":  true,
-					".jpeg": true,
-					".png":  true,
+					// ".jpg":  true,
+					// ".jpeg": true,
+					// ".png":  true,
 				}
 				if !allowed[ext] {
 					utils.ResponseMessage(c, "Định dạng file không được hỗ trợ. Chỉ cho phép pdf, docx, jpg, jpeg, png", http.StatusBadRequest, nil)
@@ -295,10 +288,10 @@ func (h *DecisionHandler) UpdateDecision() gin.HandlerFunc {
 						contentType = "application/pdf"
 					case ".docx":
 						contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-					case ".jpg", ".jpeg":
-						contentType = "image/jpeg"
-					case ".png":
-						contentType = "image/png"
+					// case ".jpg", ".jpeg":
+					// 	contentType = "image/jpeg"
+					// case ".png":
+					// 	contentType = "image/png"
 					default:
 						contentType = "application/octet-stream"
 					}

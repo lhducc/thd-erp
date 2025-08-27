@@ -1,19 +1,18 @@
 import {Button} from "@/components/ui/button.tsx";
 import {useState, useCallback, useMemo, useRef, useEffect, memo} from "react";
 import {X, GripVertical} from "lucide-react";
-import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
+import {useQuery, useMutation} from "@tanstack/react-query";
 import {type Workshift} from "@/types/workshift.ts";
-import {deleteEmployeeWorkshiftApi, getAllWorkshiftApi} from "@/apis/workshift.api.ts";
+import {getAllWorkshiftApi} from "@/apis/workshift.api.ts";
 import {formatTime} from "@/lib/utils.ts";
 import Loading from "@/components/Loading.tsx";
 import {DragDropContext, Droppable, Draggable, type DropResult} from "@hello-pangea/dnd";
 import {getAllShiftAllocations} from "@/apis/shift-allocation.api.ts";
 import {SecondNav} from "@/pages/HR/checkin/rota/_components/SecondNav.tsx";
 import {isToday} from "date-fns";
-import {getAllEmployeeWorkshiftsApi, registerManyWorkshiftsApi} from "@/apis/employee-workshift.api";
-import {type EmployeeWorkshift, type RegisterWorkshiftRequest} from "@/types/employee-workshift";
-import {toast} from "sonner";
-import {useAuth} from "@/context/AuthContext.tsx";
+import { getAllEmployeeWorkshiftsApi, registerManyWorkshiftsApi } from "@/apis/employee-workshift.api";
+import { type EmployeeWorkshift, type RegisterWorkshiftRequest } from "@/types/employee-workshift";
+import { toast } from "sonner";
 
 // Memoized components để tránh re-render không cần thiết
 const Nav = memo(() => {
@@ -46,22 +45,9 @@ const DayCell = memo(({
     columnWidths: number[];
     onResizeColumn: (index: number, width: number) => void;
 }) => {
-    const {currentUser} = useAuth();
     const dayKey = `${employee.employee_id}-${dayIndex}`;
     const [isResizing, setIsResizing] = useState(false);
     const resizeRef = useRef<HTMLDivElement>(null);
-    const queryClient = useQueryClient();
-
-    const deleteMutation = useMutation({
-        mutationFn: (id: number) => deleteEmployeeWorkshiftApi(id),
-        onSuccess: () => {
-            toast.success("Xóa ca làm việc thành công!");
-            queryClient.invalidateQueries({ queryKey: ["employee-workshifts", currentMonth, currentYear] });
-        },
-        onError: (error: any) => {
-            toast.error(`Xóa ca làm việc thất bại: ${error.message}`);
-        },
-    });
 
     const handleResizeStart = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -94,47 +80,33 @@ const DayCell = memo(({
                     className={`relative p-2 min-h-20 border bg-gray-50 ${
                         day.getDay() === 0 || day.getDay() === 6 ? 'bg-red-50' : ''
                     } ${snapshot.isDraggingOver ? 'bg-blue-100 ring-2 ring-blue-400' : ''}`}
-                    style={{
-                        width: `${columnWidths[dayIndex] || 120}px`,
-                        minWidth: `${columnWidths[dayIndex] || 120}px`
-                    }}
+                    style={{ width: `${columnWidths[dayIndex] || 120}px`, minWidth: `${columnWidths[dayIndex] || 120}px` }}
                 >
                     {/* Handle để resize cột */}
                     <div
                         ref={resizeRef}
                         className="absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize z-10"
                         onMouseDown={handleResizeStart}
-                        style={{cursor: 'col-resize'}}
+                        style={{ cursor: 'col-resize' }}
                     >
-                        <div
-                            className="absolute top-1/2 right-0 transform -translate-y-1/2 w-1 h-6 bg-gray-300 rounded"></div>
+                        <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-1 h-6 bg-gray-300 rounded"></div>
                     </div>
 
                     {/* Hiển thị ca thực tế */}
                     {actualShifts.map((shift, index) => (
                         <div
                             key={`actual-${shift.workshift_id}-${index}`}
-                            className="group mb-2 p-2 bg-white border border-gray-300 rounded min-w-[100px]"
+                            className="mb-2 p-2 bg-white border border-gray-300 rounded"
                         >
-                            <div className="flex justify-between items-center">
-                                <p className="text-sm font-medium min-w-[50px]">
-                                    {shift.workshift_name}
-                                </p>
-                                <button onClick={() => {
-                                    deleteMutation.mutate(shift.workshift_id);
-                                }} className="hidden group-hover:inline bg-red-500/60 w-fit h-fit px-2 cursor-pointer">
-      x
-    </button>
-                            </div>
+                            <p className="text-sm font-medium">{shift.workshift_name}</p>
                             <p className="text-xs text-gray-600">
                                 {formatTime(shift.start_time)} - {formatTime(shift.end_time)}
                             </p>
                         </div>
-
                     ))}
 
                     {/* Hiển thị ca dự đoán */}
-                    {scheduledShift && !hasOverlap && currentUser?.role !== "manager" && (
+                    {scheduledShift && !hasOverlap && (
                         <div className="mb-2 p-2 bg-blue-100 border border-blue-300 rounded">
                             <p className="text-sm font-medium text-blue-800">{scheduledShift.workshift_name}</p>
                             <p className="text-xs text-blue-600">
@@ -166,10 +138,9 @@ const DayCell = memo(({
                                             : 'bg-yellow-100 border-yellow-300'
                                     }`}
                                 >
-                                    <GripVertical className="h-3 w-3 mr-1 mt-0.5 text-yellow-600 flex-shrink-0"/>
+                                    <GripVertical className="h-3 w-3 mr-1 mt-0.5 text-yellow-600 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-yellow-800 truncate">Phân
-                                            công: {shift.workshift_name}</p>
+                                        <p className="text-sm font-medium text-yellow-800 truncate">Phân công: {shift.workshift_name}</p>
                                         <p className="text-xs text-yellow-600">
                                             {formatTime(shift.start_time)} - {formatTime(shift.end_time)}
                                         </p>
@@ -213,8 +184,7 @@ const EmployeeRow = memo(({
 }) => {
     return (
         <div key={employee.employee_id} className="flex">
-            <div
-                className="p-2 border-r sticky left-0 bg-white z-50 border flex flex-col items-center justify-center min-w-[200px] max-w-[200px]">
+            <div className="p-2 border-r sticky left-0 bg-white z-10 border flex flex-col items-center justify-center min-w-[200px] max-w-[200px]">
                 <p className="font-medium truncate max-w-full">{employee.full_name}</p>
                 <p className="text-sm text-gray-500 truncate max-w-full">{employee.department_name}</p>
             </div>
@@ -247,7 +217,7 @@ const EmployeeRow = memo(({
     );
 });
 
-const Rota = () => {
+const WorkshiftEmployee = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [employeeShifts, setEmployeeShifts] = useState<Record<string, Workshift[]>>({});
@@ -258,7 +228,6 @@ const Rota = () => {
     const [columnWidths, setColumnWidths] = useState<number[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
     const [draggingItem, setDraggingItem] = useState<string | null>(null);
-    const {currentUser} = useAuth()
 
     useEffect(() => {
         const handleMouseUp = () => setIsDraggingColumns(false);
@@ -288,11 +257,7 @@ const Rota = () => {
     }, [currentYear, currentMonth, daysInMonth, columnWidths.length]);
 
     // Thêm query để lấy dữ liệu ca làm việc thực tế
-    const {
-        data: employeeWorkshiftsData = {},
-        isPending: isEmployeeWorkshiftsPending,
-        refetch: refetchEmployeeWorkshifts
-    } = useQuery({
+    const { data: employeeWorkshiftsData = {}, isPending: isEmployeeWorkshiftsPending, refetch: refetchEmployeeWorkshifts } = useQuery({
         queryKey: ["employee-workshifts", currentMonth, currentYear],
         queryFn: () => getAllEmployeeWorkshiftsApi(currentMonth, currentYear),
     });
@@ -354,7 +319,7 @@ const Rota = () => {
 
     const scheduleNames = useMemo(() => {
         const names = new Set<string>();
-        shiftAllocation?.forEach(employee => {
+        shiftAllocation.forEach(employee => {
             employee.schedules?.forEach(schedule => {
                 if (schedule.work_schedule_name) {
                     names.add(schedule.work_schedule_name);
@@ -385,7 +350,7 @@ const Rota = () => {
     }, []);
 
     const handleDragEnd = useCallback((result: DropResult) => {
-        const {source, destination} = result;
+        const { source, destination } = result;
         setDraggingItem(null);
 
         // Nếu không có destination (kéo ra ngoài vùng drop) thì không làm gì
@@ -582,6 +547,7 @@ const Rota = () => {
         // Gọi API
         registerManyMutation.mutate(shiftsToRegister);
     }, [employeeShifts, monthDays, registerManyMutation]);
+
     // Hàm phân ca tự động từ schedule
     const handleAssignFromSchedule = useCallback(() => {
         const shiftsToRegister: RegisterWorkshiftRequest[] = [];
@@ -611,7 +577,7 @@ const Rota = () => {
     }, [filteredEmployees, monthDays, getScheduledShift, getActualEmployeeShift, registerManyMutation]);
 
     const handleDateChange = useCallback(
-        ({month, year}: { month: number; year: number }) => {
+        ({ month, year }: { month: number; year: number }) => {
             const newDate = new Date(year, month - 1, 1);
             setCurrentDate(newDate);
             // Reset ca phân công khi đổi tháng
@@ -658,15 +624,12 @@ const Rota = () => {
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUpOrLeave}
                     onMouseLeave={handleMouseUpOrLeave}
-                    style={{cursor: isDraggingColumns ? 'grabbing' : 'grab'}}
+                    style={{ cursor: isDraggingColumns ? 'grabbing' : 'grab' }}
                 >
                     <div className="min-w-max">
                         {/* Header với các ngày */}
                         <div className="flex">
-                            <div
-                                className="p-2 font-medium text-center sticky left-0 bg-white z-10 min-w-[200px] max-w-[200px]">Nhân
-                                viên
-                            </div>
+                            <div className="p-2 font-medium text-center sticky left-0 bg-white z-10 min-w-[200px] max-w-[200px]">Nhân viên</div>
                             {monthDays.map((day, i) => (
                                 <div
                                     key={i}
@@ -675,16 +638,12 @@ const Rota = () => {
                                     } ${
                                         isToday(day) ? 'border-2 border-blue-500 bg-blue-50' : ''
                                     }`}
-                                    style={{
-                                        width: `${columnWidths[i] || 120}px`,
-                                        minWidth: `${columnWidths[i] || 120}px`
-                                    }}
+                                    style={{ width: `${columnWidths[i] || 120}px`, minWidth: `${columnWidths[i] || 120}px` }}
                                 >
                                     {day.toLocaleDateString('vi-VN', {weekday: 'short'})}
                                     <div className="text-sm">
                                         {day.getDate()}/{day.getMonth() + 1}
-                                        {isToday(day) &&
-                                            <div className="w-2 h-2 bg-blue-500 rounded-full mx-auto mt-1"></div>}
+                                        {isToday(day) && <div className="w-2 h-2 bg-blue-500 rounded-full mx-auto mt-1"></div>}
                                     </div>
                                 </div>
                             ))}
@@ -695,7 +654,7 @@ const Rota = () => {
                                 <Loading/>
                             </div>
                         ) : (
-                            filteredEmployees?.map((employee) => (
+                            filteredEmployees.map((employee) => (
                                 <EmployeeRow
                                     key={employee.employee_id}
                                     employee={employee}
@@ -765,8 +724,7 @@ const Rota = () => {
                                                             snapshot.isDragging ? 'bg-green-100 border-green-400 shadow-md' : ''
                                                         }`}
                                                     >
-                                                        <GripVertical
-                                                            className="h-4 w-4 mr-2 mt-0.5 text-gray-500 flex-shrink-0"/>
+                                                        <GripVertical className="h-4 w-4 mr-2 mt-0.5 text-gray-500 flex-shrink-0" />
                                                         <div className="flex-1">
                                                             <h3 className="font-medium">{shift.workshift_name}: {formatTime(shift.start_time)} - {formatTime(shift.end_time)}</h3>
                                                         </div>
@@ -784,7 +742,7 @@ const Rota = () => {
             </DragDropContext>
 
             {/* Nút phân ca cố định ở góc */}
-            <div className={`fixed bottom-6 right-6 z-50 flex flex-col gap-2`}>
+            <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
                 <Button
                     onClick={handleAssignShifts}
                     disabled={registerManyMutation.isPending || totalAssignedShifts === 0}
@@ -793,7 +751,7 @@ const Rota = () => {
                 >
                     {registerManyMutation.isPending ? (
                         <>
-                            <Loading className="mr-2 h-4 w-4"/>
+                            <Loading className="mr-2 h-4 w-4" />
                             Đang phân ca...
                         </>
                     ) : (
@@ -806,7 +764,6 @@ const Rota = () => {
                     disabled={registerManyMutation.isPending}
                     variant="outline"
                     size="sm"
-                    className={`shadow-lg ${currentUser?.role === "manager" ? "hidden" : ""} `}
                 >
                     Phân ca tự động từ lịch
                 </Button>
@@ -822,4 +779,4 @@ const Rota = () => {
     );
 }
 
-export default Rota;
+export default WorkshiftEmployee;

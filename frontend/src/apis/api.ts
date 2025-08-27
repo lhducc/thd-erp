@@ -2,9 +2,9 @@ import axios from "axios";
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
-    headers: {
-        "Content-Type": "application/json",
-    },
+    // headers: {
+    //     "Content-Type": "application/json",
+    // },
 });
 
 // Request interceptor
@@ -14,7 +14,12 @@ api.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-
+        if (config.data instanceof FormData) {
+            console.log("form")
+            delete config.headers["Content-Type"];
+        } else {
+            config.headers["Content-Type"] = "application/json";
+        }
         // Log request details
         console.log('Request:', {
             url: `${config.baseURL}${config.url}`,

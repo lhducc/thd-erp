@@ -20,7 +20,7 @@ const AttendanceManagementPage = () => {
     const { mutateAsync: deleteAttendanceSetting } = useMutation({
         mutationFn: (id: string) => deleteAttendanceSettingApi(id),
         onSuccess: () => {
-            toast.success("Xóa phụ cấp thành công");
+            toast.success("Xóa thiết lập chấm công thành công");
             refetchAttendances();
         },
         onError: (error) => {

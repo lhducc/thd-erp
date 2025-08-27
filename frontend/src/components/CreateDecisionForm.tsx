@@ -1,289 +1,425 @@
 'use client';
 
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { createDecisionApi } from '@/apis/decision.api';
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { getAllDecisionTypeApi } from '@/apis/decistion-type.api';
+import { useQuery } from "@tanstack/react-query";
+import {useGetAllEmployee} from "@/query/employee.query.ts";
+import {getAllDecisionTypeApi} from "@/apis/decision-type.api.ts";
+import * as React from "react";
+import axios from "axios";
+import {toast} from "sonner";
 
 export const formSchema = z.object({
-  decision_name: z.string().nonempty('Vui lòng nhập tên quyết định'),
-  effective_date: z.string().nonempty('Vui lòng chọn ngày hiệu lực'),
-  sign_date: z.string().nonempty('Vui lòng chọn ngày ký'),
-  condition: z.string().nonempty('Vui lòng chọn tình trạng'),
-  description: z.string().optional(),
-  attached_file: z.any().optional(),
-  decision_type_id: z.string().nonempty('Vui lòng chọn loại quyết định'),
-  employee_ids: z.string().nonempty('Vui lòng nhập id'),
+    decision_name: z.string().min(1, 'Vui lòng nhập tên quyết định'),
+    effective_date: z.string().min(1, 'Vui lòng chọn ngày hiệu lực'),
+    sign_date: z.string().min(1, 'Vui lòng chọn ngày ký'),
+    condition: z.string().min(1, 'Vui lòng chọn tình trạng'),
+    content: z.string().optional(),
+    attached_file: z.any().optional(),
+    decision_type_id: z.string().min(1, 'Vui lòng chọn loại quyết định'),
+    employee_ids: z.array(z.string()).min(1, 'Vui lòng chọn ít nhất 1 nhân viên'),
 });
 
 type Props = {
-  open: boolean;
-  setOpen: (open: boolean) => void;
+    open: boolean;
+    setOpen: (open: boolean) => void;
+    onSuccess?: () => void;
 };
 
-const CreateDecisionForm = ({ open, setOpen }: Props) => {
-  const { data: decisions, isLoading } = useQuery({
-    queryKey: ["decisionTypes"],
-    queryFn: getAllDecisionTypeApi,
-  });
+type Employee = {
+    employee_id: string;
+    full_name: string;
+};
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      decision_name: '',
-      effective_date: '',
-      sign_date: '',
-      condition: '',
-      description: '',
-      attached_file: undefined,
-      employee_ids: '',
-      decision_type_id: '',
-    },
-  });
+interface MultiSelectEmployeeProps {
+    employees: Employee[];
+    value: string[];
+    onChange: (value: string[]) => void;
+    placeholder?: string;
+    disabled?: boolean;
+}
 
-const onSubmit = async (values: z.infer<typeof formSchema>) => {
-  try {
-    const formData = new FormData();
-    formData.append("decision_name", values.decision_name);
-    formData.append("effective_date", values.effective_date);
-    formData.append("sign_date", values.sign_date);
-    formData.append("content", values.description ?? "");
-    formData.append("condition", values.condition);
-    formData.append("decision_type_id", values.decision_type_id);
+function MultiSelectEmployeeComponent({
+                                          employees,
+                                          value,
+                                          onChange,
+                                          placeholder = "Chọn nhân viên...",
+                                          disabled,
+                                      }: MultiSelectEmployeeProps) {
+    const [open, setOpen] = React.useState(false);
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
 
-    if (values.attached_file?.[0]) {
-      formData.append("attached_file", values.attached_file[0]);
-    }
+    React.useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        }
 
-    const employeeIds = values.employee_ids
-      .split(",")
-      .map((id) => id.trim())
-      .filter((id) => id !== "");
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
-    employeeIds.forEach((id) => {
-      formData.append("employee_ids", id);
+    const selectedEmployees = employees.filter((e) =>
+        value?.includes(e.employee_id)
+    );
+
+    const toggleEmployee = (id: string) => {
+        if (value?.includes(id)) {
+            onChange(value.filter((v) => v !== id));
+        } else {
+            onChange([...value, id]);
+        }
+    };
+
+    return (
+        <div className="w-full relative" ref={dropdownRef}>
+            <div
+                className="w-full h-[51px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21] cursor-pointer flex items-center justify-between"
+                onClick={() => !disabled && setOpen(!open)}
+            >
+                <div className="flex flex-wrap gap-1">
+                    {selectedEmployees.length > 0 ? (
+                        selectedEmployees.map((employee) => (
+                            <span
+                                key={employee.employee_id}
+                                className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded"
+                            >
+                                {employee.full_name}
+                            </span>
+                        ))
+                    ) : (
+                        <span className="text-gray-500">{placeholder}</span>
+                    )}
+                </div>
+                <span className="text-gray-400">▼</span>
+            </div>
+
+            {open && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md shadow-lg z-10 mt-1 max-h-60 overflow-y-auto">
+                    {employees.map((employee) => (
+                        <div
+                            key={employee.employee_id}
+                            className={`p-2 cursor-pointer hover:bg-gray-100 ${
+                                value?.includes(employee.employee_id) ? 'bg-blue-50' : ''
+                            }`}
+                            onClick={() => toggleEmployee(employee.employee_id)}
+                        >
+                            <label className="flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={value?.includes(employee.employee_id)}
+                                    onChange={() => toggleEmployee(employee.employee_id)}
+                                    className="mr-2"
+                                />
+                                {employee.full_name}
+                            </label>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+const CreateDecisionForm = ({ open, setOpen, onSuccess }: Props) => {
+    const { data: decisionTypes, isLoading: isLoadingDecisionTypes } = useQuery({
+        queryKey: ["decisionTypes"],
+        queryFn: getAllDecisionTypeApi,
     });
 
-    await createDecisionApi(formData);
+    const { data: employees, isLoading: isLoadingEmployee } = useGetAllEmployee();
 
-    setOpen(false);
-  } catch (error) {
-    console.error("Failed to create decision:", error);
-  }
-};
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            decision_name: '',
+            effective_date: '',
+            sign_date: '',
+            condition: "Đang hiệu lực",
+            content: '',
+            attached_file: undefined,
+            employee_ids: [],
+            decision_type_id: '',
+        },
+    });
 
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+        try {
+            const formData = new FormData();
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="w-[1261px] h-[700px] p-6">
-        <DialogHeader>
-          <div className="flex items-center relative">
-            <DialogTitle className="text-xl font-semibold text-left">
-              THÊM QUYẾT ĐỊNH
-            </DialogTitle>
-            <DialogTitle className="text-xl w-[150px] h-[54px] font-semibold flex items-center justify-center absolute right-[30px] rounded-3xl border-2 border-gray-400">
-              TL0000001
-            </DialogTitle>
-          </div>
-        </DialogHeader>
+            // Format dates to ISO string for backend
+            const effectiveDate = new Date(values.effective_date);
+            const signDate = new Date(values.sign_date);
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex flex-wrap">
-            {/* Left */}
-            <div className="w-[50%] relative m-0">
-              <div className="w-[96%]">
-                <FormField
-                  control={form.control}
-                  name="decision_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">Tên quyết định</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="text" className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]" />
-                      </FormControl>
-                      <FormMessage className="text-red-500 text-sm" />
-                    </FormItem>
-                  )}
-                />
-              </div>
+            // Append all required fields
+            formData.append("decision_name", values.decision_name);
+            formData.append("effective_date", effectiveDate.toISOString());
+            formData.append("sign_date", signDate.toISOString());
+            formData.append("content", values.content || '');
+            formData.append("condition", values.condition);
+            formData.append("decision_type_id", values.decision_type_id);
 
-              <div className="w-[96%] mt-[20px]">
-                <FormField
-                  control={form.control}
-                  name="sign_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">Ngày ký quyết định</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="datetime-local" className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]" />
-                      </FormControl>
-                      <FormMessage className="text-red-500 text-sm" />
-                    </FormItem>
-                  )}
-                />
-              </div>
+            // Add current date as created_date
+            formData.append("created_date", new Date().toISOString());
 
-              <div className="w-[96%] mt-[20px]">
-                <FormField
-                  control={form.control}
-                  name="effective_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">Ngày hiệu lực</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="datetime-local" className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]" />
-                      </FormControl>
-                      <FormMessage className="text-red-500 text-sm" />
-                    </FormItem>
-                  )}
-                />
-              </div>
+            // Add employee IDs
+            values.employee_ids.forEach((id) => {
+                formData.append("employee_ids", id);
+            });
 
-              <div className="w-[96%] relative mt-[20px]">
-                <FormField
-                  control={form.control}
-                  name="attached_file"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">File đính kèm</FormLabel>
-                      <FormControl>
-                        <div>
-                          <input
-                            id="file-upload"
-                            type="file"
-                            onChange={(e) => field.onChange(e.target.files)}
-                            className="w-full h-[140px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
-                          />
-                          <label
-                            htmlFor="file-upload"
-                            className="absolute p-2 bg-[#EFEFEF] rounded-xl top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center font-medium text-black cursor-pointer"
-                          >
-                            ĐÍNH KÈM FILE
-                          </label>
+            // Handle file upload
+            if (values.attached_file?.[0]) {
+                formData.append("file", values.attached_file[0]);
+            }
+
+            await createDecisionApi(formData);
+            form.reset();
+            setOpen(false);
+            onSuccess?.();
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                toast.error(error?.response?.data.message);
+            }
+        }
+    };
+
+    const handleClose = () => {
+        form.reset();
+        setOpen(false);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent className="w-[1261px] h-[700px] p-6 overflow-y-auto">
+                <DialogHeader>
+                    <div className="flex items-center relative">
+                        <DialogTitle className="text-xl font-semibold text-left">
+                            THÊM QUYẾT ĐỊNH
+                        </DialogTitle>
+                    </div>
+                </DialogHeader>
+
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex flex-wrap">
+                        {/* Left Column */}
+                        <div className="w-[50%] pr-4 space-y-6">
+                            <FormField
+                                control={form.control}
+                                name="decision_name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="font-medium">Tên quyết định</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                {...field}
+                                                type="text"
+                                                className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                                placeholder="Nhập tên quyết định"
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-red-500 text-sm" />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="sign_date"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="font-medium">Ngày ký quyết định</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                {...field}
+                                                type="datetime-local"
+                                                className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-red-500 text-sm" />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="effective_date"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="font-medium">Ngày hiệu lực</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                {...field}
+                                                type="datetime-local"
+                                                className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-red-500 text-sm" />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="attached_file"
+                                render={({ field: { value, onChange, ...fieldProps } }) => (
+                                    <FormItem>
+                                        <FormLabel className="font-medium">File đính kèm</FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <input
+                                                    id="file-upload"
+                                                    type="file"
+                                                    {...fieldProps}
+                                                    onChange={(e) => onChange(e.target.files)}
+                                                    className="w-full h-[140px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21] opacity-0 cursor-pointer"
+                                                />
+                                                <label
+                                                    htmlFor="file-upload"
+                                                    className="absolute inset-0 p-2 bg-[#EFEFEF] rounded-md flex items-center justify-center text-center font-medium text-black cursor-pointer border-2 border-dashed border-gray-300"
+                                                >
+                                                    {value?.[0] ? value[0].name : 'ĐÍNH KÈM FILE'}
+                                                </label>
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage className="text-red-500 text-sm" />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
-                      </FormControl>
-                      <FormMessage className="text-red-500 text-sm" />
-                    </FormItem>
-                  )}
-                />
-              </div>
 
-              <Button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="bg-gray-400 absolute bottom-[-10px] right-[4%] hover:bg-gray-500 w-[120px] h-[40px]"
-              >
-                Hủy bỏ
-              </Button>
-            </div>
+                        {/* Right Column */}
+                        <div className="w-[50%] pl-4 space-y-6">
+                            <FormField
+                                control={form.control}
+                                name="condition"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="font-medium">Tình trạng</FormLabel>
+                                        <FormControl>
+                                            <select
+                                                {...field}
+                                                className="w-full h-[51px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                            >
+                                                <option value="" disabled>Chọn tình trạng</option>
+                                                {["Đang hiệu lực", "Hết hiệu lực", "Chưa hiệu lực"].map((item, index) => (
+                                                    <option key={index} value={item}>
+                                                        {item}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </FormControl>
+                                        <FormMessage className="text-red-500 text-sm" />
+                                    </FormItem>
+                                )}
+                            />
 
-            {/* Right */}
-            <div className="w-[50%] relative">
-              <div className="w-[96%]">
-                <FormField
-                  control={form.control}
-                  name="condition"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">Tình trạng</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="text" className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]" />
-                      </FormControl>
-                      <FormMessage className="text-red-500 text-sm" />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                            <FormField
+                                control={form.control}
+                                name="decision_type_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="font-medium">Loại quyết định</FormLabel>
+                                        <FormControl>
+                                            <select
+                                                {...field}
+                                                className="w-full h-[51px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                            >
+                                                <option value="" disabled>Chọn loại quyết định</option>
+                                                {isLoadingDecisionTypes ? (
+                                                    <option value="">Đang tải...</option>
+                                                ) : (
+                                                    decisionTypes?.map((item) => (
+                                                        <option key={item.decision_type_id} value={item.decision_type_id}>
+                                                            {item.decision_type}
+                                                        </option>
+                                                    ))
+                                                )}
+                                            </select>
+                                        </FormControl>
+                                        <FormMessage className="text-red-500 text-sm" />
+                                    </FormItem>
+                                )}
+                            />
 
-              <div className="w-[96%] mt-[20px]">
-                <FormField
-                  control={form.control}
-                  name="decision_type_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">Loại quyết định</FormLabel>
-                      <FormControl>
-                        <select {...field} className="w-full h-[51px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]">
-                          <option value="" disabled>Chọn loại quyết định</option>
-                          {isLoading ? (
-                            <option value="">Đang tải...</option>
-                          ) : (
-                            decisions?.map((item) => (
-                              <option key={item.decision_type_id} value={item.decision_type_id}>
-                                {item.decision_type}
-                              </option>
-                            ))
-                          )}
-                        </select>
-                      </FormControl>
-                      <FormMessage className="text-red-500 text-sm" />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                            <FormField
+                                control={form.control}
+                                name="employee_ids"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="font-medium">Nhân viên</FormLabel>
+                                        <FormControl>
+                                            <MultiSelectEmployeeComponent
+                                                employees={employees || []}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                disabled={isLoadingEmployee}
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-red-500 text-sm" />
+                                    </FormItem>
+                                )}
+                            />
 
-              <div className="w-[96%] mt-[20px]">
-                <FormField
-                  control={form.control}
-                  name="employee_ids"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">ID nhân viên</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="text" placeholder="VD: 1,2,3" className="w-full h-[51px] p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]" />
-                      </FormControl>
-                      <FormMessage className="text-red-500 text-sm" />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                            <FormField
+                                control={form.control}
+                                name="content"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="font-medium">Nội dung</FormLabel>
+                                        <FormControl>
+                                            <textarea
+                                                {...field}
+                                                className="w-full h-[140px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21] resize-none"
+                                                placeholder="Nhập nội dung quyết định"
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-red-500 text-sm" />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
 
-              <div className="w-[96%] mt-[20px]">
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">Mô tả</FormLabel>
-                      <FormControl>
-                        <textarea {...field} className="w-full h-[140px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21] resize-none" />
-                      </FormControl>
-                      <FormMessage className="text-red-500 text-sm" />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="bg-[#DB3B21] absolute bottom-[-10px] hover:bg-[#b83a1a] w-[120px] h-[40px]"
-              >
-                Lưu thông tin
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
+                        {/* Buttons */}
+                        <div className="w-full flex justify-end gap-4 pt-6">
+                            <Button
+                                type="button"
+                                onClick={handleClose}
+                                className="bg-gray-400 hover:bg-gray-500 w-[120px] h-[40px]"
+                            >
+                                Hủy bỏ
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="bg-[#DB3B21] hover:bg-[#b83a1a] w-[120px] h-[40px]"
+                                disabled={form.formState.isSubmitting}
+                            >
+                                {form.formState.isSubmitting ? 'Đang xử lý...' : 'Lưu thông tin'}
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
 };
 
 export default CreateDecisionForm;

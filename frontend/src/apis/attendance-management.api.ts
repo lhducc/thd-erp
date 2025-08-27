@@ -12,24 +12,13 @@ export const getAllAttendanceManagementAPI = async (): Promise<AttendanceSetting
 }
 
 export const createAttendanceSettingApi = async (payload: AttendanceSetting) => {
-    try {
-        const response = await api.post("/attendance-category", payload);
-        return response.data.data;
-    } catch (error) {
-        console.error("Error create contract API:", error.message);
-        throw new Error(error.response?.data?.error || "Lỗi khi tạo hợp đồng");
-    }
+    const response = await api.post("/attendance-category", payload);
+    return response.data.data;
 }
 
 export const updateAttendanceSettingApi = async (id: string, payload: AttendanceSetting) => {
-    try {
-        const response = await api.put(`/attendance-category/${id}`, payload);
-        console.log(response.data);
-        return response.data.data;
-    } catch (error) {
-        console.error("Error create contract API:", error.message);
-        throw new Error(error.response?.data?.error || "Lỗi khi tạo hợp đồng");
-    }
+    const response = await api.put(`/attendance-category/${id}`, payload);
+    return response.data.data;
 }
 
 export const deleteAttendanceSettingApi = async (id: string) => {

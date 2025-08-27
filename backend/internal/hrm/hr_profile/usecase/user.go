@@ -225,7 +225,6 @@ func (biz *EmployeeBiz) UpdateEmployee(ctx context.Context, id string, updatedEm
 	}
 
 	return transaction.WithTransaction(biz.db, ctx, func(ctx context.Context, tx *gorm.DB) error {
-		// Nếu đổi phòng ban thì xử lý timesheet
 		if emp.DepartmentID != updatedEmployee.DepartmentID {
 			department, err := biz.departmentRepo.GetDepartment(ctx, updatedEmployee.DepartmentID)
 			if err != nil {
@@ -236,39 +235,41 @@ func (biz *EmployeeBiz) UpdateEmployee(ctx context.Context, id string, updatedEm
 			month := int(timeNow.Month())
 			year := timeNow.Year()
 
-			//get timesheet
+			// get timesheet list
 			timesheetList, err := biz.timesheetListRepo.GetTimeSheetByOfficeIDAndTime(department.OfficeID, month, year)
 			if err != nil {
 				return fmt.Errorf("lỗi khi lấy timesheet list: %w", err)
 			}
-			//check exist
-			timesheet, err := biz.timesheetRepo.CheckExist(ctx, id, timesheetList.Month, timesheetList.Year)
-			if err != nil {
-				return err
-			}
 
-			if timesheetList != nil && timesheet == nil {
-				timesheet := checkin_model.TimeSheet{
-					TimeSheetListID: timesheetList.TimeSheetListID,
-					OfficeID:        department.OfficeID,
-					Month:           timesheetList.Month,
-					Year:            timesheetList.Year,
-					DepartmentID:    updatedEmployee.DepartmentID,
-					EmployeeID:      updatedEmployee.EmployeeID,
-					CreatedBy:       timesheetList.CreatedBy,
+			if timesheetList != nil {
+				timesheet, err := biz.timesheetRepo.CheckExist(ctx, id, timesheetList.Month, timesheetList.Year)
+				if err != nil {
+					return err
 				}
-				if err = biz.timesheetRepo.CreateEmployeeTimeSheet(tx, &timesheet); err != nil {
-					return fmt.Errorf("lỗi khi thêm nhân viên vào bảng công: %w", err)
+
+				if timesheet == nil {
+					newTs := checkin_model.TimeSheet{
+						TimeSheetListID: timesheetList.TimeSheetListID,
+						OfficeID:        department.OfficeID,
+						Month:           timesheetList.Month,
+						Year:            timesheetList.Year,
+						DepartmentID:    updatedEmployee.DepartmentID,
+						EmployeeID:      updatedEmployee.EmployeeID,
+						CreatedBy:       timesheetList.CreatedBy,
+					}
+					if err = biz.timesheetRepo.CreateEmployeeTimeSheet(tx, &newTs); err != nil {
+						return fmt.Errorf("lỗi khi thêm nhân viên vào bảng công: %w", err)
+					}
 				}
 			}
 		}
 
-		// update date role if have
+		// update role nếu có
 		account, err := biz.GetAccount(ctx, *emp.AccountID)
+		if err != nil {
+			return fmt.Errorf("failed to get account: %w", err)
+		}
 		if updatedEmployee.RoleID != "" {
-			if err != nil {
-				return err
-			}
 			account.RoleID = updatedEmployee.RoleID
 			if err := biz.account.UpdateAccountTrans(tx, account.ID, account); err != nil {
 				return fmt.Errorf("failed to update account role: %w", err)

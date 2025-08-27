@@ -3,24 +3,28 @@ package usecase
 import (
 	"context"
 	hrmmodel "erp/backend/internal/hrm/hr_profile/model"
+	"erp/backend/internal/hrm/hr_profile/repository"
 	"erp/backend/internal/hrm/hr_profile/store"
 	utils "erp/backend/pkg"
 	errpkg "erp/backend/pkg/errors"
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
 
 type contractBiz struct {
-	repo         store.ContractRepo
-	employeeRepo EmployeeRepo
+	repo             store.ContractRepo
+	employeeRepo     EmployeeRepo
+	contractTypeRepo repository.ContractTypeRepository
 }
 
-func NewContractBiz(contractRepo store.ContractRepo, employeeRepo EmployeeRepo) *contractBiz {
+func NewContractBiz(contractRepo store.ContractRepo, employeeRepo EmployeeRepo, contractTypeRepo repository.ContractTypeRepository) *contractBiz {
 	return &contractBiz{
-		repo:         contractRepo,
-		employeeRepo: employeeRepo,
+		repo:             contractRepo,
+		employeeRepo:     employeeRepo,
+		contractTypeRepo: contractTypeRepo,
 	}
 }
 
@@ -45,9 +49,6 @@ func (biz *contractBiz) CreateContract(ctx context.Context, data *hrmmodel.Contr
 
 		// 4. Validate
 		now := time.Now()
-		if data.SignDate.After(now) {
-			return errors.New("ngày ký không thể trong tương lai")
-		}
 		if data.EffectiveDate.Before(data.SignDate) {
 			return errors.New("ngày hiệu lực không thể trước ngày ký")
 		}
@@ -95,11 +96,19 @@ func (biz *contractBiz) CreateContract(ctx context.Context, data *hrmmodel.Contr
 }
 
 func (biz *contractBiz) GetContract(ctx context.Context, id string) (*hrmmodel.Contract, error) {
-	Contract, err := biz.repo.GetContract(ctx, id)
+	contract, err := biz.repo.GetContract(ctx, id)
+	if contract != nil {
+		contractTypeID := strings.TrimSpace(contract.ContractTypeId)
+		contractType, err := biz.contractTypeRepo.GetContractTypeById(ctx, contractTypeID)
+		if err != nil {
+			return nil, err
+		}
+		contract.ContractType = contractType
+	}
 	if err != nil {
 		return nil, err
 	}
-	return Contract, nil
+	return contract, nil
 }
 
 func (biz *contractBiz) GetContractByEmployeeID(ctx context.Context, employeeId string) ([]hrmmodel.ContractBasicInfo, error) {

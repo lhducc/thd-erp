@@ -3,7 +3,10 @@ package utils
 import "time"
 
 func GetStartAndEndDateVNTime(month, year int) (time.Time, time.Time) {
-	locVN, _ := time.LoadLocation("Asia/Ho_Chi_Minh")
+	locVN, err := time.LoadLocation("Asia/Ho_Chi_Minh")
+	if err != nil {
+		locVN = time.Local
+	}
 
 	startVN := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, locVN)
 	firstOfNextMonthVN := startVN.AddDate(0, 1, 0)

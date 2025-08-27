@@ -11,12 +11,10 @@ type Decision struct {
 	Condition      string    `gorm:"type:varchar(20);column:condition" json:"condition"`
 	AttachedFile   string    `gorm:"column:attached_file" json:"attached_file"`
 	CreatedDate    time.Time `gorm:"column:created_date" json:"created_date"`
-	DecisionTypeID string    `gorm:"type:varchar(6);column:decision_type_id;not null" json:"decision_type_id"`
+	DecisionTypeID string    `gorm:"type:varchar(6);column:decision_type_id" json:"decision_type_id"`
 
-	// Many-to-many relationship with Employee
-	Employees []Employee `gorm:"many2many:decision_employees;joinForeignKey:DecisionID;joinReferences:EmployeeID"`
-	// Many-to-one relationship with DecisionType - using simple foreignKey without references to avoid constraint conflicts
-	DecisionType *DecisionType `gorm:"foreignKey:DecisionTypeID" json:"decision_type,omitempty"`
+	Employees    []Employee    `gorm:"many2many:decision_employees;joinForeignKey:DecisionID;joinReferences:EmployeeID"`
+	DecisionType *DecisionType `gorm:"foreignKey:DecisionTypeID;references:DecisionTypeID" json:"decision_type,omitempty"`
 }
 
 func (Decision) TableName() string {
@@ -33,16 +31,16 @@ func (DecisionEmployee) TableName() string {
 }
 
 type DecisionCreate struct {
-	DecisionID     string    `json:"decision_id"`
-	DecisionName   string    `json:"decision_name" binding:"required"`
-	EffectiveDate  time.Time `json:"effective_date" binding:"required"`
-	SignDate       time.Time `json:"sign_date" binding:"required"`
-	Content        string    `json:"content" binding:"required"`
-	Condition      string    `json:"condition"`
-	AttachedFile   string    `json:"attached_file"`
-	CreatedDate    time.Time `json:"created_date"`
-	EmployeeIDs    []string  `json:"employee_ids"`
-	DecisionTypeID string    `json:"decision_type_id" binding:"required"`
+	DecisionID     string    `json:"decision_id" form:"decision_id"`
+	DecisionName   string    `json:"decision_name" form:"decision_name" binding:"required"`
+	EffectiveDate  time.Time `json:"effective_date" form:"effective_date" binding:"required"`
+	SignDate       time.Time `json:"sign_date" form:"sign_date" binding:"required"`
+	Content        string    `json:"content" form:"content" binding:"required"`
+	Condition      string    `json:"condition" form:"condition"`
+	AttachedFile   string    `json:"-" form:"-"`
+	CreatedDate    time.Time `json:"created_date" form:"created_date"`
+	EmployeeIDs    []string  `json:"employee_ids" form:"employee_ids"`
+	DecisionTypeID string    `json:"decision_type_id" form:"decision_type_id" binding:"required"`
 }
 
 type EmployeeShort struct {

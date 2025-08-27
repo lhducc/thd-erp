@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"mime/multipart"
+	"strings"
 	"time"
 
 	"github.com/minio/minio-go/v7/pkg/lifecycle"
@@ -18,6 +19,8 @@ type Bucket string
 
 const (
 	AttendanceBucket Bucket = "attendance"
+	DecisionBucket   Bucket = "decision"
+	ContractBucket   Bucket = "contract"
 )
 
 func UploadImageToMinIO(
@@ -83,26 +86,44 @@ func GeneratePresignedURL(
 	objectName string,
 	expireTime time.Duration,
 ) (string, error) {
-	// Use URL client for presigned URLs to ensure proper signatures
+	// Try presigned URL first using URL client (if available)
 	urlClient := config.MinioURLClient
-	if urlClient == nil {
-		return "", fmt.Errorf("MinIO URL client not available")
-	}
+	bucketNameStr := string(bucketName)
 
 	// MinIO only allows max 7 days for presigned URLs
 	if expireTime > 7*24*time.Hour {
 		expireTime = 7 * 24 * time.Hour
 	}
 
-	bucketNameStr := string(bucketName)
-
-	url, err := urlClient.PresignedGetObject(ctx, bucketNameStr, objectName, expireTime, nil)
-	if err != nil {
-		return "", fmt.Errorf("generate presigned URL failed: %w", err)
+	if urlClient != nil {
+		if u, err := urlClient.PresignedGetObject(ctx, bucketNameStr, objectName, expireTime, nil); err == nil {
+			return u.String(), nil
+		} else {
+			log.Printf("Warning: presigned URL generation failed for %s/%s: %v", bucketNameStr, objectName, err)
+		}
+	} else {
+		log.Printf("MinIO URL client not available, falling back to direct object URL for %s/%s", bucketNameStr, objectName)
 	}
 
-	// URL should already be correct with localhost:9000
-	return url.String(), nil
+	// Fallback: construct a direct object URL from configured public endpoint or internal endpoint
+	endpoint := strings.TrimRight(config.MinIO.PublicMinioEndPoint, "/")
+	if endpoint == "" {
+		endpoint = strings.TrimRight(config.MinIO.MinioEndpoint, "/")
+	}
+	if endpoint == "" {
+		return "", fmt.Errorf("no MinIO endpoint configured for fallback URL")
+	}
+
+	// Ensure scheme present
+	if !strings.HasPrefix(endpoint, "http://") && !strings.HasPrefix(endpoint, "https://") {
+		if config.MinIO.UseSSL {
+			endpoint = "https://" + endpoint
+		} else {
+			endpoint = "http://" + endpoint
+		}
+	}
+
+	return fmt.Sprintf("%s/%s/%s", endpoint, bucketNameStr, objectName), nil
 }
 
 // auto delete file in bucket after lifeTimeDay

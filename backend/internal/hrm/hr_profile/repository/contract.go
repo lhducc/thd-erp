@@ -38,7 +38,6 @@ func (r *ContractStore) GetContract(ctx context.Context, id string) (*hrmmodel.C
 		Preload("Employee.Department").
 		Preload("Employee.Department.Office").
 		Preload("Allowances").
-		Preload("ContractType").
 		Where("contract_id = ? AND is_deleted = false", id).
 		First(&contract).Error; err != nil {
 		return nil, err

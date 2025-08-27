@@ -34,18 +34,18 @@ func (ContractAllowance) TableName() string {
 
 type ContractCreate struct {
 	ContractId     string    `gorm:"primaryKey;column:contract_id" json:"contract_id"`
-	EffectiveDate  time.Time `gorm:"column:effective_date" json:"effective_date"`
-	ExpiredDate    time.Time `gorm:"column:expired_date" json:"expired_date"`
-	SignDate       time.Time `gorm:"column:sign_date" json:"sign_date"`
-	Note           string    `gorm:"note" json:"note"`
-	AttachedFile   string    `gorm:"attached_file" json:"attached_file"`
-	Condition      string    `gorm:"condition" json:"condition"`
-	CreatedDate    time.Time `gorm:"column:created_date" json:"created_date"`
-	ContractTypeId string    `gorm:"column:contract_type_id" json:"contract_type"`
-	ApproveStatus  string    `gorm:"column:approve_status" json:"approve_status"`
-	Manager        string    `gorm:"column:employee_id" json:"employee_id"`
+	EffectiveDate  time.Time `gorm:"column:effective_date" json:"effective_date" form:"effective_date"`
+	ExpiredDate    time.Time `gorm:"column:expired_date" json:"expired_date" form:"expired_date"`
+	SignDate       time.Time `gorm:"column:sign_date" json:"sign_date" form:"sign_date"`
+	Note           string    `gorm:"note" json:"note" form:"note"`
+	AttachedFile   string    `gorm:"attached_file" json:"-" form:"-"`
+	Condition      string    `gorm:"condition" json:"condition" form:"condition"`
+	CreatedDate    time.Time `gorm:"column:created_date" json:"created_date" form:"created_date"`
+	ContractTypeId string    `gorm:"column:contract_type_id" json:"contract_type" form:"contract_type"`
+	ApproveStatus  string    `gorm:"column:approve_status" json:"approve_status" form:"approve_status"`
+	Manager        string    `gorm:"column:employee_id" json:"employee_id" form:"employee_id"`
 
-	AllowanceIDs []string `json:"allowance_ids"`
+	AllowanceIDs []string `json:"allowance_ids" form:"allowance_ids"`
 }
 
 func (ContractCreate) TableName() string { return "contract" }

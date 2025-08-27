@@ -6,9 +6,10 @@ import (
 	utils "erp/backend/pkg"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type DecisionRepo interface {
@@ -55,10 +56,10 @@ func (biz *decisionBiz) CreateDecision(ctx context.Context, data *model.Decision
 		return "", fmt.Errorf("tên quyết định đã tồn tại")
 	}
 
-	now := time.Now()
-	if data.SignDate.After(now) {
-		return "", errors.New("ngày ký không thể trong tương lai")
-	}
+	//now := time.Now()
+	//if data.SignDate.After(now) {
+	//	return "", errors.New("ngày ký không thể trong tương lai")
+	//}
 	if data.EffectiveDate.Before(data.SignDate) {
 		return "", errors.New("ngày hiệu lực không thể trước ngày ký")
 	}

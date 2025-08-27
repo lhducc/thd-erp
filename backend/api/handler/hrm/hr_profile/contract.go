@@ -99,13 +99,13 @@ func (h *ContractHandler) CreateContract() gin.HandlerFunc {
 				data.AttachedFile = objectName
 			}
 		}
-		fmt.Println(data)
+
 		if err := h.ContractBiz.CreateContract(c.Request.Context(), &data); err != nil {
 			utils.ResponseError(c, "Không thể tạo hợp đồng", err, http.StatusInternalServerError)
 			return
 		}
 
-		utils.ResponseMessage(c, "Tạo hợp đồng thành công", http.StatusOK, gin.H{"data": data})
+		utils.ResponseMessage(c, "Tạo hợp đồng thành công", http.StatusCreated, nil)
 	}
 }
 func (h *ContractHandler) GetContractByEmployeeID() gin.HandlerFunc {

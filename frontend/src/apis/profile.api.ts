@@ -26,7 +26,12 @@ export const getAllEmployeesApi = async (page: number = 2, pageSize: number = 5)
     }
 };
 
-export const getEmployeeByIdApi = async (): Promise<Employee> => {
+export const getEmployeeByIdApi = async (id: string): Promise<Employee> => {
+    const response = await api.get(`/employee/${id}`);
+    return response.data.data.employee;
+};
+
+export const getEmployeePersonalApi = async (): Promise<Employee> => {
     const response = await api.get(`/employee/personal`);
     return response.data.data.employee;
 };

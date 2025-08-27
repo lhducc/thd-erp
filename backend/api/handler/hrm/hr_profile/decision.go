@@ -97,7 +97,7 @@ func (h *DecisionHandler) CreateDecision() gin.HandlerFunc {
 				data.AttachedFile = objectName
 			}
 		}
-
+		fmt.Println(data)
 		code, err := h.decisionBiz.CreateDecision(c.Request.Context(), &data)
 		if err != nil {
 			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusInternalServerError, nil)

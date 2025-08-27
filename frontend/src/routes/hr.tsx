@@ -208,6 +208,14 @@ export const hrRoutes = [
                 ),
             },
             {
+                path: `${PATH.DECISION}/:id`,
+                element: (
+                    <Suspense fallback={<Loading />}>
+                        <DecisionDetail />
+                    </Suspense>
+                ),
+            },
+            {
                 path: PATH.ATTENDANCE_MANAGEMENT,
                 element: (
                     <Suspense fallback={<Loading />}>

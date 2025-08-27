@@ -79,11 +79,11 @@ function MultiSelectEmployeeComponent({
     }, []);
 
     const selectedEmployees = employees.filter((e) =>
-        value.includes(e.employee_id)
+        value?.includes(e.employee_id)
     );
 
     const toggleEmployee = (id: string) => {
-        if (value.includes(id)) {
+        if (value?.includes(id)) {
             onChange(value.filter((v) => v !== id));
         } else {
             onChange([...value, id]);
@@ -119,14 +119,14 @@ function MultiSelectEmployeeComponent({
                         <div
                             key={employee.employee_id}
                             className={`p-2 cursor-pointer hover:bg-gray-100 ${
-                                value.includes(employee.employee_id) ? 'bg-blue-50' : ''
+                                value?.includes(employee.employee_id) ? 'bg-blue-50' : ''
                             }`}
                             onClick={() => toggleEmployee(employee.employee_id)}
                         >
                             <label className="flex items-center cursor-pointer">
                                 <input
                                     type="checkbox"
-                                    checked={value.includes(employee.employee_id)}
+                                    checked={value?.includes(employee.employee_id)}
                                     onChange={() => toggleEmployee(employee.employee_id)}
                                     className="mr-2"
                                 />
@@ -188,7 +188,7 @@ const CreateDecisionForm = ({ open, setOpen, onSuccess }: Props) => {
 
             // Handle file upload
             if (values.attached_file?.[0]) {
-                formData.append("attached_file", values.attached_file[0]);
+                formData.append("file", values.attached_file[0]);
             }
 
             await createDecisionApi(formData);

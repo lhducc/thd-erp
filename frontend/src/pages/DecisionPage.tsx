@@ -1,20 +1,24 @@
-'use client';
-
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { SquarePen, Filter } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import {useMutation, useQuery} from "@tanstack/react-query";
+import {toast} from "sonner";
+import {Button} from "@/components/ui/button";
+import {SquarePen, Filter} from "lucide-react";
+import {useState, useRef, useEffect} from "react";
 import export_file from "@/assets/export-file.svg";
-import { getAllDecisionsApi, deleteDecisionApi, createSampleDecisionApi, exportDecisionExcelApi } from "@/apis/decision.api";
+import {
+    getAllDecisionsApi,
+    deleteDecisionApi,
+    createSampleDecisionApi,
+    exportDecisionExcelApi
+} from "@/apis/decision.api";
 import ConfirmDelete from "@/components/ConfirmDelete";
 import DataTable from "@/components/DataTable";
 import Loading from "@/components/Loading";
 import CreateDecisionForm from "@/components/CreateDecisionForm";
 import UpdateDecisionForm from "@/components/UpdateDecisionForm";
 
-import type { Decision } from "@/types";
-import type { ColumnDef } from "@tanstack/react-table";
+import type {Decision} from "@/types";
+import type {ColumnDef} from "@tanstack/react-table";
+import {Link} from "react-router-dom";
 
 interface FilterState {
     decisionTypes: string[];
@@ -57,7 +61,7 @@ const DecisionPage = () => {
         }
     };
 
-    const { data: decisions, isLoading, refetch } = useQuery({
+    const {data: decisions, isLoading, refetch} = useQuery({
         queryKey: ["decisions"],
         queryFn: getAllDecisionsApi,
     });
@@ -87,7 +91,7 @@ const DecisionPage = () => {
         }
     }, [decisions, filters]);
 
-    const { mutate: deleteDecision } = useMutation({
+    const {mutate: deleteDecision} = useMutation({
         mutationFn: deleteDecisionApi,
         onSuccess: () => {
             refetch();
@@ -98,7 +102,7 @@ const DecisionPage = () => {
         },
     });
 
-    const { mutate: createDecision } = useMutation({
+    const {mutate: createDecision} = useMutation({
         mutationFn: createSampleDecisionApi,
         onSuccess: () => {
             refetch();
@@ -135,50 +139,75 @@ const DecisionPage = () => {
     };
 
     const columns: ColumnDef<Decision>[] = [
-        { accessorKey: "decision_id", header: "Mã Quyết định" },
-        { accessorKey: "decision_name", header: "Tên Quyết định" },
-        {
-            accessorKey: "decision_type_name",
-            header: "Loại Quyết định",
-            cell: ({ row }) => row.original.decision_type_name || "-",
-        },
-        {
-            accessorKey: "sign_date",
-            header: "Ngày ký",
-            cell: ({ row }) => new Date(row.original.sign_date).toLocaleString("vi-VN"),
-        },
-        {
-            accessorKey: "effective_date",
-            header: "Hiệu lực từ ngày",
-            cell: ({ row }) => new Date(row.original.effective_date).toLocaleString("vi-VN"),
-        },
-        { accessorKey: "condition", header: "Tình trạng" },
-        {
-            id: "actions",
-            header: "Chỉnh sửa",
-            cell: ({ row }) => {
-                const decision = row.original;
-                return (
-                    <div className="flex gap-4">
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setEditDecision(decision);
-                                setOpenEdit(true);
-                            }}
-                        >
-                            <SquarePen className="w-4 h-4" />
-                        </Button>
-                        <ConfirmDelete deleteFn={() => deleteDecision(decision.decision_id)} />
-                    </div>
-                );
+            {accessorKey: "decision_id", header: "Mã Quyết định"},
+            {
+                accessorKey: "decision_name",
+                header: "Tên Quyết định",
+                cell: ({row}) => {
+                    return (
+                        <Link to={`/decision/${row.original.decision_id}`}>{row.original.decision_name}</Link>
+                    )
+                }
             },
-        },
-    ];
+            {
+                accessorKey: "decision_type_name",
+                header:
+                    "Loại Quyết định",
+                cell:
+                    ({row}) => row.original.decision_type_name || "-",
+            }
+            ,
+            {
+                accessorKey: "sign_date",
+                header:
+                    "Ngày ký",
+                cell:
+                    ({row}) => new Date(row.original.sign_date).toLocaleString("vi-VN"),
+            }
+            ,
+            {
+                accessorKey: "effective_date",
+                header:
+                    "Hiệu lực từ ngày",
+                cell:
+                    ({row}) => new Date(row.original.effective_date).toLocaleString("vi-VN"),
+            }
+            ,
+            {
+                accessorKey: "condition", header:
+                    "Tình trạng"
+            }
+            ,
+            {
+                id: "actions",
+                header:
+                    "Chỉnh sửa",
+                cell:
+                    ({row}) => {
+                        const decision = row.original;
+                        return (
+                            <div className="flex gap-4">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setEditDecision(decision);
+                                        setOpenEdit(true);
+                                    }}
+                                >
+                                    <SquarePen className="w-4 h-4"/>
+                                </Button>
+                                <ConfirmDelete deleteFn={() => deleteDecision(decision.decision_id)}/>
+                            </div>
+                        );
+                    },
+            }
+            ,
+        ]
+    ;
 
     const ButtonCreate = () => (
         <div className="button-container flex items-center justify-center space-x-4 text-[17px]">
-            <CreateDecisionForm open={openCreate} setOpen={setOpenCreate} onSuccess={refetch} />
+            <CreateDecisionForm open={openCreate} setOpen={setOpenCreate} onSuccess={refetch}/>
             <Button
                 onClick={() => setOpenCreate(true)}
                 variant="default" className={`px-8 py-5 text-[17px] rounded-[15px]`}
@@ -221,11 +250,13 @@ const DecisionPage = () => {
         const uniqueDecisionTypes = decisions ? getUniqueDecisionTypes(decisions) : [];
 
         return (
-            <div className="button-container border-t-2 border-gray-300 flex items-center h-[85px] justify-end mb-[10px] pt-[45px] relative">
+            <div
+                className="button-container border-t-2 border-gray-300 flex items-center h-[85px] justify-end mb-[10px] pt-[45px] relative">
                 <div className="absolute right-0 z-30 flex">
-                    <div className="flex items-center bg-gray-100 rounded-xl p-2 w-72 cursor-pointer" onClick={() => setIsFilterVisible(!isFilterVisible)}>
+                    <div className="flex items-center bg-gray-100 rounded-xl p-2 w-72 cursor-pointer"
+                         onClick={() => setIsFilterVisible(!isFilterVisible)}>
                         <div className="ml-2 p-2 rounded-full bg-white shadow-md flex items-center justify-center">
-                            <Filter className="text-gray-500" />
+                            <Filter className="text-gray-500"/>
                         </div>
                         <span className="ml-2 text-gray-700">Lọc</span>
                         {(filters.decisionTypes.length > 0 || filters.conditions.length > 0) && (
@@ -237,7 +268,8 @@ const DecisionPage = () => {
                 </div>
 
                 {isFilterVisible && (
-                    <div ref={filterRef} className="absolute top-[85px] right-0 w-[300px] bg-white border shadow-lg p-4 rounded-lg z-50">
+                    <div ref={filterRef}
+                         className="absolute top-[85px] right-0 w-[300px] bg-white border shadow-lg p-4 rounded-lg z-50">
                         <h3 className="font-bold text-lg mb-4">Lọc</h3>
 
                         {/* Decision Type Filter */}
@@ -303,15 +335,15 @@ const DecisionPage = () => {
         );
     };
 
-    if (isLoading) return <Loading />;
+    if (isLoading) return <Loading/>;
 
     return (
         <>
             <DataTable
                 columns={columns}
-                buttonCreate={<ButtonCreate />}
+                buttonCreate={<ButtonCreate/>}
                 data={filteredData}
-                navLink={<NavLink />}
+                navLink={<NavLink/>}
                 title="QUYẾT ĐỊNH"
                 keyFilter="decision_id"
             />

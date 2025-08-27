@@ -11,7 +11,7 @@ export const createDecisionApi = async (payload: FormData) => {
 
 export const getAllDecisionsApi = async (): Promise<Decision[]> => {
     try {
-        const response = await api.get(`/decision`);
+        const response = await api.get(`/decision?page=1&pageSize=9999`);
         return response.data?.data?.data || [];
     } catch (error: any) {
         console.error("Error fetching all Decisions API:", error);

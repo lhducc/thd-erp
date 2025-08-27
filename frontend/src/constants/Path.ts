@@ -46,7 +46,6 @@ const PATH = {
     DETAIL_INFO: "/detail_infor",
     REGISTER_WORKSHIFT: "/register-workshift",
     DOCUMENTDETAIL: "/documentDetail",
-    WORKSHIFT_OF_EMPLOYEE_BELOW: "/workshift-employee-below",
 };
 
 export default PATH;

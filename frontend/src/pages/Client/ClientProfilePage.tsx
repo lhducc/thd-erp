@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getEmployeeByIdApi } from "@/apis/profile.api";
+import {getEmployeeByIdApi, getEmployeePersonalApi} from "@/apis/profile.api";
 import { useAuth } from "@/context/AuthContext";
 import { InfoRow } from "@/components/ui/info-row";
 
@@ -18,7 +18,7 @@ const ClientProfilePage = () => {
         isLoading,
     } = useQuery({
         queryKey: ["employee", employeeId],
-        queryFn: () => getEmployeeByIdApi(),
+        queryFn: () => getEmployeePersonalApi(),
         enabled: !!employeeId,
     });
 

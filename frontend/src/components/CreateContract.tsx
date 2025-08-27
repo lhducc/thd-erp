@@ -3,10 +3,10 @@ import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@
 import {Button} from "@/components/ui/button";
 import {useMutation, useQuery} from "@tanstack/react-query";
 import {createContractApi, reapproveContractApi, updateContractApi} from "@/apis/contract.api.ts";
-import type {Contract, ContractFormValues} from "@/types/contract.ts";
+import type {Contract} from "@/types/contract.ts";
 import {useEffect, useState} from "react";
 import {getAllContractsTypeApi} from "@/apis/contract-type.api.ts";
-import {getAllEmployeesApi} from "@/apis/profile.api.ts";
+import {getAllEmployeesApi, getEmployeeByRoleNameApi} from "@/apis/profile.api.ts";
 import {getAllAllowancesApi} from "@/apis/allowance.api.ts";
 import Loading from "@/components/Loading.tsx";
 import {toast} from "sonner";
@@ -20,7 +20,6 @@ import {useDepartment} from "@/query/useDepartment.ts";
 
 const contractFormSchema = z.object({
     contract_type: z.string().min(1, "Vui lòng chọn loại hợp đồng"),
-    // con: z.string(),
     sign_date: z.string().min(1, "Vui lòng chọn ngày ký"),
     effective_date: z.string().min(1, "Vui lòng chọn ngày hiệu lực"),
     expired_date: z.string().min(1, "Vui lòng chọn ngày hết hạn"),
@@ -29,7 +28,23 @@ const contractFormSchema = z.object({
     department: z.string().min(1, "Phòng ban không được để trống"),
     allowance_ids: z.array(z.string()).optional(),
     approve_status: z.string(),
+    attached_file: z.instanceof(File).optional(), // Thêm trường file
 });
+
+export type ContractFormValues = {
+    contract_id?: string;
+    condition?: string;
+    approve_status?: string;
+    contract_type: string;
+    employee_id: string;
+    department: string;
+    sign_date: string;
+    effective_date: string;
+    expired_date: string;
+    note?: string;
+    allowance_ids?: string[];
+    attached_file?: File; // Thêm trường file
+};
 
 type Props = {
     editBtn?: React.ReactNode;
@@ -40,6 +55,8 @@ type Props = {
 
 export function ContractForm({editBtn, data, type, refetch}: Props) {
     const [open, setOpen] = useState(false);
+    const [filePreview, setFilePreview] = useState<string | null>(null);
+
     const form = useForm<ContractFormValues>({
         resolver: zodResolver(contractFormSchema),
         defaultValues: {
@@ -54,8 +71,10 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
             expired_date: "",
             note: "",
             allowance_ids: [],
+            attached_file: undefined,
         },
     });
+
 
     // Fetch contract types
     const {data: contractTypes = [], isPending: pendingContractTypes} = useQuery({
@@ -76,7 +95,7 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
     // Fetch employees
     const {data: employees = [], isPending: pendingEmployees} = useQuery({
         queryKey: ["employees"],
-        queryFn: () => getAllEmployeesApi(1, 9999),
+        queryFn: () => getEmployeeByRoleNameApi("manager"),
         enabled: open,
     });
 
@@ -139,10 +158,24 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
         }
     }, [employeeId, employees, form]);
 
-    // Reset form when opening/closing or when data changes
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            form.setValue("attached_file", file);
+            setFilePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const removeFile = () => {
+        form.setValue("attached_file", undefined);
+        setFilePreview(null);
+    };
+
+    // Thêm vào phần reset form
     useEffect(() => {
         if (!open) {
             form.reset();
+            setFilePreview(null);
             return;
         }
 
@@ -159,7 +192,12 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
                 note: data.note || "",
                 department: data.employee?.department?.department_name || "",
                 allowance_ids: data.allowances?.map(a => a.id) || [],
+                attached_file: undefined,
             });
+
+            if (data.attached_file) {
+                setFilePreview(`${API_BASE_URL}/uploads/${data.attached_file}`);
+            }
         }
     }, [open, data, form]);
 
@@ -177,19 +215,22 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
                 ...values,
                 sign_date: `${values.sign_date}T00:00:00+07:00`,
                 effective_date: `${values.effective_date}T00:00:00+07:00`,
-                expired_date: `${values.expired_date}T00:00:00+07:00`
+                expired_date: `${values.expired_date}T00:00:00+07:00`,
+                approve_status: values.approve_status || "Chờ duyệt",
+                condition: values.condition || "Chưa hiệu lực",
             };
 
             if (type === "pending" && data?.contract_id) {
                 await updateContract({id: data.contract_id, data: payload});
             } else if (type === "rejected" && data?.contract_id) {
                 await reapproveContract(data.contract_id);
-            }
-            else {
+            } else {
+                console.log(payload);
                 await createContract(payload);
             }
         } catch (error) {
             console.error("Error submitting form:", error);
+            toast.error("Có lỗi xảy ra khi gửi dữ liệu");
         }
     };
 
@@ -456,6 +497,61 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
                                     })}
                                 </div>
                             </div>
+                        </div>
+
+                        {/* File Upload Section */}
+                        <div className="col-span-2 space-y-2">
+                            <FormLabel>File đính kèm</FormLabel>
+                            <FormControl>
+                                <Input
+                                    type="file"
+                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                    onChange={handleFileChange}
+                                    className="cursor-pointer"
+                                />
+                            </FormControl>
+                            <FormMessage />
+
+                            {/* File Preview */}
+                            {filePreview && (
+                                <div className="mt-2 p-3 border rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-600">
+                                                File đã chọn: {form.watch("attached_file")?.name || "File đính kèm"}
+                                            </span>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={removeFile}
+                                            className="text-red-500"
+                                        >
+                                            Xóa
+                                        </Button>
+                                    </div>
+
+                                    {/* Hiển thị preview cho hình ảnh */}
+                                    {form.watch("attached_file")?.type?.startsWith('image/') && (
+                                        <img
+                                            src={filePreview}
+                                            alt="Preview"
+                                            className="mt-2 max-h-40 rounded-lg"
+                                        />
+                                    )}
+
+                                    {/* Hiển thị link cho file đã tồn tại */}
+                                    {data?.attached_file && !form.watch("attached_file") && (
+                                        <a
+                                            href={filePreview}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-500 underline mt-2 block"
+                                        >
+                                            Xem file hiện tại
+                                        </a>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex justify-end gap-2 pt-4">

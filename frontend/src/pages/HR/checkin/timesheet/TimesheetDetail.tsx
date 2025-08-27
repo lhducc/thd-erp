@@ -237,7 +237,7 @@ const TimesheetDetailPage = () => {
             <div className="p-4 bg-gray-50 border-b">
                 <h4 className="font-semibold mb-2">Chi tiết chấm công: {timesheet.employee.full_name}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {timesheet.details.map((detail: TimesheetDetail, idx: number) => (
+                    {timesheet.details?.map((detail: TimesheetDetail, idx: number) => (
                         <div
                             key={`${detail.timesheet_detail_id}-${idx}`}
                             className="bg-white p-3 rounded shadow-sm cursor-pointer hover:shadow-md transition-shadow"
@@ -438,7 +438,7 @@ const TimesheetDetailPage = () => {
                         <th className="p-2 border">Chức vụ</th>
                         <th className="p-2 border">Cấp bậc</th>
                         {/* Day columns */}
-                        {dayColumns.map((col, idx) => (
+                        {dayColumns?.map((col, idx) => (
                             <th key={idx} className="p-1 border text-center">{col.header}</th>
                         ))}
                         <th className="p-2 border">Phút trễ</th>
@@ -446,7 +446,7 @@ const TimesheetDetailPage = () => {
                     </tr>
                     </thead>
                     <tbody>
-                    {timesheetData.timesheets.map((timesheet) => (
+                    {timesheetData.timesheets?.map((timesheet) => (
                         <>
                             <tr key={timesheet.timesheet_id} className="hover:bg-gray-50">
                                 <td className="p-2 border">
@@ -465,7 +465,7 @@ const TimesheetDetailPage = () => {
                                 <td className="p-2 border">{timesheet.employee.position.position_name}</td>
                                 <td className="p-2 border">{timesheet.employee.hierarchy_level.hierarchy_level}</td>
                                 {/* Day cells */}
-                                {dayColumns.map((col, idx) => {
+                                {dayColumns?.map((col, idx) => {
                                     const cell = col.cell!({row: {original: timesheet}});
                                     return (
                                         <td key={idx} className="p-1 border">

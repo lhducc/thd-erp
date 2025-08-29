@@ -1,5 +1,5 @@
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {getAttendanceRecordByEmployeeId} from "@/apis/attendance-record.api.ts";
+import {getAttendanceRecordByEmployeeId, getAttendanceRecordPersonalApi} from "@/apis/attendance-record.api.ts";
 import api from "@/apis/api.ts";
 import {toast} from "sonner";
 
@@ -42,3 +42,9 @@ export const useUpdateAttendanceStatus = () => {
         },
     });
 };
+
+export const useGetAttendanceRecordPersonal = (page: number, limit: number) =>
+    useQuery({
+        queryKey: ["attendanceRecord", page],
+        queryFn: () => getAttendanceRecordPersonalApi(page, limit),
+    })

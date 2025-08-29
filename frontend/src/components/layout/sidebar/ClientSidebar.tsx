@@ -43,8 +43,13 @@ const ClientSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
         },
         {
             name: "Bảng công cá nhân",
-            url: PATH.ATTENDANT_HISTORY,
+            url: PATH.ATTENDANCE_REPORT ,
             icon: CalendarRange,
+        },
+        {
+            name: "Lịch sử chấm công",
+            url: PATH.ATTENDANT_HISTORY,
+            icon: Users,
         },
     ];
 

@@ -11,4 +11,5 @@ type WorkShiftService interface {
 	GetAllWorkShift(ctx context.Context) ([]model.WorkShifts, error)
 	UpdateWorkShift(ctx context.Context, data *model.WorkShifts) error
 	DeleteWorkShift(ctx context.Context, id string) error
+	GetListShiftForRegister(ctx context.Context, employeeID string) ([]model.WorkScheduleShift, error)
 }

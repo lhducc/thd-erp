@@ -1,7 +1,6 @@
 package config
 
 import (
-	// checkin_model "erp/backend/internal/hrm/checkin/model"
 	checkin_model "erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/hr_profile/model"
 	"fmt"

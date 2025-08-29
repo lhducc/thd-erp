@@ -1,17 +1,15 @@
 package model
 
 import (
-	"erp/backend/internal/hrm/hr_profile/model"
+	hrmodel "erp/backend/internal/hrm/hr_profile/model"
 	"time"
 )
 
 type TimeSheetList struct {
 	TimeSheetListID   string `gorm:"column:timesheet_list_id;primaryKey;type:varchar" json:"timesheet_list_id"`
 	TimeSheetListName string `gorm:"column:timesheet_list_name;type:varchar(255);not null" json:"time_sheet_list_name"`
-	OfficeID          string `gorm:"column:office_id;type:varchar;not null;index:idx_office_month_year" json:"office_id"`
-	Month             int    `gorm:"column:month;type:integer;not null;index:idx_office_month_year" json:"month" validate:"required,min=1,max=12"`
-	Year              int    `gorm:"column:year;type:integer;not null;index:idx_office_month_year" json:"year" validate:"required,min=2020"`
-
+	Month             int    `gorm:"column:month;type:integer;not null;index:idx_month_year" json:"month" validate:"required,min=1,max=12"`
+	Year              int    `gorm:"column:year;type:integer;not null;index:idx_month_year" json:"year" validate:"required,min=2020"`
 	// General statistics
 	//TotalEmployees int `gorm:"column:total_employees;type:integer;default:0" json:"total_employees"`
 	//CompletedTimesheets int `gorm:"column:completed_timesheets;type:integer;default:0" json:"completed_timesheets"`
@@ -40,11 +38,10 @@ type TimeSheetList struct {
 	//IsDeleted bool       `gorm:"column:is_deleted;type:boolean;default:false" json:"is_deleted"`
 
 	// Relationships
-	Office     *model.Office   `gorm:"foreignKey:OfficeID;references:ID" json:"office,omitempty"`
-	Timesheets []TimeSheet     `gorm:"foreignKey:TimeSheetListID;references:TimeSheetListID;constraint:OnDelete:CASCADE" json:"timesheets,omitempty"`
-	Creator    *model.Employee `gorm:"foreignKey:CreatedBy;references:EmployeeID" json:"creator,omitempty"`
-	Updater    *model.Employee `gorm:"foreignKey:UpdatedBy;references:EmployeeID" json:"updater,omitempty"`
-	LockedUser *model.Employee `gorm:"foreignKey:LockedBy;references:EmployeeID" json:"locked_user,omitempty"`
+	Timesheets []TimeSheet              `gorm:"foreignKey:TimeSheetListID;references:TimeSheetListID;constraint:OnDelete:CASCADE" json:"timesheets,omitempty"`
+	Creator    *hrmodel.ManagerResponse `gorm:"foreignKey:CreatedBy;references:EmployeeID" json:"creator,omitempty"`
+	Updater    *hrmodel.ManagerResponse `gorm:"foreignKey:UpdatedBy;references:EmployeeID" json:"updater,omitempty"`
+	LockedUser *hrmodel.ManagerResponse `gorm:"foreignKey:LockedBy;references:EmployeeID" json:"locked_user,omitempty"`
 }
 
 func (TimeSheetList) TableName() string {

@@ -27,7 +27,7 @@ func (r *timesheetListRepo) Create(ctx context.Context, timesheet *model.TimeShe
 func (r *timesheetListRepo) GetByID(ctx context.Context, id string) (*model.TimeSheetList, error) {
 	var ts model.TimeSheetList
 	err := r.db.WithContext(ctx).
-		Preload("Office").Preload("Timesheets").
+		Preload("Timesheets").
 		Preload("Timesheets.Employee").
 		Preload("Timesheets.Employee.JobTitle").
 		Preload("Timesheets.Employee.Position").
@@ -95,7 +95,6 @@ func (r *timesheetListRepo) List(ctx context.Context, page, limit int) ([]model.
 
 	offset := (page - 1) * limit
 	err := r.db.WithContext(ctx).
-		Preload("Office").
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).
@@ -115,11 +114,11 @@ func (s *timesheetListRepo) GetLastDecisionByCode(ctx context.Context) (string, 
 	return lastID.TimeSheetListID, nil
 }
 
-func (r *timesheetListRepo) IsDuplicate(ctx context.Context, officeID string, month, year int, timesheetID string) (bool, error) {
+func (r *timesheetListRepo) IsDuplicate(ctx context.Context, month, year int, timesheetID string) (bool, error) {
 	var count int64
 	query := r.db.WithContext(ctx).
 		Model(&model.TimeSheetList{}).
-		Where("office_id = ? AND month = ? AND year = ?", officeID, month, year)
+		Where("month = ? AND year = ?", month, year)
 	if strings.TrimSpace(timesheetID) != "" {
 		query = query.Where("timesheet_list_id != ? ", timesheetID)
 	}
@@ -131,11 +130,11 @@ func (r *timesheetListRepo) IsDuplicate(ctx context.Context, officeID string, mo
 	return count > 0, nil
 }
 
-func (r *timesheetListRepo) GetTimeSheetByOfficeIDAndTime(officeID string, month, year int) (*model.TimeSheetList, error) {
+func (r *timesheetListRepo) GetTimeSheetByTime(ctx context.Context, month, year int) (*model.TimeSheetList, error) {
 	var timesheet model.TimeSheetList
-	err := r.db.
+	err := r.db.WithContext(ctx).
 		Model(&model.TimeSheetList{}).
-		Where("office_id = ? AND month = ? AND year = ?", officeID, month, year).
+		Where("month = ? AND year = ?", month, year).
 		First(&timesheet).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -149,7 +148,6 @@ func (r *timesheetListRepo) GetTimeSheetByOfficeIDAndTime(officeID string, month
 func (r *timesheetListRepo) GetForExport(ctx context.Context, id string) (*model.TimeSheetList, error) {
 	var ts model.TimeSheetList
 	err := r.db.WithContext(ctx).
-		Preload("Office").
 		Preload("Timesheets", func(db *gorm.DB) *gorm.DB {
 			// Sắp xếp timesheet theo EmployeeID để đảm bảo thứ tự
 			return db.Order("employee_id ASC")

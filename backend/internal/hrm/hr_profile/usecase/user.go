@@ -115,12 +115,7 @@ func (s *EmployeeBiz) CreateEmployeeWithAccount(ctx context.Context, employee *m
 		month := int(timeNow.Month())
 		year := int(timeNow.Year())
 
-		department, err := s.departmentRepo.GetDepartment(ctx, employee.DepartmentID)
-		if err != nil {
-			return err
-		}
-
-		timesheetList, err := s.timesheetListRepo.GetTimeSheetByOfficeIDAndTime(department.OfficeID, month, year)
+		timesheetList, err := s.timesheetListRepo.GetTimeSheetByTime(ctx, month, year)
 		if timesheetList != nil {
 			departmentID := employee.DepartmentID
 			fmt.Printf(departmentID)
@@ -236,7 +231,7 @@ func (biz *EmployeeBiz) UpdateEmployee(ctx context.Context, id string, updatedEm
 			year := timeNow.Year()
 
 			// get timesheet list
-			timesheetList, err := biz.timesheetListRepo.GetTimeSheetByOfficeIDAndTime(department.OfficeID, month, year)
+			timesheetList, err := biz.timesheetListRepo.GetTimeSheetByTime(ctx, month, year)
 			if err != nil {
 				return fmt.Errorf("lỗi khi lấy timesheet list: %w", err)
 			}

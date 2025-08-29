@@ -10,7 +10,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 
-const HistoryAttendance = () => {
+const AttendanceReport = () => {
     const {data: timesheetData} = useGetPersonalTimesheet(5, 2025);
     const [currentDate] = useState(new Date());
     const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
@@ -71,7 +71,6 @@ const HistoryAttendance = () => {
         }
     };
 
-    const { currentUser } = useAuth();
 
     const isDateInPast = (date: Date) => {
         const today = new Date();
@@ -282,4 +281,4 @@ const HistoryAttendance = () => {
     );
 };
 
-export default HistoryAttendance;
+export default AttendanceReport;

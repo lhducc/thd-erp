@@ -11,7 +11,7 @@ type TimeSheet struct {
 	EmployeeID      string `gorm:"column:employee_id;type:varchar;not null;index:idx_list_emp" json:"employee_id"` // employee of Office
 	Month           int    `gorm:"column:month;type:integer;not null;index:idx_list_emp" json:"month" validate:"required,min=1,max=12"`
 	Year            int    `gorm:"column:year;type:integer;not null;index:idx_list_emp" json:"year" validate:"required,min=2020"`
-	OfficeID        string `gorm:"column:office_id;type:varchar" json:"office_id"`         //get from TimeSheetList.OfficeID
+	OfficeID        string `gorm:"column:office_id;type:varchar" json:"office_id"`         // populated from Employee.Department.OfficeID when creating timesheet
 	DepartmentID    string `gorm:"column:department_id;type:varchar" json:"department_id"` //get from Employee.DepartmentID
 
 	// Working day summary

@@ -12,8 +12,11 @@ type TimesheetListInterface interface {
 	Delete(ctx context.Context, id string) error
 	List(ctx context.Context, page, limit int) ([]model.TimeSheetList, int64, error)
 	GetLastDecisionByCode(ctx context.Context) (string, error)
-	IsDuplicate(ctx context.Context, officeID string, month, year int, timesheetID string) (bool, error)
+	// IsDuplicate checks whether a timesheet list exists for the given month/year.
+	// When timesheets are global (not per office) we only check month/year.
+	IsDuplicate(ctx context.Context, month, year int, timesheetID string) (bool, error)
 	UpdateLocked(ctx context.Context, timesheet *model.TimeSheetList) error
-	GetTimeSheetByOfficeIDAndTime(officeID string, month, year int) (*model.TimeSheetList, error)
+	// GetTimeSheetByTime returns the timesheet list for the given month/year (global, not per office).
+	GetTimeSheetByTime(ctx context.Context, month, year int) (*model.TimeSheetList, error)
 	GetForExport(ctx context.Context, id string) (*model.TimeSheetList, error)
 }

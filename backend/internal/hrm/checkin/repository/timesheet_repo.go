@@ -100,7 +100,7 @@ func (r *timesheetRepo) UpdateTimesheetAndCreateDetail(ctx context.Context, ts *
 					DoUpdates: clause.AssignmentColumns([]string{
 						"work_shift_id", "is_working_day", "is_weekend",
 						"checkin_record_id", "checkout_record_id",
-						"work_hours", "work_days", "is_additional_shift",
+						"work_hours", "work_days",
 						"is_late", "late_minutes",
 						"leave_type", "leave_hours", "is_absent", "absent_reason",
 						// Preserve manual adjustment fields

@@ -2,9 +2,10 @@ package service
 
 import (
 	"context"
-	"erp/backend/internal/hrm/checkin/model"
+	checkinmodel "erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
+	hrmodel "erp/backend/internal/hrm/hr_profile/model"
 	"erp/backend/internal/hrm/hr_profile/repository"
 	utils "erp/backend/pkg"
 	"errors"
@@ -34,8 +35,9 @@ func NewTimesheetListSerivce(timesheetListRepo repo_interface.TimesheetListInter
 	}
 }
 
-func (s *timesheetListService) CreateElementOfTimesheetList(ctx context.Context, timesheet *model.TimeSheetList) error {
-	duplicate, err := s.timesheetListRepo.IsDuplicate(ctx, timesheet.OfficeID, timesheet.Month, timesheet.Year, "")
+func (s *timesheetListService) CreateElementOfTimesheetList(ctx context.Context, timesheet *checkinmodel.TimeSheetList) error {
+	// Check duplicate globally by month/year
+	duplicate, err := s.timesheetListRepo.IsDuplicate(ctx, timesheet.Month, timesheet.Year, "")
 	if err != nil {
 		return fmt.Errorf("lỗi kiểm tra trùng thời gian bảng công: %w", err)
 	}
@@ -72,11 +74,11 @@ func (s *timesheetListService) CreateElementOfTimesheetList(ctx context.Context,
 	return nil
 }
 
-func (s *timesheetListService) GetByID(ctx context.Context, id string) (*model.TimeSheetList, error) {
+func (s *timesheetListService) GetByID(ctx context.Context, id string) (*checkinmodel.TimeSheetList, error) {
 	return s.timesheetListRepo.GetByID(ctx, id)
 }
 
-func (s *timesheetListService) Update(ctx context.Context, timesheet *model.TimeSheetList) error {
+func (s *timesheetListService) Update(ctx context.Context, timesheet *checkinmodel.TimeSheetList) error {
 	ts, err := s.GetByID(ctx, timesheet.TimeSheetListID)
 	if err != nil {
 		return err
@@ -101,25 +103,36 @@ func (s *timesheetListService) Delete(ctx context.Context, id string) error {
 	return s.timesheetListRepo.Delete(ctx, id)
 }
 
-func (s *timesheetListService) List(ctx context.Context, page, limit int) ([]model.TimeSheetList, int64, error) {
+func (s *timesheetListService) List(ctx context.Context, page, limit int) ([]checkinmodel.TimeSheetList, int64, error) {
 	return s.timesheetListRepo.List(ctx, page, limit)
 }
 
-func (s *timesheetListService) createTimeSheetEmployee(ctx context.Context, timeSheetList *model.TimeSheetList) (bool, error) {
-	employees, err := s.employeeRepo.GetEmployeesByOfficeID(ctx, timeSheetList.OfficeID)
+func (s *timesheetListService) createTimeSheetEmployee(ctx context.Context, timeSheetList *checkinmodel.TimeSheetList) (bool, error) {
+	// fetch all employees (global timesheet)
+	employeesAll, err := s.employeeRepo.GetAllEmployees()
 	if err != nil {
 		return false, err
 	}
 
+	// convert to pointers to match previous behavior
+	var employees []*hrmodel.Employee
+	for i := range employeesAll {
+		employees = append(employees, &employeesAll[i])
+	}
 	if len(employees) == 0 {
 		return true, nil
 	}
 
-	var timesheets []*model.TimeSheet
+	var timesheets []*checkinmodel.TimeSheet
 	for _, employee := range employees {
-		timesheet := model.TimeSheet{
+		// office for each timesheet is taken from employee's Department.OfficeID when available
+		officeID := ""
+		if employee.Department != nil && employee.Department.OfficeID != "" {
+			officeID = employee.Department.OfficeID
+		}
+		timesheet := checkinmodel.TimeSheet{
 			TimeSheetListID: timeSheetList.TimeSheetListID,
-			OfficeID:        timeSheetList.OfficeID,
+			OfficeID:        officeID,
 			Month:           timeSheetList.Month,
 			Year:            timeSheetList.Year,
 			DepartmentID:    employee.DepartmentID,
@@ -139,7 +152,7 @@ func (s *timesheetListService) createTimeSheetEmployee(ctx context.Context, time
 	return true, nil
 }
 
-func (s *timesheetListService) LockedTimesheet(ctx context.Context, timesheet *model.TimeSheetList) error {
+func (s *timesheetListService) LockedTimesheet(ctx context.Context, timesheet *checkinmodel.TimeSheetList) error {
 	ts, err := s.GetByID(ctx, timesheet.TimeSheetListID)
 	if err != nil {
 		return err
@@ -154,6 +167,6 @@ func (s *timesheetListService) LockedTimesheet(ctx context.Context, timesheet *m
 	return s.timesheetListRepo.UpdateLocked(ctx, timesheet)
 }
 
-func (s *timesheetListService) GetByEmployeeID(ctx context.Context, id string) (*model.TimeSheetList, error) {
+func (s *timesheetListService) GetByEmployeeID(ctx context.Context, id string) (*checkinmodel.TimeSheetList, error) {
 	return s.timesheetListRepo.GetByID(ctx, id)
 }

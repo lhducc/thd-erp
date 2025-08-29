@@ -6,8 +6,9 @@ import (
 	"fmt"
 
 	utils "erp/backend/pkg"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type WorkShiftHandler struct {
@@ -126,5 +127,18 @@ func (h *WorkShiftHandler) DeleteWorkShift() gin.HandlerFunc {
 		}
 
 		utils.ResponseMessage(c, "Xóa ca làm việc thành công", http.StatusOK, nil)
+	}
+}
+
+func (h *WorkShiftHandler) GetWorkshiftForRegister() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		employeeID := c.GetString("employeeId")
+		result, err := h.biz.GetListShiftForRegister(ctx, employeeID)
+		if err != nil {
+			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+		utils.ResponseMessage(c, "Danh sách ca làm việc được phép đăng ký của nhân viên", http.StatusOK, &result)
 	}
 }

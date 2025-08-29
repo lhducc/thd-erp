@@ -5,6 +5,7 @@ import (
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
+	"erp/backend/internal/hrm/hr_profile/repository"
 	"errors"
 	"fmt"
 
@@ -12,11 +13,18 @@ import (
 )
 
 type WorkShiftService struct {
-	repo repo_interface.WorkShiftRepo
+	repo         repo_interface.WorkShiftRepo
+	employeeRepo *repository.UserStore
+	scheduleRepo repo_interface.WorkScheduleRepo
 }
 
-func NewWorkShiftService(repo repo_interface.WorkShiftRepo) service_interface.WorkShiftService {
-	return &WorkShiftService{repo: repo}
+func NewWorkShiftService(repo repo_interface.WorkShiftRepo,
+	employeeRepo *repository.UserStore,
+	scheduleRepo repo_interface.WorkScheduleRepo,
+) service_interface.WorkShiftService {
+	return &WorkShiftService{repo: repo,
+		employeeRepo: employeeRepo,
+		scheduleRepo: scheduleRepo}
 }
 
 func (sv *WorkShiftService) CreateWorkShift(ctx context.Context, w *model.WorkShifts) error {
@@ -121,4 +129,28 @@ func (biz *WorkShiftService) DeleteWorkShift(ctx context.Context, id string) err
 	}
 
 	return nil
+}
+
+func (biz *WorkShiftService) GetListShiftForRegister(ctx context.Context, employeeID string) ([]model.WorkScheduleShift, error) {
+	employee, err := biz.employeeRepo.GetUserById(employeeID)
+	if err != nil {
+		return nil, fmt.Errorf("lỗi khi lấy thông tin nhân viên: %w", err)
+	}
+	if &employee == nil {
+		return nil, errors.New("nhân viên không tồn tại")
+	}
+	schedule, err := biz.scheduleRepo.GetByID(ctx, *employee.ScheduleID)
+	if err != nil {
+		return nil, fmt.Errorf("lỗi khi lấy thông tin lịch làm việc: %w", err)
+	}
+	if schedule == nil {
+		return nil, errors.New("nhân viên chưa được gán lịch làm việc")
+	}
+	var workShifts []model.WorkScheduleShift
+	if schedule.IsScheduleAuto == true {
+		workShifts = nil
+		return workShifts, nil
+	}
+	workShifts = schedule.Weekdays
+	return workShifts, nil
 }

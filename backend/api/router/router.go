@@ -109,7 +109,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	//checkin service
 	attendanceRecordService := checkinService.NewAttendanceRecordService(attendanceRecordRepo, categoryRepo, officeRepo)
 	attendanceCategoryService := checkinService.NewAttendanceCategoryService(categoryRepo, userRepo)
-	workShiftService := checkinService.NewWorkShiftService(workShiftRepo)
+	workShiftService := checkinService.NewWorkShiftService(workShiftRepo, userRepo, workScheduleRepo)
 	employeeWorkShiftService := checkinService.NewEmployeeWorkshiftService(employeeWorkShiftRepo, userRepo, workShiftRepo, workScheduleRepo)
 	workScheduleService := checkinService.NewWorkScheduleService(workScheduleRepo, userRepo)
 	shiftAllocationService := checkinService.NewShiftAllocationService(workScheduleRepo, userRepo, employeeWorkShiftRepo)
@@ -156,7 +156,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupRoleRoutes(adminRouter, roleHanlder)
 
 	//CheckIn
-	setupWorkShiftRoutes(hrmRouter, workShiftHandler)
+	setupWorkShiftRoutes(adminRouter, hrmRouter, workShiftHandler)
 	setupAttandanceRecordRoutes(adminRouter, hrmRouter, attandanceRecord)
 	setupAttendanceCategory(adminRouter, hrmRouter, attendanceCategoryHandler)
 	setupEmployeeWorkshiftRoutes(adminRouter, managerRouter, hrmRouter, employeeWorkShiftHandler)
@@ -337,15 +337,20 @@ func setupContractTypeRoutes(r *gin.RouterGroup, h *handler.ContractTypeHandler)
 	}
 }
 
-func setupWorkShiftRoutes(router *gin.RouterGroup, workShiftHandler *checkin.WorkShiftHandler) {
-	workshift := router.Group("/workshifts")
+func setupWorkShiftRoutes(adminRouter, userRouter *gin.RouterGroup, workShiftHandler *checkin.WorkShiftHandler) {
+	workshiftAdmin := adminRouter.Group("/workshifts")
 	{
-		workshift.POST("", workShiftHandler.CreateWorkShift())
-		workshift.GET("/:id", workShiftHandler.GetWorkShift())
-		workshift.GET("", workShiftHandler.GetAllWorkShift())
-		workshift.PUT("/:id", workShiftHandler.UpdateWorkShift())
-		workshift.DELETE("/:id", workShiftHandler.DeleteWorkShift())
+		workshiftAdmin.POST("", workShiftHandler.CreateWorkShift())
+		workshiftAdmin.GET("/:id", workShiftHandler.GetWorkShift())
+		workshiftAdmin.GET("", workShiftHandler.GetAllWorkShift())
+		workshiftAdmin.PUT("/:id", workShiftHandler.UpdateWorkShift())
+		workshiftAdmin.DELETE("/:id", workShiftHandler.DeleteWorkShift())
 	}
+	workshiftUser := userRouter.Group("/workshifts")
+	{
+		workshiftUser.GET("/allow-register", workShiftHandler.GetWorkshiftForRegister())
+	}
+
 }
 
 func setupAttandanceRecordRoutes(amdinRouter, userRouter *gin.RouterGroup, handler *checkin.AttendanceRecordHandler) {

@@ -27,6 +27,7 @@ const PATH = {
     ATTENDANCE_MANAGEMENT: "/attendance-management",
     APPROVE_ATTENDANCE: "/approve-attendant",
     TIMESHEET: "/timesheet",
+    ATTENDANCE_REPORT: "/attendant-report",
     ATTENDANT_HISTORY: "/attendant-history",
     WORK_SCHEDULE: "/setup-work-schedule",
     WORK_SCHEDULE_REGISTER: "/setup-work-schedule-register",

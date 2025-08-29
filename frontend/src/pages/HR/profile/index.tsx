@@ -412,10 +412,10 @@ const HRProfilePage = () => {
             <DataTable
                 columns={columns}
                 buttonCreate={<ButtonCreate/>}
-                data={filteredEmployees}
+                data={filteredEmployees || []}
                 navLink={navLink}
                 title="Hồ sơ nhân viên"
-                keyFilter="employee_id"
+                keyFilter="full_name"
             />
             {editEmployee && (
                 <Suspense fallback={<Loading />} >

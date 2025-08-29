@@ -10,10 +10,9 @@ type AdjustWorkDayReq struct {
 }
 
 type TimesheetDTO struct {
-	Name     string `json:"name"`
-	OfficeID string `json:"office_id"`
-	Month    int    `json:"month"`
-	Year     int    `json:"year"`
+	Name  string `json:"name"`
+	Month int    `json:"month"`
+	Year  int    `json:"year"`
 }
 
 func (timesheet TimesheetDTO) Validate() error {
@@ -32,7 +31,6 @@ func (timesheet TimesheetDTO) Validate() error {
 func (ts *TimesheetDTO) ConvertToBusinessModel() *model.TimeSheetList {
 	return &model.TimeSheetList{
 		TimeSheetListName: ts.Name,
-		OfficeID:          ts.OfficeID,
 		Month:             ts.Month,
 		Year:              ts.Year,
 	}

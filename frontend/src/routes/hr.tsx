@@ -3,6 +3,8 @@ import PATH from "@/constants/Path";
 import { settingRoutes } from "@/routes/setting";
 import Loading from "@/components/Loading";
 import AttendanceHistory from "@/pages/AttendanceHistory.tsx";
+import AttendanceReport from "@/pages/Client/attendance-report/AttendanceReport.tsx";
+import HistoryAttendance from "@/pages/Client/HistoryAttendance.tsx";
 
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
@@ -75,7 +77,15 @@ export const hrRoutes = [
                 path: PATH.ATTENDANT_HISTORY,
                 element: (
                     <Suspense fallback={<Loading />}>
-                        <AttendanceHistory />
+                        <HistoryAttendance />
+                    </Suspense>
+                ),
+            },
+            {
+                path: PATH.ATTENDANCE_REPORT,
+                element: (
+                    <Suspense fallback={<Loading />}>
+                        <AttendanceReport />
                     </Suspense>
                 ),
             },
@@ -175,14 +185,14 @@ export const hrRoutes = [
                     </Suspense>
                 ),
             },
-            {
-                path: PATH.ATTENDANT_HISTORY,
-                element: (
-                    <Suspense fallback={<Loading />}>
-                        <AttendantHistory />
-                    </Suspense>
-                ),
-            },
+            // {
+            //     path: PATH.ATTENDANT_HISTORY,
+            //     element: (
+            //         <Suspense fallback={<Loading />}>
+            //             <AttendantHistory />
+            //         </Suspense>
+            //     ),
+            // },
             {
                 path: `${PATH.ATTENDANT_HISTORY}/:id`,
                 element: (

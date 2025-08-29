@@ -6,6 +6,11 @@ export const getAttendanceRecordByEmployeeId = async (id: string): Promise<Atten
     return response.data.data;
 }
 
+export const getAttendanceRecordPersonalApi = async (page: number, limit: number): Promise<AttendanceRecord[]> => {
+    const response = await api.get(`/attendance-record/personal?page=${page}&limit=${limit}`);
+    return response.data.data;
+}
+
 export const createAttendanceRecordByAdminId = async (payload: CreateManualRecord): Promise<AttendanceRecord> => {
     const response = await api.post(`/attendance-record/history-record/manual`, payload);
     return response.data.data;

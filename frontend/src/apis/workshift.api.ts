@@ -38,11 +38,6 @@ export const registerEmployeeWorkshiftApi = async (
     date: string // Expected format: "YYYY-MM-DD"
 ): Promise<EmployeeWorkshift> => {
     try {
-        console.log({
-            employee_id,
-            workshift_id,
-            date: new Date(date).toISOString() // Convert to ISO string
-        })
         const response = await api.post("/employee-workshifts", {
             employee_id,
             workshift_id,

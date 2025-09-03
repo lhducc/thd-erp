@@ -103,7 +103,7 @@ const ContractPage = () => {
             <DataTable
                 columns={columns}
                 // data={contracts || []}
-                data={contracts}
+                data={contracts || []}
                 // navLink={navLink}
                 title="Hợp đồng"
                 buttonCreate={<ContractForm refetch={refetchContracts}/>}

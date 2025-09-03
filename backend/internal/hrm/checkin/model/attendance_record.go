@@ -27,7 +27,7 @@ type AttendanceRecord struct {
 
 	Employee           *model.EmployeeInforResponse `gorm:"foreignKey:EmployeeID;references:EmployeeID"`
 	Office             *model.Office                `gorm:"foreignKey:OfficeID;references:ID"`
-	CreateByInfo       *model.ManagerResponse       `gorm:"foreignKey:CreatedBy;references:EmployeeID" json:"create_by_info"`
+	CreateByInfo       *model.Employee       `gorm:"foreignKey:CreatedBy;references:EmployeeID" json:"create_by_info"`
 	AttendanceCategory *AttendanceCategory          `gorm:"foreignKey:AttendanceCategoryID;references:AttendanceCategoryID"`
 }
 

@@ -69,6 +69,7 @@ func (req *WorkScheduleRequest) Validate() error {
 	if req.EffectiveDate.IsZero() {
 		return errors.New("effective_date and expiration_date must not be empty")
 	}
+
 	if req.ExpirationDate != nil {
 		if req.EffectiveDate.After(*req.ExpirationDate) {
 			return errors.New("effective_date must be before expiration_date")

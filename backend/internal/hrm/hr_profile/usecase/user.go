@@ -331,13 +331,13 @@ func (e *EmployeeBiz) ExportEmployeeTest(selectedFields []string) ([]byte, strin
 		return emp.PhoneNumber
 	})
 
-	exporter.RegisterField("email", "Email", "email", func(item interface{}) any {
-		emp := item.(*model.Employee)
-		if emp.Account != nil {
-			return emp.Account.LoginMail
-		}
-		return ""
-	})
+	// exporter.RegisterField("email", "Email", "email", func(item interface{}) any {
+	// 	emp := item.(*model.Employee)
+	// 	if emp.Account != nil {
+	// 		return emp.Account.LoginMail
+	// 	}
+	// 	return ""
+	// })
 
 	exporter.RegisterField("manager", "Quản lý", "manager", func(item interface{}) any {
 		emp := item.(*model.Employee)

@@ -71,7 +71,7 @@ show_usage() {
 # Function to run docker-compose command
 run_compose() {
     cd "$PROJECT_ROOT/deploys"
-    docker compose -f docker-compose.uat.yml "$@"
+    docker compose -f docker-compose.uat.yml --env-file "$PROJECT_ROOT/.env" "$@"
 }
 
 # Main script logic

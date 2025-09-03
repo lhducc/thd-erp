@@ -6,10 +6,11 @@ import (
 	"erp/backend/internal/hrm/hr_profile/store"
 	usecase "erp/backend/internal/hrm/hr_profile/usecase"
 	mock_test "erp/backend/internal/hrm/hr_profile/usecase/usecase_test/mock_test"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestCreateContract(t *testing.T) {

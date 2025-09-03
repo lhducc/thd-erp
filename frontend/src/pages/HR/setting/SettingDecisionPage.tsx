@@ -6,7 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { SquarePen } from "lucide-react";
 import { toast } from "sonner";
-import {deleteDecisionTypeApi, getAllDecisionTypeApi} from "@/apis/decistion-type.api.ts";
+import {deleteDecisionTypeApi, getAllDecisionTypeApi} from "@/apis/decision-type.api.ts";
 import type {DecisionType} from "@/types/decistion-type.ts";
 import CreateDecisionType from "@/components/CreateDecisionType.tsx";
 

@@ -127,20 +127,27 @@ func (r *ContractStore) UpdateContract(ctx context.Context, id string, data *hrm
 		}
 	}()
 
+	updates := map[string]interface{}{
+		"effective_date": data.EffectiveDate,
+		"expired_date":   data.ExpiredDate,
+		"sign_date":      data.SignDate,
+		"note":           data.Note,
+		"condition":      data.Condition,
+		// "created_date":     data.CreatedDate,
+		"contract_type_id": data.ContractTypeId,
+		"approve_status":   data.ApproveStatus,
+		"employee_id":      data.Manager,
+	}
+
+	// Only update attached_file when a new file is provided. If FE omits the field,
+	// data.AttachedFile will be empty and we should keep the existing DB value.
+	if data.AttachedFile != "" {
+		updates["attached_file"] = data.AttachedFile
+	}
+
 	if err := tx.Table("contract").
 		Where("contract_id = ?", id).
-		Updates(map[string]interface{}{
-			"effective_date":   data.EffectiveDate,
-			"expired_date":     data.ExpiredDate,
-			"sign_date":        data.SignDate,
-			"note":             data.Note,
-			"attached_file":    data.AttachedFile,
-			"condition":        data.Condition,
-			"created_date":     data.CreatedDate,
-			"contract_type_id": data.ContractTypeId,
-			"approve_status":   data.ApproveStatus,
-			"employee_id":      data.Manager,
-		}).Error; err != nil {
+		Updates(updates).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -151,16 +158,44 @@ func (r *ContractStore) UpdateContract(ctx context.Context, id string, data *hrm
 		return err
 	}
 
-	if len(data.AllowanceIDs) > 0 {
-		var allowances []*hrmmodel.Allowance
-		if err := tx.Where("id IN ?", data.AllowanceIDs).Find(&allowances).Error; err != nil {
-			tx.Rollback()
-			return err
-		}
+	if data.AllowanceIDs != nil {
+		// If frontend explicitly provided allowance IDs (possibly empty), sync them.
+		if len(data.AllowanceIDs) == 0 {
+			// delete all existing associations for this contract
+			if err := tx.Where("contract_id = ?", id).Delete(&hrmmodel.ContractAllowance{}).Error; err != nil {
+				tx.Rollback()
+				return err
+			}
+		} else {
+			// validate allowances exist (optional, but keeps behavior similar)
+			var allowances []*hrmmodel.Allowance
+			if err := tx.Where("id IN ?", data.AllowanceIDs).Find(&allowances).Error; err != nil {
+				tx.Rollback()
+				return err
+			}
 
-		if err := tx.Model(&contract).Association("Allowances").Replace(allowances); err != nil {
-			tx.Rollback()
-			return err
+			// remove associations that are not in the new list
+			if err := tx.Where("contract_id = ? AND allowance_id NOT IN ?", id, data.AllowanceIDs).Delete(&hrmmodel.ContractAllowance{}).Error; err != nil {
+				tx.Rollback()
+				return err
+			}
+
+			// insert missing associations one by one if they don't exist yet
+			for _, aid := range data.AllowanceIDs {
+				var existing hrmmodel.ContractAllowance
+				if err := tx.Where("contract_id = ? AND allowance_id = ?", id, aid).First(&existing).Error; err != nil {
+					if errors.Is(err, gorm.ErrRecordNotFound) {
+						ca := hrmmodel.ContractAllowance{ContractID: id, AllowanceID: aid}
+						if err := tx.Create(&ca).Error; err != nil {
+							tx.Rollback()
+							return err
+						}
+					} else {
+						tx.Rollback()
+						return err
+					}
+				}
+			}
 		}
 	}
 

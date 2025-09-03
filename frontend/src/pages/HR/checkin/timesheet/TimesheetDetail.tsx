@@ -399,7 +399,6 @@ const TimesheetDetailPage = () => {
                 <h1 className="text-2xl font-bold mb-2">{timesheetData.time_sheet_list_name}</h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <p><span className="font-semibold">Văn phòng:</span> {timesheetData.office.office_name}</p>
                         <p><span className="font-semibold">Tháng/Năm:</span> {timesheetData.month}/{timesheetData.year}</p>
                         <p><span className="font-semibold">Khoảng thời gian:</span> {new Date(timesheetData.start_date).toLocaleDateString('vi-VN')} - {new Date(timesheetData.end_date).toLocaleDateString('vi-VN')}</p>
                     </div>

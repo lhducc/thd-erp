@@ -43,7 +43,7 @@ export const createContractApi = async (payload: ContractFormValues) => {
 
 export const updateContractApi = async (id: string, payload: Partial<ContractFormValues>) => {
     const formData = new FormData();
-
+    console.log(payload);
     // Thêm các trường có giá trị
     if (payload.contract_type) formData.append('contract_type', payload.contract_type);
     if (payload.employee_id) formData.append('employee_id', payload.employee_id);
@@ -57,8 +57,8 @@ export const updateContractApi = async (id: string, payload: Partial<ContractFor
 
     // Thêm allowance_ids
     if (payload.allowance_ids) {
-        payload.allowance_ids.forEach((id, index) => {
-            formData.append(`allowance_ids[${index}]`, id);
+        payload.allowance_ids.forEach((id) => {
+            formData.append(`allowance_ids`, id);
         });
     }
 
@@ -66,6 +66,11 @@ export const updateContractApi = async (id: string, payload: Partial<ContractFor
     if (payload.attached_file) {
         formData.append('attached_file', payload.attached_file);
     }
+
+    formData.forEach((value, key) => {
+        console.log(key, value);
+    });
+
 
     const response = await api.put(`/contract/${id}`, formData, {
         headers: {

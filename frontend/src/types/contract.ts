@@ -41,6 +41,7 @@ export interface ContractFormValues {
     employee_name: string;
     department: string;
     status: "Chưa hiệu lực" | "Hiệu lực";
+    attached_file: File | string;
     note: string;
     approve_status: "Chờ duyệt" | "Đã duyệt" | "Không duyệt";
     allowance_ids: [];

@@ -30,9 +30,17 @@ func (s *WorkScheduleService) CreateNewWorkSchedule(c context.Context, workSched
 	var weekdayShift []model.WorkScheduleShift
 	wScheduleId := workSchedule.WorkScheduleID
 	timeNow := time.Now()
-	effectiveBeforeNow := workSchedule.EffectiveDate.Before(timeNow)
-	expirationAfterNow := workSchedule.ExpirationDate.After(timeNow)
 
+	// Kiểm tra EffectiveDate
+	effectiveBeforeNow := workSchedule.EffectiveDate.Before(timeNow)
+
+	// Mặc định expirationAfterNow = true để không ảnh hưởng nếu nil
+	expirationAfterNow := true
+	if workSchedule.ExpirationDate != nil {
+		expirationAfterNow = workSchedule.ExpirationDate.After(timeNow)
+	}
+
+	// Check trùng tên lịch làm việc
 	exists, err := s.repo.IsExistsByName(c, workSchedule.WorkScheduleName)
 	if err != nil {
 		return err
@@ -40,6 +48,8 @@ func (s *WorkScheduleService) CreateNewWorkSchedule(c context.Context, workSched
 	if exists {
 		return errors.New("Tên lịch làm việc đã tồn tại")
 	}
+
+	// Tạo danh sách shift cho các weekday
 	for _, weekday := range workSchedule.Weekdays {
 		weekdayShift = append(weekdayShift, model.WorkScheduleShift{
 			Weekday:        weekday.Weekday,
@@ -48,14 +58,20 @@ func (s *WorkScheduleService) CreateNewWorkSchedule(c context.Context, workSched
 		})
 	}
 
+	// Xác định trạng thái lịch làm việc
 	switch {
 	case workSchedule.EffectiveDate.After(timeNow):
+		// Ngày hiệu lực trong tương lai → chưa active
 		workSchedule.Status = variable.InActive
 	case effectiveBeforeNow && expirationAfterNow:
+		// Đang trong khoảng hiệu lực
 		workSchedule.Status = variable.Active
 	case effectiveBeforeNow && !expirationAfterNow:
+		// Đã hết hạn
 		workSchedule.Status = variable.Expired
 	}
+
+	// Lưu xuống DB
 	return s.repo.Save(c, workSchedule, weekdayShift)
 }
 
@@ -82,10 +98,8 @@ func (s *WorkScheduleService) DeleteWorkScheduleRegister(c context.Context, id i
 }
 
 func (s *WorkScheduleService) UpdateWorkScheduleAuto(c context.Context, workSchedule *model.WorkSchedule, id int) error {
+	// Kiểm tra lịch làm việc có tồn tại không
 	exists, err := s.repo.IsExistsByScheduleIDAuto(c, id)
-	timeNow := time.Now()
-	effectiveBeforeNow := workSchedule.EffectiveDate.Before(timeNow)
-	expirationAfterNow := workSchedule.ExpirationDate.After(timeNow)
 	if err != nil {
 		return err
 	}
@@ -93,6 +107,16 @@ func (s *WorkScheduleService) UpdateWorkScheduleAuto(c context.Context, workSche
 		return errors.New("Lịch làm việc cần sửa đổi không tồn tại")
 	}
 
+	timeNow := time.Now()
+	effectiveBeforeNow := workSchedule.EffectiveDate.Before(timeNow)
+
+	// Mặc định expirationAfterNow = true (nếu nil thì coi như chưa hết hạn)
+	expirationAfterNow := true
+	if workSchedule.ExpirationDate != nil {
+		expirationAfterNow = workSchedule.ExpirationDate.After(timeNow)
+	}
+
+	// Xác định trạng thái lịch làm việc
 	switch {
 	case workSchedule.EffectiveDate.After(timeNow):
 		workSchedule.Status = variable.InActive
@@ -102,6 +126,7 @@ func (s *WorkScheduleService) UpdateWorkScheduleAuto(c context.Context, workSche
 		workSchedule.Status = variable.Expired
 	}
 
+	// Cập nhật xuống DB
 	return s.repo.Update(c, workSchedule, id)
 }
 

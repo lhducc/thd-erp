@@ -84,7 +84,7 @@ const ContractPage = () => {
                                 </Button>
                             }
                             data={contract}
-                            // type={activeTab}
+                            type="pending"
                             refetch={refetchContracts}
                         />
                         <ConfirmDelete deleteFn={() => deleteContract(contract.contract_id)}/>

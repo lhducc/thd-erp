@@ -18,7 +18,6 @@ import axios from "axios";
 
 type Inputs = {
     name: string;
-    office_id: string;
     month_year: string; // e.g. "2025-05"
 }
 
@@ -30,19 +29,10 @@ const TimesheetForm = ({refresh}: { refresh: () => void }) => {
     } = useForm<Inputs>()
     const [monthYearLabel, setMonthYearLabel] = useState<string>("");
 
-    const {data: offices, isLoading: isOfficeLoading} = useOffice()
-
     const onSubmit: SubmitHandler<Inputs> = async (data) => {
         const [year, month] = data.month_year.split("-").map(Number);
-        console.log({
-            name: data.name,
-            office_id: data.office_id,
-            month,
-            year,
-        })
         await createTimesheet({
             name: data.name,
-            office_id: data.office_id,
             month,
             year,
         });
@@ -86,24 +76,12 @@ const TimesheetForm = ({refresh}: { refresh: () => void }) => {
                     type="month"
                 />
                 <p className="text-sm text-gray-600 italic">{monthYearLabel}</p>
-                <label className="text-sm font-semibold text-gray-900">
-                    Văn phòng
-                </label>
-                <select className="border rounded-lg p-2" {...register("office_id", {required: true})}>
-                    {offices?.map((item) => (
-                        <option key={item.office_id} value={item.office_id}>{item.office_name}</option>
-                    ))}
-                </select>
                 <div className={`flex gap-2 items-center w-full justify-center mt-2`}>
-                    <Button variant="secondary" onClick={() => setOpen(true)}>Hủy</Button>
+                    <Button variant="secondary" onClick={() => setOpen(false)}>Hủy</Button>
                     <Button type="submit">{isPending ? <Loading/> : "Tạo bảng công"}</Button>
                 </div>
             </form>
         )
-    }
-
-    if (isOfficeLoading) {
-        return <Loading/>
     }
 
     return (
@@ -118,7 +96,11 @@ const TimesheetForm = ({refresh}: { refresh: () => void }) => {
 }
 
 const TimesheetPage = () => {
-    const {data: timesheet, isLoading: isTimesheetLoading, refetch: refreshTimesheet} = useGetAllTimesheets();
+    const {data: timesheet, isLoading: isTimesheetLoading, refetch: refreshTimesheet} = useGetAllTimesheets({
+        page: 1,
+        limit: 99999,
+        search: ''
+    });
 
     const columns: ColumnDef<Timesheet>[] = [
         {
@@ -128,10 +110,6 @@ const TimesheetPage = () => {
         {
             accessorKey: "time_sheet_list_name",
             header: "Tên bảng công",
-        },
-        {
-            accessorKey: "office.office_name",
-            header: "Văn phòng",
         },
         {
             accessorKey: "address",

@@ -45,7 +45,7 @@ const formSchema = z.object({
     repeat_type: z.string().min(1, "Loại lặp lại là bắt buộc"),
     repeat_cycle: z.number().min(1, "Chu kỳ lặp lại là bắt buộc"),
     effective_date: z.string().min(1, "Ngày hiệu lực là bắt buộc"),
-    expiration_date: z.string().min(1, "Ngày hết hiệu lực là bắt buộc"),
+    // expiration_date: z.string().min(1, "Ngày hết hiệu lực là bắt buộc"),
     managers: z.array(
         z.object({
             manager_id: z.string(),

@@ -15,34 +15,37 @@ import (
 var DB *gorm.DB
 
 var AllModels = []interface{}{
-	//&model.Office{},
-	//&checkin_model.EmployeeWorkshift{},
-	//&model.Position{},
-	//&model.Department{},
-	//&model.Office{},
-	//&model.JobTitle{},
-	//&checkin_model.WorkShiftss{},
-	//&checkin_model.EmployeeWorkshift{},
-	//&model.EmployeeDocumentType{},
-	//&model.Employee{},
-	//&model.ContractType{},
-	//&model.Contract{},
-	//&model.DecisionType{},
-	//&model.Decision{},
-	//&model.DecisionEmployee{},
-	//&model.Insurance{},
-	//&checkin_model.WorkShifts{},
-	//&model.Allowance{},
-	//&model.Contract{},
-	//&model.ContractAllowance{},
-	//&checkin_model.AttendanceCategory{},
-	//&checkin_model.AttendanceRecord{},
-	//&checkin_model.WorkSchedule{},
-	//&checkin_model.WorkScheduleShift{},
-	//&checkin_model.WorkScheduleManager{},
-	//&checkin_model.TimeSheetList{},
-	//&checkin_model.TimeSheet{},
-	//&checkin_model.TimeSheetDetail{},
+	// // HR profile models
+	// &model.Role{},
+	// &model.Office{},
+	// &model.Position{},
+	// &model.HierarchyLevel{},
+	// &model.EmployeeDocumentType{},
+	// &model.ContractType{},
+	// &model.DecisionType{},
+	// &model.Insurance{},
+	// &model.Allowance{},
+	// &model.Department{},
+	// &model.JobTitle{},
+	// &model.Contract{},
+	// &model.Employee{},
+	// &model.Account{},
+	// &model.Decision{},
+	// &model.DecisionEmployee{},
+	// &model.ContractAllowance{},
+	// &model.EmployeeDocument{},
+
+	// // Checkin models
+	// &checkin_model.WorkShifts{},
+	// &checkin_model.EmployeeWorkshift{},
+	// &checkin_model.AttendanceCategory{},
+	// &checkin_model.AttendanceRecord{},
+	// &checkin_model.WorkSchedule{},
+	// &checkin_model.WorkScheduleShift{},
+	// &checkin_model.WorkScheduleManager{},
+	// &checkin_model.TimeSheetList{},
+	// &checkin_model.TimeSheet{},
+	// &checkin_model.TimeSheetDetail{},
 }
 
 func ConnectPostgres() {
@@ -256,51 +259,12 @@ func AutoMigrateModels(db *gorm.DB, models []interface{}) error {
 
 // AutoMigrate creates all database tables
 func AutoMigrate(db *gorm.DB) error {
-	// First pass - create tables without relationships to avoid circular dependencies
-	err := db.Set("gorm:auto_preload", false).AutoMigrate(
-		// Basic lookup tables first (no dependencies)
-		&model.Role{},
-		&model.Office{},
-		&model.Position{},
-		&model.HierarchyLevel{},
-		&model.EmployeeDocumentType{},
-		&model.ContractType{},
-		&model.DecisionType{},
-		&model.Insurance{},
-		&model.Allowance{},
-		&model.Department{},
-		&model.JobTitle{},
-		&model.Contract{},
-		&model.Employee{},
-		&model.Account{},
-		&model.Decision{},
-		&model.DecisionEmployee{},
-
-		// Checkin models
-		&checkin_model.WorkShifts{},
-		&checkin_model.EmployeeWorkshift{},
-		&checkin_model.AttendanceCategory{},
-		&checkin_model.AttendanceRecord{},
-
-		// Contract models
-		&model.ContractAllowance{},
-		&model.EmployeeDocument{},
-
-		// Work schedule models
-		&checkin_model.WorkSchedule{},
-		&checkin_model.WorkScheduleShift{},
-		&checkin_model.WorkScheduleManager{},
-		&checkin_model.TimeSheetList{},
-		&checkin_model.TimeSheet{},
-		&checkin_model.TimeSheetDetail{},
-	)
-
+	// Run AutoMigrate for all models defined in AllModels to avoid duplicated lists
+	err := db.Set("gorm:auto_preload", false).AutoMigrate(AllModels...)
 	fmt.Println("Migration complete")
-
 	if err != nil {
 		return fmt.Errorf("migrate thất bại: %w", err)
 	}
-
 	return nil
 }
 

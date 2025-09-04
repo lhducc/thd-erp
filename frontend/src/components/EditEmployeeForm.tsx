@@ -33,6 +33,7 @@ import {useWorkScheduleRegister} from "@/query/useWorkScheduleRegister.ts";
 import {useEmployeeByRoleNameQuery} from "@/query/employee.query.ts";
 import axios from "axios";
 import type {Department} from "@/types";
+import {useQueryClient} from "@tanstack/react-query";
 
 const employee = z.object({
     employee_id: z.string().optional(),
@@ -98,7 +99,7 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
     const {data: jobTitle} = useJobTitle()
     const {data: roles} = useGetRoles()
     const {data: managers} = useEmployeeByRoleNameQuery("manager")
-
+    const clientQuery = useQueryClient()
     async function onSubmit(values: z.infer<typeof form>) {
         setIsLoading(true);
         try {
@@ -118,6 +119,8 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
                 schedule_id: Number(values.schedule_id)
             };
             await updateEmployeeApi(data.employee_id, payload);
+            await clientQuery.invalidateQueries({queryKey: ["employees"]})
+            await clientQuery.invalidateQueries({queryKey: ["employeeId", data.employee_id]})
             refetchEmployee();
             setIsLoading(false);
             toast.success("Cập nhật nhân viên thành công")
@@ -305,7 +308,7 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
 
                                     <FormField
                                         control={form.control}
-                                        name="work_schedule_id"
+                                        name="schedule_id"
                                         render={({field}) => (
                                             <FormItem className="mt-[20px]">
                                                 {/*<FormLabel className="font-medium">Lịch làm việc</FormLabel>*/}

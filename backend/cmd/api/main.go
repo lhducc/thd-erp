@@ -6,9 +6,7 @@ import (
 	"erp/backend/config"
 	"erp/backend/pkg/job"
 	"log"
-	"net/http"
 	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,6 +24,10 @@ func main() {
 	job.InitWorkerPool(10)
 
 	db := config.GetDB()
+	if db == nil {
+		panic("Database connection is nil - failed to connect to PostgreSQL")
+	}
+
 	sqlDB, err := db.DB()
 	if err != nil {
 		panic("Không thể lấy sql.DB từ GORM: " + err.Error())
@@ -40,29 +42,27 @@ func main() {
 		c.JSON(200, gin.H{"message": "Hello, World!"})
 	})
 
-	// Luôn chạy HTTP
+	// Start HTTP server on port 8080
 	go func() {
+		log.Println("HTTP Server running at :8080")
 		if err := r.Run(":8080"); err != nil {
-			log.Fatalf("Failed to run HTTP server: %v", err)
+			log.Printf("HTTP server failed: %v", err)
 		}
 	}()
 
-	certPath := "./ssl/server.crt"
-	keyPath := "./ssl/server.key"
+	// Start HTTPS server on port 8443 if SSL is enabled
+	certPath := "/app/ssl/server.crt"
+	keyPath := "/app/ssl/server.key"
 
 	if config.AppConfig.Server.SSL && fileExists(certPath) && fileExists(keyPath) {
-		server := &http.Server{
-			Addr:         ":8443",
-			Handler:      r,
-			ReadTimeout:  15 * time.Second,
-			WriteTimeout: 15 * time.Second,
-		}
 		log.Println("HTTPS Server running at :8443")
-		if err := server.ListenAndServeTLS(certPath, keyPath); err != nil {
-			log.Fatalf("Failed to run HTTPS server: %v", err)
+		err := r.RunTLS(":8443", certPath, keyPath)
+		if err != nil {
+			log.Fatalf("HTTPS server failed: %v", err)
 		}
 	} else {
 		log.Println("⚠️ SSL disabled or certificate files not found — running HTTP only.")
+		// Keep the HTTP server running
 		select {}
 	}
 }

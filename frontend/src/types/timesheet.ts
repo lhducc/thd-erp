@@ -34,7 +34,7 @@ export type Timesheet = {
 
 export type CreateTimesheet = {
     name: string;
-    office_id: string;
+    // office_id: string;
     month: number;
     year: number;
 }

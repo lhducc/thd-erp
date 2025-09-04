@@ -8,7 +8,5 @@ type Position struct {
 	CreatedDate time.Time `gorm:"column:created_date;autoCreateTime" json:"created_date"`
 }
 
-
-
 func (Position) TableName() string { return "position" }
 

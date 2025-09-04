@@ -48,7 +48,7 @@ func LoadMinIOConfig() {
 		MinIO.UseSSL = strings.ToLower(sslEnv) == "true"
 	} else {
 		// If running in docker or endpoint points to internal service, assume HTTP (no SSL) by default.
-		if os.Getenv("APP_ENV") == "docker" || strings.Contains(MinIO.MinioEndpoint, "minio:") || strings.Contains(MinIO.MinioEndpoint, "localhost:9000") {
+		if os.Getenv("APP_ENV") == "docker" || strings.Contains(MinIO.MinioEndpoint, "minio:") || strings.Contains(MinIO.MinioEndpoint, "192.168.1.58:9000") {
 			MinIO.UseSSL = false
 		} else {
 			MinIO.UseSSL = true
@@ -77,10 +77,13 @@ func LoadMinIOConfig() {
 	customDialer := &net.Dialer{}
 	// URL transport: preserve the custom dialer redirection, and set TLS config only when SSL is enabled.
 	urlTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true, // Allow self-signed certificates
+		},
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			// Redirect localhost:9000 to the actual MinIO container via host IP
-			if strings.Contains(addr, "localhost:9000") {
-				addr = "172.18.0.1:9000"
+			if strings.Contains(addr, "192.168.1.58:9000") {
+				addr = "192.168.1.58:9000"
 			}
 			return customDialer.DialContext(ctx, network, addr)
 		},
@@ -89,7 +92,7 @@ func LoadMinIOConfig() {
 		urlTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
-	urlClient, err := minio.New("localhost:9000", &minio.Options{
+	urlClient, err := minio.New("192.168.1.58:9000", &minio.Options{
 		Creds:     credentials.NewStaticV4(MinIO.AccessKey, MinIO.SecretKey, ""),
 		Secure:    MinIO.UseSSL,
 		Transport: urlTransport,

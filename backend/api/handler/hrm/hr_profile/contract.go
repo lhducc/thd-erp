@@ -46,58 +46,52 @@ func (h *ContractHandler) CreateContract() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var data model.ContractCreate
 
-		// Support multipart/form-data so client can upload a file; fall back to JSON
+		// Require multipart/form-data (no JSON fallback). Parse multipart form and bind form fields.
 		if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
-			if err := c.ShouldBindJSON(&data); err != nil {
-				utils.ResponseError(c, "Dữ liệu đầu vào không hợp lệ", err, http.StatusBadRequest)
+			utils.ResponseError(c, "Dữ liệu đầu vào không hợp lệ: yêu cầu multipart/form-data", err, http.StatusBadRequest)
+			return
+		}
+
+		if err := c.ShouldBind(&data); err != nil {
+			utils.ResponseError(c, "Dữ liệu đầu vào không hợp lệ", err, http.StatusBadRequest)
+			return
+		}
+
+		// Handle attached file if provided (field name: attached_file). Only upload when real file present.
+		file, header, err := c.Request.FormFile("attached_file")
+		if err == nil && file != nil && header != nil && header.Filename != "" && header.Size > 0 {
+			defer file.Close()
+			ext := strings.ToLower(filepath.Ext(header.Filename))
+			allowed := map[string]bool{
+				".pdf":  true,
+				".docx": true,
+			}
+			if !allowed[ext] {
+				utils.ResponseMessage(c, "Định dạng file không được hỗ trợ. Chỉ cho phép pdf, docx, jpg, jpeg, png", http.StatusBadRequest, nil)
 				return
 			}
-		} else {
-			if err := c.ShouldBind(&data); err != nil {
-				utils.ResponseError(c, "Dữ liệu đầu vào không hợp lệ", err, http.StatusBadRequest)
+
+			contentType := header.Header.Get("Content-Type")
+			if contentType == "" {
+				switch ext {
+				case ".pdf":
+					contentType = "application/pdf"
+				case ".docx":
+					contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+				default:
+					contentType = "application/octet-stream"
+				}
+			}
+
+			objectName := uuid.New().String() + ext
+			if err := minIO.UploadImageToMinIO(c.Request.Context(), minIO.ContractBucket, objectName, file, header.Size, contentType, 30); err != nil {
+				utils.ResponseMessage(c, fmt.Sprintf("Upload file failed: %v", err), http.StatusInternalServerError, nil)
 				return
 			}
-
-			// Handle attached file if provided (field name: attached_file)
-			file, header, err := c.Request.FormFile("attached_file")
-			if err == nil && file != nil {
-				defer file.Close()
-				ext := strings.ToLower(filepath.Ext(header.Filename))
-				allowed := map[string]bool{
-					".pdf":  true,
-					".docx": true,
-					// ".jpg":  true,
-					// ".jpeg": true,
-					// ".png":  true,
-				}
-				if !allowed[ext] {
-					utils.ResponseMessage(c, "Định dạng file không được hỗ trợ. Chỉ cho phép pdf, docx, jpg, jpeg, png", http.StatusBadRequest, nil)
-					return
-				}
-
-				contentType := header.Header.Get("Content-Type")
-				if contentType == "" {
-					switch ext {
-					case ".pdf":
-						contentType = "application/pdf"
-					case ".docx":
-						contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-					//case ".jpg", ".jpeg":
-					//	contentType = "image/jpeg"
-					//case ".png":
-					//	contentType = "image/png"
-					default:
-						contentType = "application/octet-stream"
-					}
-				}
-
-				objectName := uuid.New().String() + ext
-				if err := minIO.UploadImageToMinIO(c.Request.Context(), minIO.ContractBucket, objectName, file, header.Size, contentType, 30); err != nil {
-					utils.ResponseMessage(c, fmt.Sprintf("Upload file failed: %v", err), http.StatusInternalServerError, nil)
-					return
-				}
-				data.AttachedFile = objectName
-			}
+			data.AttachedFile = objectName
+		} else if err != nil {
+			// no file provided or some multipart parsing issue for this part — log and continue without setting AttachedFile
+			log.Printf("contract.CreateContract: FormFile attached_file error or empty: %v", err)
 		}
 
 		if err := h.ContractBiz.CreateContract(c.Request.Context(), &data); err != nil {
@@ -280,7 +274,9 @@ func (h *ContractHandler) UpdateContract() gin.HandlerFunc {
 			}
 
 			file, header, err := c.Request.FormFile("attached_file")
-			if err == nil && file != nil {
+			// If no file was uploaded the handler should continue silently.
+			// Be defensive: some clients may send an empty part (filename=="") or size==0.
+			if err == nil && file != nil && header != nil && header.Filename != "" && header.Size > 0 {
 				defer file.Close()
 				ext := strings.ToLower(filepath.Ext(header.Filename))
 				// Allow only .pdf and .docx for contract attachments
@@ -311,6 +307,9 @@ func (h *ContractHandler) UpdateContract() gin.HandlerFunc {
 					return
 				}
 				data.AttachedFile = objectName
+			} else if err != nil {
+				// If FormFile returned an error other than missing/no-file, log it for debugging but continue.
+				log.Printf("contract.UpdateContract: FormFile error for attached_file: %v", err)
 			}
 		}
 

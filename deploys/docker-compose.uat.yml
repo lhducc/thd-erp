@@ -6,7 +6,7 @@ services:
       context: ../frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=${VITE_API_URL:-https://localhost:8443/api/v1}
+        - VITE_API_URL=${VITE_API_URL:-https://192.168.1.58/api/v1}
     ports:
       - "80:80"
       - "443:443"
@@ -14,6 +14,8 @@ services:
       - ../.env
     depends_on:
       - backend
+    networks:
+      - erp-network
     restart: unless-stopped
 
   backend:
@@ -22,9 +24,12 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-      - "8443:8443"  # Add HTTPS port for backend
+    # Ports removed - backend only accessible through frontend reverse proxy
+    expose:
+      - "8080"
+      - "8443"
+    environment:
+      - AUTO_MIGRATE=true
     env_file:
       - ../.env
     depends_on:
@@ -34,19 +39,21 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    networks:
+      - erp-network
     restart: unless-stopped
   # Note: Backend must be configured to connect to Postgres and MinIO using SSL/TLS (see below)
 
   postgres:
-    image: ${POSTGRES_IMAGE:-postgres:15-alpine}
-    # image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
+    # image: ${POSTGRES_IMAGE:-postgres:15-alpine}
+    image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
     container_name: erp-postgres
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:-erp_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-erp_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-erp_db}
       POSTGRES_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-replicator}
       POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-replicator_pass}
     env_file:
@@ -59,31 +66,23 @@ services:
     restart: unless-stopped
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ../scripts/unified-db-init.sh:/docker-entrypoint-initdb.d/unified-db-init.sh:ro
-      # Mount SSL certificates for Postgres (commented out for initial setup)
-      # - ../ssl/thd.erp.com.crt:/var/lib/postgresql/server.crt:ro
-      # - ../ssl/thd.erp.com.key:/var/lib/postgresql/server.key:ro
-      # - ../ssl/rootCA.crt:/var/lib/postgresql/root.crt:ro
-      # Mount custom Postgres configuration files (commented out for initial setup)
-      # - ../postgres/postgresql.conf:/etc/postgresql/postgresql.conf
-      # - ../postgres/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
-    # You must also update postgresql.conf and pg_hba.conf to enable SSL (not shown here)
-    # SSL environment variables commented out for initial setup
+    networks:
+      - erp-network
 
   postgres-replica:
-    image: ${POSTGRES_IMAGE:-postgres:15-alpine}
-    # image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
+    # image: ${POSTGRES_IMAGE:-postgres:15-alpine}
+    image: 192.168.1.76:5001/product/erp/erp/postgres:15-alpine
     container_name: erp-postgres-replica
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:-erp_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-erp_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-erp_db}
       POSTGRES_MASTER_SERVICE: postgres
       POSTGRES_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-replicator}
       POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-replicator_pass}
-      PGUSER: ${POSTGRES_USER}
+      PGUSER: ${POSTGRES_USER:-erp_user}
     env_file:
       - ../.env
     healthcheck:
@@ -94,14 +93,15 @@ services:
     restart: unless-stopped
     volumes:
       - pgdata_replica:/var/lib/postgresql/data
-      - ../scripts/unified-db-init.sh:/docker-entrypoint-initdb.d/unified-db-init.sh:ro
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - erp-network
 
   minio:
-    image: ${MINIO_IMAGE:-minio/minio:latest}
-    # image: 192.168.1.76:5001/product/erp/erp/minio:latest
+    # image: ${MINIO_IMAGE:-minio/minio:latest}
+    image: 192.168.1.76:5001/product/erp/erp/minio:latest
     container_name: erp-minio
     command: server --console-address ":9001" /data
     env_file:
@@ -111,9 +111,9 @@ services:
       - "9001:9001"
     environment:
       # Enable HTTPS for MinIO
-      MINIO_SERVER_URL: ${MINIO_SERVER_URL:-https://localhost:9000}
+      MINIO_SERVER_URL: ${MINIO_SERVER_URL:-https://192.168.1.58:9000}
     healthcheck:
-      test: ["CMD", "curl", "-kf", "${MINIO_HEALTH_URL:-https://localhost:9000/minio/health/ready}"]
+      test: ["CMD", "curl", "-kf", "${MINIO_HEALTH_URL:-https://192.168.1.58:9000/minio/health/ready}"]
       interval: 30s
       timeout: 20s
       retries: 3
@@ -122,9 +122,15 @@ services:
       # Mount SSL certificates for MinIO (must be named public.crt and private.key)
       - ../ssl/minio.crt:/root/.minio/certs/public.crt:ro
       - ../ssl/minio.key:/root/.minio/certs/private.key:ro
+    networks:
+      - erp-network
     restart: unless-stopped
 
 volumes:
   pgdata:
   pgdata_replica:
   minio_data:
+
+networks:
+  erp-network:
+    driver: bridge

@@ -23,7 +23,7 @@ type WorkSchedule struct {
 	Managers []WorkScheduleManager `gorm:"foreignKey:WorkScheduleID;references:WorkScheduleID" json:"managers"`
 	Weekdays []WorkScheduleShift   `gorm:"foreignKey:WorkScheduleID;references:WorkScheduleID" json:"weekdays"`
 
-	Office *model.OfficeResponse `gorm:"foreignKey:OfficeID;references:ID" json:"office"`
+	Office *model.Office `gorm:"foreignKey:OfficeID;references:ID" json:"office"`
 }
 
 type WorkScheduleManager struct {
@@ -33,7 +33,7 @@ type WorkScheduleManager struct {
 	IsReading             bool   `gorm:"column:is_reading;default:true" json:"is_reading"`
 	IsEditing             bool   `gorm:"column:is_editing;default:false" json:"is_editing"`
 
-	Employee *model.ManagerResponse `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"manager"`
+	Employee *model.Employee `gorm:"foreignKey:EmployeeID;references:EmployeeID" json:"manager"`
 }
 
 type WorkScheduleShift struct {

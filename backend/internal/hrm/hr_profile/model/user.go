@@ -18,7 +18,7 @@ type Account struct {
 	CreatedDate time.Time `gorm:"column:created_date;autoCreateTime" json:"created_date"`
 
 	Role     *Role     `gorm:"foreignKey:RoleID;references:ID" json:"role,omitempty"`
-	Employee *Employee `gorm:"foreignKey:EmployeeId;references:employee_id" json:"employee,omitempty"`
+	Employee *Employee `gorm:"foreignKey:EmployeeId;references:EmployeeID" json:"employee,omitempty"`
 }
 
 func (Account) TableName() string { return "account" }

@@ -30,8 +30,13 @@ func (s *WorkScheduleService) CreateNewWorkSchedule(c context.Context, workSched
 	var weekdayShift []model.WorkScheduleShift
 	wScheduleId := workSchedule.WorkScheduleID
 	timeNow := time.Now()
+
 	effectiveBeforeNow := workSchedule.EffectiveDate.Before(timeNow)
-	expirationAfterNow := workSchedule.ExpirationDate.After(timeNow)
+
+	expirationAfterNow := true
+	if workSchedule.ExpirationDate != nil {
+		expirationAfterNow = workSchedule.ExpirationDate.After(timeNow)
+	}
 
 	exists, err := s.repo.IsExistsByName(c, workSchedule.WorkScheduleName)
 	if err != nil {
@@ -40,6 +45,7 @@ func (s *WorkScheduleService) CreateNewWorkSchedule(c context.Context, workSched
 	if exists {
 		return errors.New("Tên lịch làm việc đã tồn tại")
 	}
+
 	for _, weekday := range workSchedule.Weekdays {
 		weekdayShift = append(weekdayShift, model.WorkScheduleShift{
 			Weekday:        weekday.Weekday,
@@ -83,14 +89,19 @@ func (s *WorkScheduleService) DeleteWorkScheduleRegister(c context.Context, id i
 
 func (s *WorkScheduleService) UpdateWorkScheduleAuto(c context.Context, workSchedule *model.WorkSchedule, id int) error {
 	exists, err := s.repo.IsExistsByScheduleIDAuto(c, id)
-	timeNow := time.Now()
-	effectiveBeforeNow := workSchedule.EffectiveDate.Before(timeNow)
-	expirationAfterNow := workSchedule.ExpirationDate.After(timeNow)
 	if err != nil {
 		return err
 	}
 	if !exists {
 		return errors.New("Lịch làm việc cần sửa đổi không tồn tại")
+	}
+
+	timeNow := time.Now()
+	effectiveBeforeNow := workSchedule.EffectiveDate.Before(timeNow)
+
+	expirationAfterNow := true
+	if workSchedule.ExpirationDate != nil {
+		expirationAfterNow = workSchedule.ExpirationDate.After(timeNow)
 	}
 
 	switch {
@@ -107,14 +118,19 @@ func (s *WorkScheduleService) UpdateWorkScheduleAuto(c context.Context, workSche
 
 func (s *WorkScheduleService) UpdateWorkScheduleRegister(c context.Context, workSchedule *model.WorkSchedule, id int) error {
 	exists, err := s.repo.IsExistsByScheduleIDRegister(c, id)
-	timeNow := time.Now()
-	effectiveBeforeNow := workSchedule.EffectiveDate.Before(timeNow)
-	expirationAfterNow := workSchedule.ExpirationDate.After(timeNow)
 	if err != nil {
 		return err
 	}
 	if !exists {
 		return errors.New("Lịch làm việc cần sửa đổi không tồn tại")
+	}
+
+	timeNow := time.Now()
+	effectiveBeforeNow := workSchedule.EffectiveDate.Before(timeNow)
+
+	expirationAfterNow := true
+	if workSchedule.ExpirationDate != nil {
+		expirationAfterNow = workSchedule.ExpirationDate.After(timeNow)
 	}
 
 	switch {

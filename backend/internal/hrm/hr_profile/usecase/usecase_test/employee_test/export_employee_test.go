@@ -54,13 +54,13 @@ func (e *employeeBiz) ExportEmployeeTest(selectedFields []string) ([]byte, strin
 		return emp.PhoneNumber
 	})
 
-	exporter.RegisterField("email", "Email", "email", func(item interface{}) any {
-		emp := item.(*model.Employee)
-		if emp.Account != nil {
-			return emp.Account.LoginMail
-		}
-		return ""
-	})
+	// exporter.RegisterField("email", "Email", "email", func(item interface{}) any {
+	// 	emp := item.(*model.Employee)
+	// 	if emp.Account != nil {
+	// 		return emp.Account.LoginMail
+	// 	}
+	// 	return ""
+	// })
 
 	exporter.RegisterField("manager", "Quản lý", "manager", func(item interface{}) any {
 		emp := item.(*model.Employee)
@@ -111,9 +111,9 @@ func TestExportEmployeeTest(t *testing.T) {
 			Birthday:    "1990-01-15",
 			Gender:      "Male",
 			PhoneNumber: "0912345678",
-			Account: &model.Account{
-				LoginMail: "nguyenvana@example.com",
-			},
+			// Account: &model.Account{
+			// 	LoginMail: "nguyenvana@example.com",
+			// },
 			Manager: &model.ManagerResponse{
 				Fullname: "Tran Thi B (Manager)",
 			},
@@ -125,7 +125,7 @@ func TestExportEmployeeTest(t *testing.T) {
 			Birthday:    "1992-03-20",
 			Gender:      "Female",
 			PhoneNumber: "0987654321",
-			Account:     nil, // Test case cho nil account
+			// Account:     nil, // Test case cho nil account
 			Manager:     nil, // Test case cho nil manager
 			CreatedDate: time.Date(2023, 2, 10, 0, 0, 0, 0, time.UTC),
 		},

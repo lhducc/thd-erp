@@ -6,7 +6,7 @@ import ManagerSidbar from "@/components/layout/sidebar/ManagerSidbar.tsx";
 
 const SIDEBAR_COMPONENTS: Record<string, ReactNode> = {
     admin: <HRSidebar/>,
-    HR: <HRSidebar/>,
+    hr: <HRSidebar/>,
     employee: <ClientSidebar/>,
     manager: <ManagerSidbar/>,
 };

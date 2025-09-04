@@ -25,7 +25,7 @@ const formSchema = z.object({
     name: z.string().min(1, "Tên lịch không được để trống"),
     office: z.string().min(1, "Văn phòng không được để trống"),
     start_date: z.string().min(1, "Ngày bắt đầu không được để trống"),
-    end_date: z.string().min(1, "Ngày kết thúc không được để trống"),
+    end_date: z.string().optional(),
 });
 
 const SetupWorkScheduleRegister = () => {
@@ -76,7 +76,8 @@ const SetupWorkScheduleRegister = () => {
                 form.reset();
                 setWeekdays([]);
             }
-            await queryClient.invalidateQueries({queryKey: ["workScheduleRegisterById", "workScheduleRegister", id]})
+            await queryClient.invalidateQueries({queryKey: ["workScheduleRegisterById", id]})
+            await queryClient.invalidateQueries({queryKey: ["workScheduleRegister"]})
             navigate("/setup-work-schedule-register")
         },
         onError: (error) => {
@@ -95,14 +96,14 @@ const SetupWorkScheduleRegister = () => {
             work_schedule_name: values.name,
             office_id: values.office,
             effective_date: new Date(values.start_date).toISOString(),
-            expiration_date: new Date(values.end_date).toISOString(),
+            expiration_date: values?.end_date ? new Date(values?.end_date).toISOString() : null,
             weekdays: weekdays.map(day => ({
                 week_day: day.week_day,
                 workshift_id: day.workshift_id,
                 order: day.order || 0
             })),
         };
-
+        console.log(payload);
         registerMutation.mutate(payload);
     };
 

@@ -84,7 +84,7 @@ const ContractPage = () => {
                                 </Button>
                             }
                             data={contract}
-                            // type={activeTab}
+                            type="pending"
                             refetch={refetchContracts}
                         />
                         <ConfirmDelete deleteFn={() => deleteContract(contract.contract_id)}/>
@@ -103,7 +103,7 @@ const ContractPage = () => {
             <DataTable
                 columns={columns}
                 // data={contracts || []}
-                data={contracts}
+                data={contracts || []}
                 // navLink={navLink}
                 title="Hợp đồng"
                 buttonCreate={<ContractForm refetch={refetchContracts}/>}

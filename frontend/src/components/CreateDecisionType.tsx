@@ -22,7 +22,7 @@ import {Input} from "@/components/ui/input";
 import {useEffect, useState} from "react";
 import {useMutation} from "@tanstack/react-query";
 import {toast} from "sonner";
-import {createDecisionTypeApi, updateDecisionTypeApi} from "@/apis/decistion-type.api.ts";
+import {createDecisionTypeApi, updateDecisionTypeApi} from "@/apis/decision-type.api.ts";
 import type {DecisionType} from "@/types/decistion-type.ts";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
 import {Skeleton} from "@/components/ui/skeleton.tsx";

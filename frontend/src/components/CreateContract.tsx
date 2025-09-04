@@ -6,7 +6,7 @@ import {createContractApi, reapproveContractApi, updateContractApi} from "@/apis
 import type {Contract} from "@/types/contract.ts";
 import {useEffect, useState} from "react";
 import {getAllContractsTypeApi} from "@/apis/contract-type.api.ts";
-import {getAllEmployeesApi, getEmployeeByRoleNameApi} from "@/apis/profile.api.ts";
+import {getEmployeeByRoleNameApi} from "@/apis/profile.api.ts";
 import {getAllAllowancesApi} from "@/apis/allowance.api.ts";
 import Loading from "@/components/Loading.tsx";
 import {toast} from "sonner";
@@ -43,13 +43,13 @@ export type ContractFormValues = {
     expired_date: string;
     note?: string;
     allowance_ids?: string[];
-    attached_file?: File; // Thêm trường file
+    attached_file?: File;
 };
 
 type Props = {
     editBtn?: React.ReactNode;
     data?: Contract;
-    type?: "pending" | "approved" | "rejected" ;
+    type?: "pending" | "approved" | "rejected";
     refetch?: () => void;
 };
 
@@ -74,7 +74,6 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
             attached_file: undefined,
         },
     });
-
 
     // Fetch contract types
     const {data: contractTypes = [], isPending: pendingContractTypes} = useQuery({
@@ -107,7 +106,6 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
             refetch?.();
         },
         onError: (error) => {
-            console.log(error);
             toast.error(error.message);
         },
     });
@@ -185,18 +183,18 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
                 condition: data.condition || "Chưa hiệu lực",
                 approve_status: data.approve_status || "Chờ duyệt",
                 employee_id: data.employee?.employee_id || "",
-                contract_type: data.contract_type || "",
+                contract_type: data.contract_type?.trim() || "",
                 sign_date: formatDateForInput(data.sign_date) || "",
                 effective_date: formatDateForInput(data.effective_date) || "",
                 expired_date: formatDateForInput(data.expired_date) || "",
                 note: data.note || "",
-                department: data.employee?.department?.department_name || "",
+                department: data.employee?.department?.department_id || "",
                 allowance_ids: data.allowances?.map(a => a.id) || [],
                 attached_file: undefined,
             });
 
             if (data.attached_file) {
-                setFilePreview(`${API_BASE_URL}/uploads/${data.attached_file}`);
+                setFilePreview(data.attached_file);
             }
         }
     }, [open, data, form]);
@@ -225,7 +223,6 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
             } else if (type === "rejected" && data?.contract_id) {
                 await reapproveContract(data.contract_id);
             } else {
-                console.log(payload);
                 await createContract(payload);
             }
         } catch (error) {
@@ -246,8 +243,6 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
         form.setValue("allowance_ids", currentAllowances.filter(id => id !== allowanceId));
     };
 
-    // const isLoading = pendingContract;
-
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -263,9 +258,9 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <div className={`flex justify-between md:flex-row flex-col p-5 items-center gap-2`}>
-                    <DialogTitle className="text-xl">
-                        {type === "pending" ? 'Chỉnh sửa hợp đồng' : 'Thêm hợp đồng mới'}
-                    </DialogTitle>
+                        <DialogTitle className="text-xl">
+                            {type === "pending" ? 'Chỉnh sửa hợp đồng' : 'Thêm hợp đồng mới'}
+                        </DialogTitle>
                         {
                             data?.contract_id ? (
                                     <div className="border p-3 w-fit rounded-lg border-black">
@@ -280,299 +275,292 @@ export function ContractForm({editBtn, data, type, refetch}: Props) {
                 {pendingAllowances || pendingContractTypes || pendingEmployees || pendingDepartment ? (
                     <Loading/>
                 ) : (
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Contract Type */}
-                            <FormField
-                                control={form.control}
-                                name="contract_type"
-                                render={({field}) => {
-                                    return (
-                                        <FormItem>
-                                            <FormLabel>Loại hợp đồng</FormLabel>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Contract Type */}
+                                <FormField
+                                    control={form.control}
+                                    name="contract_type"
+                                    render={({field}) => {
+                                        return (
+                                            <FormItem>
+                                                <FormLabel>Loại hợp đồng</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl
+                                                        className={`w-full col-span-2 ${type !== "approved" ? "border-blue-300" : "border-gray-300"}`}>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Chọn loại hợp đồng"/>
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {contractTypes.map((type) => (
+                                                            <SelectItem key={type.contract_type_id}
+                                                                        value={type.contract_type_id}>
+                                                                {type.contract_type}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage/>
+                                            </FormItem>
+                                        )
+                                    }}
+                                />
+
+                                <div className="md:grid-cols-2 md:col-span-1 col-span-2 gap-4">
+                                    Tình trạng
+                                    <div className={`border border-gray-300 text-gray-500 p-2 rounded-lg`}>
+                                        {
+                                            data?.condition ?
+                                                <p>{data.condition}</p>
+                                                :
+                                                <p>Chưa hiệu lực</p>
+                                        }
+                                    </div>
+                                </div>
+
+                                {/* Sign Date */}
+                                <FormField
+                                    control={form.control}
+                                    name="sign_date"
+                                    render={({field}) => (
+                                        <FormItem className={`rounded-lg col-span-2 md:col-span-1`}>
+                                            <FormLabel>Ngày ký</FormLabel>
+                                            <FormControl>
+                                                <Input className={`rounded-lg h-[50px] w-full col-span-2`}
+                                                       type="date" {...field} />
+                                            </FormControl>
+                                            <FormMessage/>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Note */}
+                                <div className="md:row-span-3 col-span-2 md:col-span-1">
+                                    <FormField
+                                        control={form.control}
+                                        name="note"
+                                        render={({field}) => (
+                                            <FormItem>
+                                                <FormLabel>Chú thích</FormLabel>
+                                                <FormControl>
+                          <textarea
+                              {...field}
+                              value={field.value || ""}
+                              className={`w-full rounded-md border p-2 min-h-[250px] ${type !== "approved" ? "border-blue-300" : ""}`}
+                          />
+                                                </FormControl>
+                                                <FormMessage/>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                {/* Effective Date */}
+                                <FormField
+                                    control={form.control}
+                                    name="effective_date"
+                                    render={({field}) => (
+                                        <FormItem className={`rounded-lg col-span-2 md:col-span-1`}>
+                                            <FormLabel>Ngày hiệu lực</FormLabel>
+                                            <FormControl>
+                                                <Input className={`rounded-lg h-[50px]`} type="date" {...field} />
+                                            </FormControl>
+                                            <FormMessage/>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Expired Date */}
+                                <FormField
+                                    control={form.control}
+                                    name="expired_date"
+                                    render={({field}) => (
+                                        <FormItem className={`rounded-lg col-span-2 md:col-span-1`}>
+                                            <FormLabel>Ngày hết hạn</FormLabel>
+                                            <FormControl>
+                                                <Input className={`rounded-lg h-[50px]`} type="date" {...field} />
+                                            </FormControl>
+                                            <FormMessage/>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Employee */}
+                                <FormField
+                                    control={form.control}
+                                    name="employee_id"
+                                    render={({field}) => (
+                                        <FormItem className={`rounded-lg col-span-2 md:col-span-1`}>
+                                            <FormLabel>Tên nhân viên</FormLabel>
                                             <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl  className={`w-full col-span-2 ${type !== "approved" ? "border-blue-300" : "border-gray-300"}`}>
+                                                <FormControl className={`w-full`}>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Chọn loại hợp đồng"/>
+                                                        <SelectValue placeholder="Chọn nhân viên"/>
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    {contractTypes.map((type) => (
-                                                        <SelectItem key={type.contract_type}
-                                                                    value={type.contract_type_id}>
-                                                            {type.contract_type}
+                                                    {employees?.map((employee) => (
+                                                        <SelectItem key={employee.employee_id}
+                                                                    value={employee.employee_id}>
+                                                            {employee.full_name}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage/>
                                         </FormItem>
-                                    )
-                                }}
-                            />
+                                    )}
+                                />
 
-                            <div className="md:grid-cols-2 md:col-span-1 col-span-2 gap-4">
-                                Tình trạng
-                                <div className={`border border-gray-300 text-gray-500 p-2 rounded-lg`}>
-                                    {
-                                        data?.condition ?
-                                            <p>{data.condition}</p>
-                                            :
-                                            <p>Chưa hiệu lực</p>
-                                    }
+                                <div className={`md:col-span-1 col-span-2`}>
+                                    Trạng thái
+                                    <div className={`border border-gray-300 rounded-lg p-2 text-gray-500`}>
+                                        {
+                                            data?.contract_id ?
+                                                <p>{data?.approve_status}</p>
+                                                : <p>Chờ duyệt</p>
+                                        }
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Sign Date */}
-                            <FormField
-                                control={form.control}
-                                name="sign_date"
-                                render={({field}) => (
-                                    <FormItem className={`rounded-lg col-span-2 md:col-span-1`}>
-                                        <FormLabel>Ngày ký</FormLabel>
-                                        <FormControl>
-                                            <Input className={`rounded-lg h-[50px] w-full col-span-2`} type="date" {...field} />
-                                        </FormControl>
-                                        <FormMessage/>
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Note */}
-                            <div className="md:row-span-3 col-span-2 md:col-span-1">
+                                {/* Department */}
                                 <FormField
                                     control={form.control}
-                                    name="note"
+                                    name="department"
                                     render={({field}) => (
-                                        <FormItem>
-                                            <FormLabel>Chú thích</FormLabel>
+                                        <FormItem className="h-fit">
+                                            <FormLabel>Phòng ban</FormLabel>
                                             <FormControl>
-                          <textarea
-                              {...field}
-                              value={field.value || ""}
-                              className={`w-full rounded-md border p-2 min-h-[250px] ${type !== "approved" ? "border-blue-300" : ""}`}
-                          />
+                                                <select
+                                                    {...field}
+                                                    className="w-full p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
+                                                >
+                                                    <option value="">Chọn vị trí</option>
+                                                    {departments?.map((department) => {
+                                                        return <option
+                                                            value={department.department_id}>{department.department_name}</option>
+                                                    })}
+                                                </select>
                                             </FormControl>
                                             <FormMessage/>
                                         </FormItem>
                                     )}
                                 />
-                            </div>
 
-                            {/* Effective Date */}
-                            <FormField
-                                control={form.control}
-                                name="effective_date"
-                                render={({field}) => (
-                                    <FormItem className={`rounded-lg col-span-2 md:col-span-1`}>
-                                        <FormLabel>Ngày hiệu lực</FormLabel>
-                                        <FormControl>
-                                            <Input className={`rounded-lg h-[50px]`} type="date" {...field} />
-                                        </FormControl>
-                                        <FormMessage/>
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Expired Date */}
-                            <FormField
-                                control={form.control}
-                                name="expired_date"
-                                render={({field}) => (
-                                    <FormItem className={`rounded-lg col-span-2 md:col-span-1`}>
-                                        <FormLabel>Ngày hết hạn</FormLabel>
-                                        <FormControl>
-                                            <Input className={`rounded-lg h-[50px]`} type="date" {...field} />
-                                        </FormControl>
-                                        <FormMessage/>
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Employee */}
-                            <FormField
-                                control={form.control}
-                                name="employee_id"
-                                render={({field}) => (
-                                    <FormItem className={`rounded-lg col-span-2 md:col-span-1`}>
-                                        <FormLabel>Tên nhân viên</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl className={`w-full`}>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Chọn nhân viên"/>
-                                                </SelectTrigger>
-                                            </FormControl>
+                                {/* Allowances */}
+                                <div className="col-span-2 md:col-span-1 space-y-2">
+                                    <FormLabel>Phụ cấp</FormLabel>
+                                    <div className="flex gap-2">
+                                        <Select
+                                            onValueChange={(value) => {
+                                                if (value) handleAddAllowance(value);
+                                            }}
+                                        >
+                                            <SelectTrigger className="flex-1">
+                                                <SelectValue placeholder="Chọn phụ cấp"/>
+                                            </SelectTrigger>
                                             <SelectContent>
-                                                {employees?.map((employee) => (
-                                                    <SelectItem key={employee.employee_id}
-                                                                value={employee.employee_id}>
-                                                        {employee.full_name}
-                                                    </SelectItem>
-                                                ))}
+                                                {allowances
+                                                    .filter(a => !form.watch("allowance_ids")?.includes(a.id))
+                                                    .map((a) => (
+                                                        <SelectItem key={a.id} value={a.id}>
+                                                            {a.allowance_name}
+                                                        </SelectItem>
+                                                    ))}
                                             </SelectContent>
                                         </Select>
-                                        <FormMessage/>
-                                    </FormItem>
-                                )}
-                            />
+                                    </div>
 
-                            <div className={`md:col-span-1 col-span-2`}>
-                                Trạng thái
-                                <div className={`border border-gray-300 rounded-lg p-2 text-gray-500`}>
-                                    {
-                                        data?.contract_id ?
-                                            <p>{data?.approve_status}</p>
-                                            : <p>Chờ duyệt</p>
-                                    }
+                                    <div className="mt-2 space-y-2">
+                                        {form.watch("allowance_ids")?.map(allowanceId => {
+                                            const allowance = allowances.find(a => a.id === allowanceId);
+                                            return allowance ? (
+                                                <div key={allowanceId}
+                                                     className="flex items-center justify-between p-2 border rounded">
+                                                    <span>{allowance.allowance_name}</span>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className={`text-red-500`}
+                                                        onClick={() => handleRemoveAllowance(allowanceId)}
+                                                    >
+                                                        Xóa
+                                                    </Button>
+                                                </div>
+                                            ) : null;
+                                        })}
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Department */}
-                            <FormField
-                                control={form.control}
-                                name="department"
-                                render={({field}) => (
-                                    <FormItem className="h-fit">
-                                        <FormLabel>Phòng ban</FormLabel>
-                                        <FormControl>
-                                            <select
-                                                {...field}
-                                                className="w-full p-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#DB3B21]"
-                                            >
-                                                <option value="">Chọn vị trí</option>
-                                                {departments?.map((department) => {
-                                                    return <option
-                                                        value={department.department_id}>{department.department_name}</option>
-                                                })}
-                                            </select>
-                                        </FormControl>
-                                        <FormMessage/>
-                                    </FormItem>
-                                )}
-                            />
+                            {/* File Upload Section */}
+                            <div className="col-span-2 space-y-2">
+                                <FormLabel>File đính kèm</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="file"
+                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                        onChange={handleFileChange}
+                                        className="cursor-pointer"
+                                    />
+                                </FormControl>
+                                <FormMessage/>
 
-                            {/* Allowances */}
-                            <div className="col-span-2 md:col-span-1 space-y-2">
-                                <FormLabel>Phụ cấp</FormLabel>
-                                <div className="flex gap-2">
-                                    <Select
-                                        onValueChange={(value) => {
-                                            if (value) handleAddAllowance(value);
-                                        }}
-                                    >
-                                        <SelectTrigger className="flex-1">
-                                            <SelectValue placeholder="Chọn phụ cấp"/>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {allowances
-                                                .filter(a => !form.watch("allowance_ids")?.includes(a.id))
-                                                .map((a) => (
-                                                    <SelectItem key={a.id} value={a.id}>
-                                                        {a.allowance_name}
-                                                    </SelectItem>
-                                                ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="mt-2 space-y-2">
-                                    {form.watch("allowance_ids")?.map(allowanceId => {
-                                        const allowance = allowances.find(a => a.id === allowanceId);
-                                        return allowance ? (
-                                            <div key={allowanceId}
-                                                 className="flex items-center justify-between p-2 border rounded">
-                                                <span>{allowance.allowance_name}</span>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className={`text-red-500`}
-                                                    onClick={() => handleRemoveAllowance(allowanceId)}
-                                                >
-                                                    Xóa
-                                                </Button>
-                                            </div>
-                                        ) : null;
-                                    })}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* File Upload Section */}
-                        <div className="col-span-2 space-y-2">
-                            <FormLabel>File đính kèm</FormLabel>
-                            <FormControl>
-                                <Input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                    onChange={handleFileChange}
-                                    className="cursor-pointer"
-                                />
-                            </FormControl>
-                            <FormMessage />
-
-                            {/* File Preview */}
-                            {filePreview && (
-                                <div className="mt-2 p-3 border rounded-lg">
-                                    <div className="flex items-center justify-between">
+                                {/* File Preview */}
+                                {filePreview && (
+                                    <div className="mt-2 p-3 border rounded-lg">
+                                        <div className="flex items-center justify-between">
                                             <span className="text-sm text-gray-600">
                                                 File đã chọn: {form.watch("attached_file")?.name || "File đính kèm"}
                                             </span>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={removeFile}
-                                            className="text-red-500"
-                                        >
-                                            Xóa
-                                        </Button>
+                                        </div>
+
+                                        {/* Hiển thị preview cho hình ảnh */}
+                                        {form.watch("attached_file")?.type?.startsWith('image/') && (
+                                            <img
+                                                src={filePreview}
+                                                alt="Preview"
+                                                className="mt-2 max-h-40 rounded-lg"
+                                            />
+                                        )}
+
+                                        {/* Hiển thị link cho file đã tồn tại */}
+                                        {data?.attached_file && !form.watch("attached_file") && (
+                                            <a
+                                                href={filePreview}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-500 underline mt-2 block"
+                                            >
+                                                Xem file hiện tại
+                                            </a>
+                                        )}
                                     </div>
+                                )}
+                            </div>
 
-                                    {/* Hiển thị preview cho hình ảnh */}
-                                    {form.watch("attached_file")?.type?.startsWith('image/') && (
-                                        <img
-                                            src={filePreview}
-                                            alt="Preview"
-                                            className="mt-2 max-h-40 rounded-lg"
-                                        />
-                                    )}
-
-                                    {/* Hiển thị link cho file đã tồn tại */}
-                                    {data?.attached_file && !form.watch("attached_file") && (
-                                        <a
-                                            href={filePreview}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-500 underline mt-2 block"
-                                        >
-                                            Xem file hiện tại
-                                        </a>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex justify-end gap-2 pt-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setOpen(false)}
-                            >
-                                Hủy bỏ
-                            </Button>
-                            <Button type="submit"
-                                    className={`${type === "approved" ? "hidden" : ""}`}
-                                    disabled={pendingCreate || pendingUpdate || pendingReapprove}>
-                                {pendingCreate || pendingUpdate || pendingReapprove ? (
-                                    <Loader2 className="animate-spin mr-2 h-4 w-4"/>
-                                ) : null}
-                                {type === "pending" ? "Cập nhật" : type === "rejected" ? "Yêu cầu duyệt lại" : "Tạo hợp đồng"}
-                            </Button>
-                        </div>
-                    </form>
-                </Form>
+                            <div className="flex justify-end gap-2 pt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setOpen(false)}
+                                >
+                                    Hủy bỏ
+                                </Button>
+                                <Button type="submit"
+                                        className={`${type === "approved" ? "hidden" : ""}`}
+                                        disabled={pendingCreate || pendingUpdate || pendingReapprove}>
+                                    {pendingCreate || pendingUpdate || pendingReapprove ? (
+                                        <Loader2 className="animate-spin mr-2 h-4 w-4"/>
+                                    ) : null}
+                                    {type === "pending" ? "Cập nhật" : type === "rejected" ? "Yêu cầu duyệt lại" : "Tạo hợp đồng"}
+                                </Button>
+                            </div>
+                        </form>
+                    </Form>
                 )}
             </DialogContent>
         </Dialog>

@@ -52,8 +52,8 @@ const SetupWorkScheduleRegister = () => {
             form.reset({
                 name: workSchedule.work_schedule_name,
                 office: workSchedule.office_id,
-                start_date: workSchedule.effective_date.split('T')[0],
-                end_date: workSchedule.expiration_date.split('T')[0],
+                start_date: workSchedule.effective_date?.split('T')[0],
+                end_date: workSchedule.expiration_date?.split('T')[0],
             });
 
             // Convert weekdays data to WeekdaySelection format
@@ -103,7 +103,6 @@ const SetupWorkScheduleRegister = () => {
                 order: day.order || 0
             })),
         };
-        console.log(payload);
         registerMutation.mutate(payload);
     };
 

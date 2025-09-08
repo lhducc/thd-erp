@@ -84,7 +84,7 @@ func (h *ContractHandler) CreateContract() gin.HandlerFunc {
 			}
 
 			objectName := uuid.New().String() + ext
-			if err := minIO.UploadImageToMinIO(c.Request.Context(), minIO.ContractBucket, objectName, file, header.Size, contentType, 30); err != nil {
+			if err := minIO.UploadImageToMinIO(c.Request.Context(), minIO.ContractBucket, objectName, file, header.Size, contentType, 0); err != nil {
 				utils.ResponseMessage(c, fmt.Sprintf("Upload file failed: %v", err), http.StatusInternalServerError, nil)
 				return
 			}
@@ -302,7 +302,7 @@ func (h *ContractHandler) UpdateContract() gin.HandlerFunc {
 				}
 
 				objectName := uuid.New().String() + ext
-				if err := minIO.UploadImageToMinIO(c.Request.Context(), minIO.ContractBucket, objectName, file, header.Size, contentType, 30); err != nil {
+				if err := minIO.UploadImageToMinIO(c.Request.Context(), minIO.ContractBucket, objectName, file, header.Size, contentType, 0); err != nil {
 					utils.ResponseMessage(c, fmt.Sprintf("Upload file failed: %v", err), http.StatusInternalServerError, nil)
 					return
 				}

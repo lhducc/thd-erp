@@ -48,24 +48,27 @@ func UploadImageToMinIO(
 		log.Println("Created bucket:", bucketName)
 
 		// Set bucket policy to allow public read access
-		err = SetBucketPublicReadPolicy(minioClient, bucketName)
-		if err != nil {
+		if err := SetBucketPublicReadPolicy(minioClient, bucketName); err != nil {
 			log.Printf("Warning: Failed to set public read policy for bucket %s: %v", bucketName, err)
 		}
 
+		// Apply lifecycle if requested (lifeCycleTimeDay > 0). 0 means keep objects indefinitely.
 		if lifeCycleTimeDay > 0 {
-			err = SetupLifecycle(minioClient, bucketName, lifeCycleTimeDay)
-			if err != nil {
-				log.Fatalf("Failed to setup lifecycle: %v", err)
+			if err := SetupLifecycle(minioClient, bucketName, lifeCycleTimeDay); err != nil {
+				log.Printf("Warning: Failed to setup lifecycle for bucket %s: %v", bucketName, err)
 			}
-		} else {
-			return fmt.Errorf("lifecycle time must be greater than 0")
 		}
 	} else {
 		// Bucket exists, ensure it has public read policy
-		err = SetBucketPublicReadPolicy(minioClient, bucketName)
-		if err != nil {
+		if err := SetBucketPublicReadPolicy(minioClient, bucketName); err != nil {
 			log.Printf("Warning: Failed to set public read policy for existing bucket %s: %v", bucketName, err)
+		}
+
+		// If lifecycle requested, attempt to apply/update rule on existing bucket.
+		if lifeCycleTimeDay > 0 {
+			if err := SetupLifecycle(minioClient, bucketName, lifeCycleTimeDay); err != nil {
+				log.Printf("Warning: Failed to setup lifecycle for existing bucket %s: %v", bucketName, err)
+			}
 		}
 	}
 
@@ -91,7 +94,7 @@ func GeneratePresignedURL(
 	// Use reverse proxy URL instead of direct MinIO access
 	// This avoids certificate issues by serving through the main nginx proxy
 	publicEndpoint := strings.TrimRight(config.MinIO.PublicMinioEndPoint, "/")
-	
+
 	// If public endpoint is not configured, use default reverse proxy path
 	if publicEndpoint == "" || strings.Contains(publicEndpoint, "192.168.1.58:9000") {
 		// Use the reverse proxy through nginx
@@ -101,9 +104,9 @@ func GeneratePresignedURL(
 	// Return direct object URL through reverse proxy (bucket has public read policy)
 	directURL := fmt.Sprintf("%s/%s/%s", publicEndpoint, bucketNameStr, objectName)
 	log.Printf("Generated reverse proxy object URL: %s", directURL)
-	
+
 	return directURL, nil
-}// auto delete file in bucket after lifeTimeDay
+} // auto delete file in bucket after lifeTimeDay
 func SetupLifecycle(minioClient *minio.Client, bucketName Bucket, lifeTimeDay int) error {
 	ctx := context.Background()
 

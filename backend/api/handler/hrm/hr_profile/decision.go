@@ -89,7 +89,7 @@ func (h *DecisionHandler) CreateDecision() gin.HandlerFunc {
 				// generate unique object name (uuid + original ext)
 				objectName := uuid.New().String() + ext
 				// use UploadImageToMinIO helper
-				if err := minIO.UploadImageToMinIO(c.Request.Context(), minIO.DecisionBucket, objectName, file, header.Size, contentType, 30); err != nil {
+				if err := minIO.UploadImageToMinIO(c.Request.Context(), minIO.DecisionBucket, objectName, file, header.Size, contentType, 0); err != nil {
 					utils.ResponseMessage(c, fmt.Sprintf("Upload file failed: %v", err), http.StatusInternalServerError, nil)
 					return
 				}

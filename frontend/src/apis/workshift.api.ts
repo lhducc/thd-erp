@@ -12,6 +12,16 @@ export const getAllWorkshiftApi = async (): Promise<Workshift[]> => {
     }
 };
 
+export const getRegisterWorkshiftApi = async () => {
+    try {
+        const response = await api.get("/workshifts/allow-register");
+        return response.data.data
+    } catch (error) {
+        console.error("Error fetching all workshifts API:", error);
+        throw error;
+    }
+};
+
 export const createWorkshiftApi = async (payload: Omit<WorkShiftRequest, 'workshift_id'>): Promise<Workshift> => {
     const response = await api.post("/workshifts", payload);
     return response.data.data

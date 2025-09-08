@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {
     deleteEmployeeWorkshiftApi, getAllWorkshiftApi,
-    getEmployeeWorkshiftsApi,
+    getEmployeeWorkshiftsApi, getRegisterWorkshiftApi,
     registerEmployeeWorkshiftApi, updateEmployeeWorkshiftApi
 } from "@/apis/workshift.api.ts";
 import type { EmployeeWorkshift } from '@/types/employee-workshift';
@@ -83,8 +83,8 @@ const RegisterWorkshift = () => {
     const {
         data: allWorkshifts,
     } = useQuery({
-        queryKey: ["workshifts"],
-        queryFn: getAllWorkshiftApi,
+        queryKey: ["register-workshifts"],
+        queryFn: getRegisterWorkshiftApi,
     });
 
     // Mutations

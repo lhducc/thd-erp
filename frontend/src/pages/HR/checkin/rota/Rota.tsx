@@ -118,7 +118,7 @@ const DayCell = memo(({
                         >
                             <div className="flex justify-between items-center">
                                 <p className="text-sm font-medium min-w-[50px]">
-                                    {shift.workshift_name}
+                                    {shift.workshift_name} - {shift.date}
                                 </p>
                                 <button onClick={() => {
                                     deleteMutation.mutate(shift.workshift_id);
@@ -381,7 +381,7 @@ const Rota = () => {
     });
 
     const getDayName = useCallback((date: Date): string => {
-        return date.toLocaleDateString('en-US', {weekday: 'long'}).toLowerCase();
+        return date?.toLocaleDateString('en-US', {weekday: 'long'}).toLowerCase();
     }, []);
 
     const handleDragEnd = useCallback((result: DropResult) => {
@@ -501,26 +501,31 @@ const Rota = () => {
         setSelectedSchedule(prev => prev === scheduleName ? null : scheduleName);
     }, []);
 
-    // Hàm mới để lấy ca làm việc thực tế của nhân viên
+    // Hàm để lấy ca làm việc thực tế của nhân viên
     const getActualEmployeeShift = useCallback((employeeId: string, dayIndex: number) => {
         const day = monthDays[dayIndex];
-        // Sửa: Lấy ngày theo định dạng YYYY-MM-DD
-        const dayString = `${day.getFullYear()}-${(day.getMonth() + 1).toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
+
+        // Lấy ngày theo định dạng YYYY-MM-DD
+        const dayString = `${day.getFullYear()}-${(day.getMonth() + 1)
+            .toString()
+            .padStart(2, "0")}-${day.getDate().toString().padStart(2, "0")}`;
 
         const employeeShifts = processedEmployeeWorkshifts[employeeId] || [];
 
-        return employeeShifts.filter((shift: EmployeeWorkshift) => {
-            try {
-                const shiftDate = new Date(shift.date);
-                const shiftDateString = `${shiftDate.getFullYear()}-${(shiftDate.getMonth() + 1).toString().padStart(2, '0')}-${shiftDate.getDate().toString().padStart(2, '0')}`;
-
-                return shiftDateString === dayString;
-            } catch (error) {
-                console.error('Error parsing date:', shift.date, error);
-                return false;
-            }
-        }).map((shift: EmployeeWorkshift) => shift.workshift);
+        return employeeShifts
+            .filter((shift: EmployeeWorkshift) => {
+                try {
+                    // Nếu shift.date đã là ISO thì cắt phần ngày trực tiếp
+                    const shiftDateString = shift.date.substring(0, 10); // "YYYY-MM-DD"
+                    return shiftDateString === dayString;
+                } catch (error) {
+                    console.error("Error parsing date:", shift.date, error);
+                    return false;
+                }
+            })
+            .map((shift: EmployeeWorkshift) => shift.workshift);
     }, [monthDays, processedEmployeeWorkshifts]);
+
 
     // Hàm kiểm tra xem ca thật và ca dự đoán có trùng nhau không
     const isShiftOverlap = useCallback((actualShift: Workshift, scheduledShift: any): boolean => {
@@ -534,8 +539,14 @@ const Rota = () => {
         const employee = shiftAllocation.find(e => e.employee_id === employeeId);
         if (!employee || !employee.schedules || employee.schedules.length === 0) return null;
 
-        const dayName = getDayName(monthDays[dayIndex]);
+        const day = monthDays[dayIndex];
+        if (!day) return null;
+
+        const dayName = getDayName(day);
         for (const schedule of employee.schedules) {
+            if (schedule.is_schedule_auto === false) {
+                continue; // Bỏ qua schedule nếu is_schedule_auto là false
+            }
             if (selectedSchedule && schedule.work_schedule_name !== selectedSchedule) {
                 continue;
             }

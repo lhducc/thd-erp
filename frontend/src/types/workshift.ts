@@ -4,6 +4,14 @@ export enum TimeOfDayEnum {
     Evening = "Tối",
     AllDay = "Cả ngày",
 }
+export type WorkScheduleShift = {
+    work_schedule_shift_id: number;
+    work_schedule_id: number;
+    week_day: WeekDayEnum;
+    workshift_id: string;
+    order: number;
+    work_shift: Workshift;  // tham chiếu đến type Workshift ở trên
+};
 
 export type Workshift = {
     workshift_id: string;

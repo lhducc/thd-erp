@@ -65,7 +65,7 @@ const AttendanceManagementPage = () => {
             cell: ({ row }) => (
                 <input
                     type="checkbox"
-                    checked={row.original.status}
+                    checked={row.original.status === "active"}
                     readOnly
                 />
             ),

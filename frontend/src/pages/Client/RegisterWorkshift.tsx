@@ -87,6 +87,17 @@ const RegisterWorkshift = () => {
         queryFn: getRegisterWorkshiftApi,
     });
 
+
+    const filteredWorkshifts = allWorkshifts
+        ?.filter(ws => ws.work_shift !== null) // lọc ca hợp lệ
+        ?.map(ws => ({
+            id: ws.workshift_id,
+            name: ws.work_shift.workshift_name,
+            start: ws.work_shift.start_time,
+            end: ws.work_shift.end_time
+        }));
+
+
     // Mutations
     const registerMutation = useMutation({
         mutationFn: ({ employee_id, work_shift_id, date }:
@@ -316,11 +327,12 @@ const RegisterWorkshift = () => {
                                 disabled={registerMutation.isPending || updateMutation.isPending}
                             >
                                 <option value="">-- Chọn ca --</option>
-                                {allWorkshifts?.map((workshift) => (
-                                    <option key={workshift.workshift_id} value={workshift.workshift_id}>
-                                        {workshift.workshift_name} ({workshift.start_time} - {workshift.end_time})
+                                {filteredWorkshifts?.map((ws, index) => (
+                                    <option key={`${ws.code}-${index}`} value={ws.code}>
+                                        {ws.name}
                                     </option>
                                 ))}
+
                             </select>
                         </div>
 

@@ -5,6 +5,7 @@ import type {RegisterWorkshiftRequest} from "@/types/employee-workshift.ts";
 export const getAllEmployeeWorkshiftsApi = async (currentMonth: number, currentYear: number): Promise<DocumentType[]> => {
     try {
         const response = await api.get(`/employee-workshifts/all?month=${currentMonth}&year=${currentYear}`);
+        console.log(response.data.data)
         return response.data.data;
     } catch (error: any) {
         console.error("Error fetching all contracts API:", error);

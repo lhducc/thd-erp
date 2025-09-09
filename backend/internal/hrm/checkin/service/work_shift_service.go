@@ -139,6 +139,9 @@ func (biz *WorkShiftService) GetListShiftForRegister(ctx context.Context, employ
 	if &employee == nil {
 		return nil, errors.New("nhân viên không tồn tại")
 	}
+	if &employee.ScheduleID == nil {
+		return nil, errors.New("nhân viên chưa được gán lịch làm việc")
+	}
 	schedule, err := biz.scheduleRepo.GetByID(ctx, *employee.ScheduleID)
 	if err != nil {
 		return nil, fmt.Errorf("lỗi khi lấy thông tin lịch làm việc: %w", err)

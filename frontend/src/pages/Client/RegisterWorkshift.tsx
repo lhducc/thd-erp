@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {
-    deleteEmployeeWorkshiftApi, getAllWorkshiftApi,
+    deleteEmployeeWorkshiftApi, deleteEmployeeWorkshiftByEmployeeApi, getAllWorkshiftApi,
     getEmployeeWorkshiftsApi, getRegisterWorkshiftApi,
     registerEmployeeWorkshiftApi, updateEmployeeWorkshiftApi
 } from "@/apis/workshift.api.ts";
@@ -123,7 +123,7 @@ const RegisterWorkshift = () => {
     });
 
     const deleteMutation = useMutation({
-        mutationFn: (id: number) => deleteEmployeeWorkshiftApi(id),
+        mutationFn: (id: number) => deleteEmployeeWorkshiftByEmployeeApi(id),
         onSuccess: () => {
             toast.success('Xóa ca làm việc thành công!');
             queryClient.invalidateQueries({ queryKey: ["employeeWorkshifts"] });

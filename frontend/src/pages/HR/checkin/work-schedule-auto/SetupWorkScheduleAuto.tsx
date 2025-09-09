@@ -92,7 +92,8 @@ const SetupWorkScheduleAuto = () => {
             isEditMode ? updateWorkshiftSchedule(id || "", data) : createWorkshiftSchedule(data),
         onSuccess: async () => {
             toast.success(isEditMode ? "Cập nhật lịch làm việc thành công" : "Tạo lịch làm việc thành công");
-            await queryClient.invalidateQueries({queryKey: ["work-schedule", "work-schedules", id]})
+            await queryClient.invalidateQueries({queryKey: ["work-schedule"]})
+            await queryClient.invalidateQueries({queryKey: ["work-schedules", id]})
             navigate(PATH.WORK_SCHEDULE);
         },
         onError: (error: Error) => {
@@ -118,18 +119,19 @@ const SetupWorkScheduleAuto = () => {
         },
     });
 
+    if (Object.keys(form.formState.errors).length > 0) {
+        console.log("Form Errors:", form.formState.errors);
+    }
+
+
     useEffect(() => {
         if (isEditMode && workSchedule && workshifts && offices) {
-            console.log("WorkSchedule structure:", workSchedule);
-            console.log("Office in workSchedule:", workSchedule.office);
-
             // Kiểm tra cấu trúc thực tế
             const officeId = workSchedule.office_id ||
                 workSchedule.office?.office_id ||
                 workSchedule.office_id ||
                 "";
 
-            console.log("Final officeId:", officeId);
             const days = Array.from({ length: 7 }, (_, i) => {
                 const dayOfWeek = i + 2;
                 const weekdayKey = WEEKDAY_MAP[dayOfWeek];
@@ -161,7 +163,29 @@ const SetupWorkScheduleAuto = () => {
         return !(end1 <= start2 || start1 >= end2);
     };
 
-    const onSubmit = (data: AutoScheduleFormValues) => {
+    const onSubmit = async (data: AutoScheduleFormValues) => {
+        // Kiểm tra lại validation trước khi submit
+        const validatedDays = data.days.map(day => {
+            if (day.enabled) {
+                // Đảm bảo không có ca nào bị rỗng
+                const validShifts = day.shifts.filter(shift => shift !== "");
+                return {
+                    ...day,
+                    shifts: validShifts.length > 0 ? validShifts : [""]
+                };
+            }
+            return day;
+        });
+
+        // Cập nhật lại form values
+        form.setValue('days', validatedDays);
+
+        // Kiểm tra lại validation
+        const isValid = await form.trigger('days');
+        if (!isValid) {
+            toast.error("Vui lòng kiểm tra lại thông tin các ca làm việc");
+            return;
+        }
         const weekdays = data.days
             .filter((day): day is Day & { enabled: true; shifts: string[] } =>
                 day.enabled && day.shifts.length > 0 && day.shifts.every(shift => shift !== "")
@@ -251,12 +275,23 @@ const SetupWorkScheduleAuto = () => {
                     type="checkbox"
                     checked={day.enabled}
                     onChange={() => {
-                        const days = [...form.getValues('days')];
-                        days[index].enabled = !days[index].enabled;
-                        if (!days[index].enabled) {
-                            days[index].shifts = [""];
+                        let days = [...form.getValues('days')];
+                        const newEnabledState = !days[index].enabled;
+
+                        if (!newEnabledState) {
+                            // Bỏ tick -> loại bỏ hẳn ngày khỏi mảng
+                            days = days.filter((_, i) => i !== index);
+                        } else {
+                            // Tick lại -> thêm ngày mới với default shift
+                            days.splice(index, 0, {
+                                day_of_week: index + 2,
+                                enabled: true,
+                                shift_count: 1,
+                                shifts: workshifts?.[0]?.workshift_id ? [workshifts[0].workshift_id] : [""],
+                            });
                         }
-                        form.setValue('days', days);
+
+                        form.setValue("days", days, { shouldValidate: true });
                     }}
                 />
                 <span className="w-16">{dayNames[index]}</span>

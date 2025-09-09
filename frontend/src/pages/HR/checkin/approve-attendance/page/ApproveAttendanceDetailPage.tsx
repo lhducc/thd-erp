@@ -133,24 +133,24 @@ const ApproveAttendanceDetailPage = () => {
             accessorKey: "AttendanceCategory.attendance_category_name",
             header: "Hình thức chấm công",
         },
-        {
-            accessorKey: "gps_location",
-            header: "Vị trí GPS",
-            cell: ({row}) => {
-                if (!row.original.latitude || !row.original.longitude) return null;
-                return (
-                    <button
-                        onClick={() => setSelectedLocation({
-                            lat: row.original.latitude!,
-                            lng: row.original.longitude!
-                        })}
-                        className="text-blue-500 hover:underline"
-                    >
-                        Xem bản đồ
-                    </button>
-                )
-            }
-        },
+        // {
+        //     accessorKey: "gps_location",
+        //     header: "Vị trí GPS",
+        //     cell: ({row}) => {
+        //         if (!row.original.latitude || !row.original.longitude) return null;
+        //         return (
+        //             <button
+        //                 onClick={() => setSelectedLocation({
+        //                     lat: row.original.latitude!,
+        //                     lng: row.original.longitude!
+        //                 })}
+        //                 className="text-blue-500 hover:underline"
+        //             >
+        //                 Xem bản đồ
+        //             </button>
+        //         )
+        //     }
+        // },
         {
             accessorKey: "timestamp",
             header: "Thời gian yêu cầu",

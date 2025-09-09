@@ -12,7 +12,7 @@ export const createWorkshiftSchedule = async (data: any): Promise<void> => {
     }
 }
 
-export const getWorkSchedule = async () : Promise<WorkSchedule[]> => {
+export const getWorkSchedule = async (): Promise<WorkSchedule[]> => {
     try {
         const response = await api.get("/work-schedule");
         return response.data.data;
@@ -22,14 +22,9 @@ export const getWorkSchedule = async () : Promise<WorkSchedule[]> => {
     }
 }
 
-export const getAllWorkScheduleRegister = async () : Promise<WorkScheduleRegister[]> => {
-    try {
-        const response = await api.get("/work-schedule-register/register");
-        return response.data.data;
-    } catch (error) {
-        console.error("Error getting contract calendar:", error.message);
-        throw new Error(error.response?.data?.error || "Lỗi khi lấy lịch làm việc");
-    }
+export const getAllWorkScheduleRegister = async (): Promise<WorkScheduleRegister[]> => {
+    const response = await api.get("/work-schedule-register/register");
+    return response.data.data;
 }
 
 export const getWorkScheduleById = async (id: string): Promise<WorkScheduleResponse> => {
@@ -42,7 +37,7 @@ export const getWorkScheduleById = async (id: string): Promise<WorkScheduleRespo
     }
 }
 
-export const getWorkScheduleRegisterById = async (id?: string):Promise<WorkScheduleResponse> => {
+export const getWorkScheduleRegisterById = async (id?: string): Promise<WorkScheduleResponse> => {
     try {
         const response = await api.get(`/work-schedule-register/${id}`);
         return response.data.data;
@@ -77,7 +72,7 @@ export const updateWorkScheduleRegisterApi = async (id?: number, data: WorkSched
     }
 }
 
-export const assignWorkshiftSchedule = async (id: string, payload:any) => {
+export const assignWorkshiftSchedule = async (id: string, payload: any) => {
     try {
         const result = {
             managers: payload
@@ -91,7 +86,7 @@ export const assignWorkshiftSchedule = async (id: string, payload:any) => {
     }
 }
 
-export const assignWorkshiftScheduleAuto = async (id: string, payload:any) => {
+export const assignWorkshiftScheduleAuto = async (id: string, payload: any) => {
     try {
         console.log(payload)
         const response = await api.post(`/work-schedule/assign/${id}`, payload);
@@ -112,7 +107,7 @@ export const registerWorkScheduleRegisterApi = async (payload: WorkScheduleRegis
     }
 };
 
-export const getWorkScheduleByIdApi = async (id : string) => {
+export const getWorkScheduleByIdApi = async (id: string) => {
     const response = await api.get(`/work-schedule-register/${id}`)
     return response.data;
 }

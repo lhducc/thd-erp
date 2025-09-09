@@ -8,9 +8,9 @@ const HISTORY_ATTENDANCE: Record<string, ReactNode> = {
     manager: <ManagementHistoryAttendance/>,
     employee: <AttendanceReport/>,
 };
-
 const AttendanceHistory = () => {
     const {currentUser} = useAuth();
+console.log(currentUser?.role);
     if (!currentUser) return null;
     return <>{HISTORY_ATTENDANCE[currentUser.role]}</>;
 };

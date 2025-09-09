@@ -18,7 +18,6 @@ import {useEffect} from "react";
 import Loading from "@/components/Loading.tsx";
 import {Skeleton} from "@/components/ui/skeleton.tsx";
 import {Building2} from "lucide-react";
-import {useAuth} from "@/context/AuthContext.tsx";
 
 // Strongly typed enums
 export const RepeatTypeEnum = z.enum(["weekly", "monthly"]);
@@ -38,24 +37,31 @@ const WEEKDAY_MAP: Record<number, WeekDay> = {
 // Strongly typed week days
 type WeekDay = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
 
-// Strongly typed day schema
+// Strongly typed day schema với validation
 const daySchema = z.object({
-    day_of_week: z.number().min(2).max(8), // 2=Monday, 8=Sunday
+    day_of_week: z.number().min(2).max(8),
     enabled: z.boolean(),
     shift_count: z.number().min(1),
-    shifts: z.array(z.string()) // array of workshift_id
+    shifts: z.array(z.string().min(1, "Ca làm việc là bắt buộc"))
+        .refine(
+            (shifts) => shifts.every(shift => shift !== ""),
+            "Tất cả ca làm việc phải được chọn"
+        )
 });
 type Day = z.infer<typeof daySchema>;
 
-// Strongly typed form schema
+// Strongly typed form schema với validation đầy đủ
 const auto_schedule = z.object({
-    work_schedule_name: z.string().min(1),
-    office_id: z.string().min(1),
+    work_schedule_name: z.string().min(1, "Tên lịch làm việc là bắt buộc"),
+    office_id: z.string().optional(),
     repeat_type: RepeatTypeEnum,
-    repeat_cycle: z.coerce.number().min(1),
-    effective_date: z.string().min(1),
-    expiration_date: z.string().min(1),
-    days: z.array(daySchema),
+    repeat_cycle: z.coerce.number().min(1, "Chu kỳ lặp phải lớn hơn 0"),
+    effective_date: z.string().min(1, "Ngày hiệu lực là bắt buộc"),
+    expiration_date: z.string().optional(),
+    days: z.array(daySchema).refine(
+        (days) => days.some(day => day.enabled && day.shifts.length > 0),
+        "Ít nhất một ngày phải được chọn và có ca làm việc"
+    ),
 });
 type AutoScheduleFormValues = z.infer<typeof auto_schedule>;
 
@@ -66,8 +72,8 @@ type WorkSchedulePayload = Omit<AutoScheduleFormValues, 'days'> & {
         week_day: WeekDay;
         workshift_id: string;
     }[];
-    effective_date: string;
-    expiration_date: string;
+    effective_date?: string;
+    expiration_date?: string;
 };
 
 const SetupWorkScheduleAuto = () => {
@@ -107,13 +113,23 @@ const SetupWorkScheduleAuto = () => {
                 day_of_week: i + 2,
                 enabled: false,
                 shift_count: 1,
-                shifts: [],
+                shifts: [""],
             })),
         },
     });
 
     useEffect(() => {
         if (isEditMode && workSchedule && workshifts && offices) {
+            console.log("WorkSchedule structure:", workSchedule);
+            console.log("Office in workSchedule:", workSchedule.office);
+
+            // Kiểm tra cấu trúc thực tế
+            const officeId = workSchedule.office_id ||
+                workSchedule.office?.office_id ||
+                workSchedule.office_id ||
+                "";
+
+            console.log("Final officeId:", officeId);
             const days = Array.from({ length: 7 }, (_, i) => {
                 const dayOfWeek = i + 2;
                 const weekdayKey = WEEKDAY_MAP[dayOfWeek];
@@ -125,17 +141,17 @@ const SetupWorkScheduleAuto = () => {
                     day_of_week: dayOfWeek,
                     enabled: shiftsForDay.length > 0,
                     shift_count: shiftsForDay.length || 1,
-                    shifts: shiftsForDay?.map(shift => shift?.workshift_id)
+                    shifts: shiftsForDay?.map(shift => shift?.workshift_id) || [""]
                 };
             });
 
             form.reset({
                 work_schedule_name: workSchedule.work_schedule_name,
-                office_id: workSchedule.office_id,
+                office_id: officeId,
                 repeat_type: workSchedule.repeat_type as RepeatTypeEnum,
                 repeat_cycle: workSchedule.repeat_cycle || 1,
                 effective_date: workSchedule.effective_date.split('T')[0],
-                expiration_date: workSchedule.expiration_date.split('T')[0],
+                expiration_date: workSchedule?.expiration_date?.split('T')[0],
                 days: days
             });
         }
@@ -148,7 +164,7 @@ const SetupWorkScheduleAuto = () => {
     const onSubmit = (data: AutoScheduleFormValues) => {
         const weekdays = data.days
             .filter((day): day is Day & { enabled: true; shifts: string[] } =>
-                day.enabled && day.shifts.length > 0
+                day.enabled && day.shifts.length > 0 && day.shifts.every(shift => shift !== "")
             )
             .flatMap((day) =>
                 day.shifts.map((shiftId) => ({
@@ -163,12 +179,23 @@ const SetupWorkScheduleAuto = () => {
             repeat_type: data.repeat_type,
             status: "active",
             weekdays,
-            effective_date: `${data.effective_date}T00:00:00Z`,
-            expiration_date: `${data.expiration_date}T00:00:00Z`,
+            effective_date: data.effective_date ? `${data.effective_date}T00:00:00Z` : undefined,
+            expiration_date: data.expiration_date ? `${data.expiration_date}T00:00:00Z` : undefined,
         };
 
         createWorkSchedule(finalPayload);
     };
+
+    useEffect(() => {
+        if (isEditMode && workSchedule && offices) {
+            const officeId = workSchedule.office?.office_id || workSchedule.office_id || "";
+
+            // Set giá trị sau một khoảng delay nhỏ để đảm bảo Select component đã render
+            setTimeout(() => {
+                form.setValue("office_id", officeId);
+            }, 100);
+        }
+    }, [workSchedule, offices, isEditMode, form]);
 
     if (isEditMode && (pendingWorkSchedule || !offices || pendingWorkshift)) {
         return <Loading />;
@@ -187,28 +214,32 @@ const SetupWorkScheduleAuto = () => {
         ) || [];
 
         return (
-            <Select
-                key={shiftIndex}
-                onValueChange={(value) => {
-                    const days = [...form.getValues('days')];
-                    const newShifts = [...days[dayIndex].shifts];
-                    newShifts[shiftIndex] = value;
-                    days[dayIndex].shifts = newShifts;
-                    form.setValue('days', days);
-                }}
-                value={day.shifts[shiftIndex]}
-            >
-                <SelectTrigger className="w-52">
-                    <SelectValue placeholder="Chọn ca" />
-                </SelectTrigger>
-                <SelectContent>
-                    {availableShifts.map((ws) => (
-                        <SelectItem key={ws.workshift_id} value={ws.workshift_id}>
-                            {ws.workshift_name} ({ws.start_time} - {ws.end_time})
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <FormField
+                control={form.control}
+                name={`days.${dayIndex}.shifts.${shiftIndex}`}
+                render={({ field }) => (
+                    <FormItem>
+                        <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                        >
+                            <FormControl>
+                                <SelectTrigger className="w-52">
+                                    <SelectValue placeholder="Chọn ca" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {availableShifts.map((ws) => (
+                                    <SelectItem key={ws.workshift_id} value={ws.workshift_id}>
+                                        {ws.workshift_name} ({ws.start_time} - {ws.end_time})
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
         );
     };
 
@@ -223,7 +254,7 @@ const SetupWorkScheduleAuto = () => {
                         const days = [...form.getValues('days')];
                         days[index].enabled = !days[index].enabled;
                         if (!days[index].enabled) {
-                            days[index].shifts = [];
+                            days[index].shifts = [""];
                         }
                         form.setValue('days', days);
                     }}
@@ -290,42 +321,45 @@ const SetupWorkScheduleAuto = () => {
                             <FormField
                                 control={form.control}
                                 name="office_id"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Văn phòng</FormLabel>
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            value={field.value}
-                                            disabled={isEditMode}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger className="h-10 w-full">
-                                                    <SelectValue placeholder="Chọn văn phòng" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {!offices ? (
-                                                    <SelectItem value="loading" disabled>
-                                                        <div className="flex items-center gap-2">
-                                                            <Skeleton className="h-4 w-4 rounded-full" />
-                                                            <span>Đang tải...</span>
-                                                        </div>
-                                                    </SelectItem>
-                                                ) : (
-                                                    offices?.map((item) => (
-                                                        <SelectItem key={item.office_id} value={item.office_id}>
+                                render={({ field }) => {
+                                    return (
+                                        <FormItem>
+                                            <FormLabel>Văn phòng</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                value={field.value || ""}
+                                                disabled={isEditMode}
+                                                defaultValue={field.value}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger className="h-10 w-full">
+                                                        <SelectValue placeholder="Chọn văn phòng" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {!offices ? (
+                                                        <SelectItem value="loading" disabled>
                                                             <div className="flex items-center gap-2">
-                                                                <Building2 className="w-4 h-4" />
-                                                                {item.office_name}
+                                                                <Skeleton className="h-4 w-4 rounded-full" />
+                                                                <span>Đang tải...</span>
                                                             </div>
                                                         </SelectItem>
-                                                    ))
-                                                )}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                                    ) : (
+                                                        offices?.map((item) => (
+                                                            <SelectItem key={item.office_id} value={item.office_id}>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Building2 className="w-4 h-4" />
+                                                                    {item.office_name}
+                                                                </div>
+                                                            </SelectItem>
+                                                        ))
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    );
+                                }}
                             />
 
                             <div className="w-full flex gap-5">
@@ -383,7 +417,6 @@ const SetupWorkScheduleAuto = () => {
                                                 <Input
                                                     {...field}
                                                     type="date"
-                                                    min={new Date().toISOString().split('T')[0]}
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -413,6 +446,12 @@ const SetupWorkScheduleAuto = () => {
 
                         <div className="space-y-2 w-full p-5 bg-white">
                             {form.watch('days').map((day, index) => renderDayRow(day, index))}
+                            {/* Hiển thị lỗi tổng cho days */}
+                            {form.formState.errors.days && (
+                                <p className="text-sm text-destructive">
+                                    {form.formState.errors.days.message}
+                                </p>
+                            )}
                         </div>
                     </div>
 

@@ -2,9 +2,9 @@ import { lazy, Suspense } from "react";
 import PATH from "@/constants/Path";
 import { settingRoutes } from "@/routes/setting";
 import Loading from "@/components/Loading";
-import AttendanceHistory from "@/pages/AttendanceHistory.tsx";
 import AttendanceReport from "@/pages/Client/attendance-report/AttendanceReport.tsx";
 import HistoryAttendance from "@/pages/Client/HistoryAttendance.tsx";
+import AttendanceHistory from "@/pages/AttendanceHistory.tsx";
 
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
@@ -25,7 +25,7 @@ const DecisionDetail = lazy(() => import("@/pages/DecisionDetailPage"));
 const AttendancePage = lazy(() => import("@/pages/Client/check-in/AttendancePage"));
 const RegisterWorkshift = lazy(() => import("@/pages/Client/RegisterWorkshift"));
 const Rota = lazy(() => import("@/pages/HR/checkin/rota/Rota.tsx"));
-const AttendantHistory = lazy(() => import("@/pages/AttendanceHistory.tsx"));
+// const AttendantHistory = lazy(() => import("@/pages/AttendanceHistory.tsx"));
 const AttendantHistoryDetail = lazy(() => import("@/pages/HR/checkin/AttendantHistoryDetail"));
 const TimesheetPage = lazy(() => import("@/pages/HR/checkin/timesheet/TimesheetPage"));
 const TimesheetDetail = lazy(() => import("@/pages/HR/checkin/timesheet/TimesheetDetail"));
@@ -70,14 +70,6 @@ export const hrRoutes = [
                 element: (
                     <Suspense fallback={<Loading />}>
                         <ApproveAttendanceDetailPage />
-                    </Suspense>
-                ),
-            },
-            {
-                path: PATH.ATTENDANT_HISTORY,
-                element: (
-                    <Suspense fallback={<Loading />}>
-                        <HistoryAttendance />
                     </Suspense>
                 ),
             },
@@ -185,14 +177,14 @@ export const hrRoutes = [
                     </Suspense>
                 ),
             },
-            // {
-            //     path: PATH.ATTENDANT_HISTORY,
-            //     element: (
-            //         <Suspense fallback={<Loading />}>
-            //             <AttendantHistory />
-            //         </Suspense>
-            //     ),
-            // },
+            {
+                path: PATH.ATTENDANT_HISTORY,
+                element: (
+                    <Suspense fallback={<Loading />}>
+                        <AttendanceHistory />
+                    </Suspense>
+                ),
+            },
             {
                 path: `${PATH.ATTENDANT_HISTORY}/:id`,
                 element: (

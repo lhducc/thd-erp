@@ -82,8 +82,6 @@ const HRSidebar = ({...props}: ComponentProps<typeof Sidebar>) => {
                 },
                 {
                     name: "Quản lý chấm công",
-
-
                     url: PATH.ATTENDANCE_MANAGEMENT,
                     child: [
                         {

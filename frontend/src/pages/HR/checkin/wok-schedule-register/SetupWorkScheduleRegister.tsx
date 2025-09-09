@@ -109,6 +109,16 @@ const SetupWorkScheduleRegister = () => {
     const handleWeekdaySelectionChange = (selections: WeekdaySelection[]) => {
         setWeekdays(selections);
     };
+    useEffect(() => {
+        if (isEditMode && workSchedule && offices) {
+            const officeId = workSchedule.office?.office_id || workSchedule.office_id || "";
+
+            // Set giá trị sau một khoảng delay nhỏ để đảm bảo Select component đã render
+            setTimeout(() => {
+                form.setValue("office", officeId);
+            }, 100);
+        }
+    }, [workSchedule, offices, isEditMode, form]);
 
     if (pendingWorkSchedule && isEditMode && pendingOffices && pendingWorkshifts) {
         return (

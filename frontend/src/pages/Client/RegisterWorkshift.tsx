@@ -87,15 +87,24 @@ const RegisterWorkshift = () => {
         queryFn: getRegisterWorkshiftApi,
     });
 
+    const getWorkshiftsForSelectedDay = () => {
+        if (!selectedDate || !allWorkshifts) return [];
 
-    const filteredWorkshifts = allWorkshifts
-        ?.filter(ws => ws.work_shift !== null) // lọc ca hợp lệ
-        ?.map(ws => ({
-            id: ws.workshift_id,
-            name: ws.work_shift.workshift_name,
-            start: ws.work_shift.start_time,
-            end: ws.work_shift.end_time
-        }));
+        // Chuyển đổi thứ từ Date object sang dạng string giống trong data
+        const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const dayIndex = selectedDate.getDay();
+        const currentDay = daysOfWeek[dayIndex];
+
+        // Lọc các ca làm việc cho thứ hiện tại
+        return allWorkshifts
+            .filter(ws => ws.week_day === currentDay && ws.work_shift !== null)
+            .map(ws => ({
+                id: ws.workshift_id,
+                name: ws.work_shift.workshift_name,
+                start: ws.work_shift.start_time,
+                end: ws.work_shift.end_time
+            }));
+    };
 
 
     // Mutations
@@ -181,11 +190,18 @@ const RegisterWorkshift = () => {
         }
     };
 
-    // Helper functions
     const getWorkshiftForDate = (date: Date): EmployeeWorkshift | undefined => {
         if (!employeeWorkshifts) return undefined;
         const dateStr = date.toISOString().split('T')[0];
         return employeeWorkshifts.find(ws =>
+            new Date(ws.date).toISOString().split('T')[0] === dateStr
+        );
+    };
+
+    const getWorkshiftsForDate = (date: Date): EmployeeWorkshift[] => {
+        if (!employeeWorkshifts) return [];
+        const dateStr = date.toISOString().split('T')[0];
+        return employeeWorkshifts.filter(ws =>
             new Date(ws.date).toISOString().split('T')[0] === dateStr
         );
     };
@@ -197,7 +213,7 @@ const RegisterWorkshift = () => {
     };
 
     const getWorkshiftName = (workshiftId: string) => {
-        return allWorkshifts?.find(ws => ws.workshift_id === workshiftId)?.workshift_name || 'Unknown';
+        return allWorkshifts?.find(ws => ws.workshift_id === workshiftId)?.work_shift.workshift_name || 'Unknown';
     };
 
     return (
@@ -266,7 +282,8 @@ const RegisterWorkshift = () => {
                         const day = date.getDate();
                         const isToday = date.toDateString() === new Date().toDateString();
                         const isPast = isDateInPast(date);
-                        const workshift = getWorkshiftForDate(date);
+                        const workshifts = getWorkshiftsForDate(date); // Đổi thành số nhiều
+
                         return (
                             <div
                                 key={index}
@@ -281,20 +298,24 @@ const RegisterWorkshift = () => {
                             >
                                 <div className="text-right font-medium text-xs sm:text-sm">{day}</div>
                                 <div className="mt-1 text-xs">
-                                    {workshift ? (
-                                        <div className="bg-blue-100 text-blue-800 p-1 rounded text-center">
-                                            {getWorkshiftName(workshift.workshift_id)}
-                                            {!isPast && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDelete(workshift?.id);
-                                                    }}
-                                                    className="text-red-500 text-xs ml-1"
-                                                >
-                                                    ×
-                                                </button>
-                                            )}
+                                    {workshifts.length > 0 ? (
+                                        <div className="space-y-1">
+                                            {workshifts.map((workshift) => (
+                                                <div key={workshift.id} className="bg-blue-100 text-blue-800 p-1 rounded text-center">
+                                                    {getWorkshiftName(workshift.workshift_id)}
+                                                    {!isPast && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDelete(workshift.id);
+                                                            }}
+                                                            className="text-red-500 text-xs ml-1"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
                                         </div>
                                     ) : isPast ? (
                                         <div className="text-gray-400">Không có ca</div>
@@ -327,9 +348,9 @@ const RegisterWorkshift = () => {
                                 disabled={registerMutation.isPending || updateMutation.isPending}
                             >
                                 <option value="">-- Chọn ca --</option>
-                                {filteredWorkshifts?.map((ws, index) => (
-                                    <option key={`${ws.code}-${index}`} value={ws.code}>
-                                        {ws.name}
+                                {getWorkshiftsForSelectedDay().map((ws) => (
+                                    <option key={ws.id} value={ws.id}>
+                                        {ws.name} ({ws.start} - {ws.end})
                                     </option>
                                 ))}
 

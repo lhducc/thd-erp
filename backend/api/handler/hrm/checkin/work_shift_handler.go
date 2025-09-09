@@ -139,6 +139,7 @@ func (h *WorkShiftHandler) GetWorkshiftForRegister() gin.HandlerFunc {
 			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
 			return
 		}
+		fmt.Println(result)
 		utils.ResponseMessage(c, "Danh sách ca làm việc được phép đăng ký của nhân viên", http.StatusOK, &result)
 	}
 }

@@ -573,7 +573,7 @@ const Rota = () => {
             const dayIndex = parseInt(dayIndexStr);
 
             if (dayIndex >= 0 && dayIndex < monthDays.length) {
-                const day = monthDays[dayIndex];
+                const day = monthDays[dayIndex + 1];
 
                 shifts.forEach(shift => {
                     shiftsToRegister.push({

@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Building2 } from "lucide-react";
@@ -41,7 +41,7 @@ const SetupWorkScheduleRegister = () => {
             end_date: ""
         },
     });
-    const {data: workSchedule, isLoading: pendingWorkSchedule} = useQuery(useWorkScheduleRegisterById(id))
+    const { data: workSchedule, isLoading: pendingWorkSchedule } = useWorkScheduleRegisterById(id);
     const { data: offices, isLoading: pendingOffices } = useOffice()
     const { data: workshifts, isLoading: pendingWorkshifts } = useQueryWorkshift()
     const navigate = useNavigate();
@@ -57,7 +57,7 @@ const SetupWorkScheduleRegister = () => {
             });
 
             // Convert weekdays data to WeekdaySelection format
-            const initialWeekdays = workSchedule.weekdays.map(day => ({
+            const initialWeekdays = workSchedule?.weekdays?.map(day => ({
                 week_day: day.week_day,
                 workshift_id: day.workshift_id,
                 order: day.order
@@ -65,6 +65,7 @@ const SetupWorkScheduleRegister = () => {
             setWeekdays(initialWeekdays);
         }
     }, [workSchedule, isEditMode, form, offices, pendingOffices]);
+
     const queryClient = useQueryClient();
     const registerMutation = useMutation({
         mutationFn: isEditMode ?
@@ -76,8 +77,8 @@ const SetupWorkScheduleRegister = () => {
                 form.reset();
                 setWeekdays([]);
             }
-            await queryClient.invalidateQueries({queryKey: ["workScheduleRegisterById", id]})
-            await queryClient.invalidateQueries({queryKey: ["workScheduleRegister"]})
+            queryClient.removeQueries({queryKey: ["workScheduleRegisterById", id]})
+            queryClient.removeQueries({ queryKey: ["workScheduleRegister"] })
             navigate("/setup-work-schedule-register")
         },
         onError: (error) => {
@@ -85,6 +86,15 @@ const SetupWorkScheduleRegister = () => {
             console.error("Error:", error);
         },
     });
+
+    useEffect(() => {
+        return () => {
+            queryClient.removeQueries({
+                queryKey: ["workScheduleRegisterById", id],
+                exact: true
+            });
+        };
+    }, [id]);
 
     const onSubmit = (values: z.infer<typeof formSchema>) => {
         if (weekdays.length === 0) {

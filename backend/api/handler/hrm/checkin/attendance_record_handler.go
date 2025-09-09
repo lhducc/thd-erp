@@ -62,8 +62,8 @@ func (h *AttendanceRecordHandler) CreateAttendanceRecord() gin.HandlerFunc {
 				return
 			}
 		} else {
+			record.Status = variable.Pending
 		}
-		record.Status = variable.Pending
 		if category.IsCheckLocation == false && category.IsGPS == false {
 			record.Longitude = nil
 			record.Latitude = nil

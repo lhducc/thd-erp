@@ -30,6 +30,7 @@ services:
       - "8443"
     environment:
       - AUTO_MIGRATE=true
+      - TZ=Asia/Ho_Chi_Minh
     env_file:
       - ../.env
     depends_on:
@@ -39,6 +40,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    volumes:
+      - /usr/share/zoneinfo:/usr/share/zoneinfo:ro
     networks:
       - erp-network
     restart: unless-stopped

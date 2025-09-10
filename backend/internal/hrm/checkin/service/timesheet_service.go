@@ -19,7 +19,13 @@ import (
 )
 
 var vietnamLoc = func() *time.Location {
-	loc, _ := time.LoadLocation("Asia/Ho_Chi_Minh")
+	loc, err := time.LoadLocation("Asia/Ho_Chi_Minh")
+	if err != nil {
+		log.Printf("Failed to load Asia/Ho_Chi_Minh timezone: %v, falling back to UTC", err)
+		// You could also try loading from IANA database or use a fixed offset
+		loc = time.FixedZone("ICT", 7*60*60) // UTC+7
+	}
+	log.Println("Vietnam location loaded:", loc)
 	return loc
 }()
 
@@ -114,6 +120,7 @@ func (t *timesheetServiceImp) calculateForEmployee(
 	ts model.TimeSheet,
 	tsl *model.TimeSheetList,
 ) error {
+	log.Printf("vietnam location: %v", vietnamLoc)
 	// Check if context is cancelled before expensive operations
 	if ctx.Err() != nil {
 		return ctx.Err()
@@ -152,6 +159,10 @@ func (t *timesheetServiceImp) calculateForEmployee(
 	// Map day-shift
 	shiftMap := make(map[time.Time]model.EmployeeWorkshift)
 	for _, shift := range employeeShifts {
+		// Ensure shift.Date has a location before using it
+		if shift.Date.Location() == nil {
+			shift.Date = shift.Date.In(vietnamLoc)
+		}
 		dateKey := normalizeToDay(shift.Date, vietnamLoc)
 		shiftMap[dateKey] = shift
 	}
@@ -160,6 +171,14 @@ func (t *timesheetServiceImp) calculateForEmployee(
 	totalWorkDays := 0.0
 	totalLateMinutes := 0
 	lateShifts := 0
+
+	// Make sure both dates have proper location
+	if tsl.StartDate.Location() == nil {
+		tsl.StartDate = tsl.StartDate.In(vietnamLoc)
+	}
+	if tsl.EndDate.Location() == nil {
+		tsl.EndDate = tsl.EndDate.In(vietnamLoc)
+	}
 
 	currentDate := tsl.StartDate.In(vietnamLoc)
 	endDate := tsl.EndDate.In(vietnamLoc)
@@ -363,6 +382,21 @@ func (t *timesheetServiceImp) classifyRecords(records []model.AttendanceRecord,
 
 	for i := range records {
 		record := &records[i]
+
+		// Ensure record timestamp has a location before calling In()
+		if record.Timestamp.Location() == nil {
+			record.Timestamp = time.Date(
+				record.Timestamp.Year(),
+				record.Timestamp.Month(),
+				record.Timestamp.Day(),
+				record.Timestamp.Hour(),
+				record.Timestamp.Minute(),
+				record.Timestamp.Second(),
+				record.Timestamp.Nanosecond(),
+				vietnamLoc,
+			)
+		}
+
 		recordTime := record.Timestamp.In(vietnamLoc)
 
 		if checkinFrom != nil && checkinTo != nil {
@@ -393,6 +427,12 @@ func (t *timesheetServiceImp) classifyRecords(records []model.AttendanceRecord,
 }
 
 func normalizeToDay(t time.Time, loc *time.Location) time.Time {
+	// Check if the time has no location or has a nil location
+	if t.Location() == nil {
+		// If no location is set, create a new time with the provided location
+		t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), loc)
+	}
+
 	localTime := t.In(loc)
 	dayStart := time.Date(localTime.Year(), localTime.Month(), localTime.Day(), 0, 0, 0, 0, loc)
 	return dayStart
@@ -469,7 +509,7 @@ func (t *timesheetServiceImp) ManualAdjustWorkDay(
 	detail.WorkDaysAdjusted = adjustedWorkDays
 	detail.IsManuallyAdjusted = true
 	detail.AdjustmentBy = &adjustedBy
-	now := time.Now()
+	now := time.Now().In(vietnamLoc) // Use Vietnam timezone instead of UTC
 	detail.AdjustmentAt = &now
 
 	// update detail

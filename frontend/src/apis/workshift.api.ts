@@ -60,14 +60,10 @@ export const registerEmployeeWorkshiftApi = async (
     }
 };
 
-export const deleteEmployeeWorkshiftApi = async (id: number): Promise<void> => {
-    try {
-        await api.delete(`/employee-workshifts/${id}`);
-    } catch (error) {
-        console.error("Error deleting employee workshift:", error);
-        throw error;
-    }
-};
+export const deleteEmployeeWorkshiftApi = async (id: number) => {
+    const response = await api.delete(`/employee-workshifts/${id}`);
+    return response.data.data;
+}
 
 export const deleteEmployeeWorkshiftByEmployeeApi = async (id: number): Promise<void> => {
     try {

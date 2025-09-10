@@ -2,7 +2,7 @@ import {useAuth} from "@/context/AuthContext.tsx";
 import {lazy, type ReactNode} from "react";
 
 const ManagementHistoryAttendance = lazy(() => import("@/pages/HR/checkin/ManagementAttendantHistory.tsx"))
-const AttendanceReport = lazy(() => import("@/pages/Client/attendance-report/AttendanceReport"))
+const AttendanceReport = lazy(() => import("@/pages/Client/HistoryAttendance.tsx"))
 const HISTORY_ATTENDANCE: Record<string, ReactNode> = {
     admin: <ManagementHistoryAttendance/>,
     manager: <ManagementHistoryAttendance/>,

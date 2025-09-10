@@ -81,14 +81,21 @@ const RegisterWorkshift = () => {
     });
 
     const {
-        data: allWorkshifts,
+        data: registerWorkshifts,
     } = useQuery({
         queryKey: ["register-workshifts"],
         queryFn: getRegisterWorkshiftApi,
     });
 
+    const {
+        data: allWorkshifts,
+    } = useQuery({
+        queryKey: ["all-workshifts"],
+        queryFn: getAllWorkshiftApi,
+    });
+
     const getWorkshiftsForSelectedDay = () => {
-        if (!selectedDate || !allWorkshifts) return [];
+        if (!selectedDate || !registerWorkshifts) return [];
 
         // Chuyển đổi thứ từ Date object sang dạng string giống trong data
         const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -96,7 +103,7 @@ const RegisterWorkshift = () => {
         const currentDay = daysOfWeek[dayIndex];
 
         // Lọc các ca làm việc cho thứ hiện tại
-        return allWorkshifts
+        return registerWorkshifts
             .filter(ws => ws.week_day === currentDay && ws.work_shift !== null)
             .map(ws => ({
                 id: ws.workshift_id,
@@ -168,7 +175,11 @@ const RegisterWorkshift = () => {
     const handleRegister = () => {
         if (!selectedDate || !selectedWorkshift || !currentUser?.user_id) return;
 
-        const dateStr = selectedDate.toISOString().split('T')[0];
+        // Sửa đổi: Tạo chuỗi ngày tháng chính xác theo múi giờ địa phương
+        const year = selectedDate.getFullYear();
+        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(selectedDate.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
 
         if (editingWorkshiftId) {
             updateMutation.mutate({
@@ -192,18 +203,36 @@ const RegisterWorkshift = () => {
 
     const getWorkshiftForDate = (date: Date): EmployeeWorkshift | undefined => {
         if (!employeeWorkshifts) return undefined;
-        const dateStr = date.toISOString().split('T')[0];
-        return employeeWorkshifts.find(ws =>
-            new Date(ws.date).toISOString().split('T')[0] === dateStr
-        );
+
+        const dateStr = date.toLocaleDateString('en-CA');
+
+        return employeeWorkshifts.find(ws => {
+            const wsDate = new Date(ws.date);
+            const wsDateStr = wsDate.toLocaleDateString('en-CA');
+            return wsDateStr === dateStr;
+        });
     };
 
     const getWorkshiftsForDate = (date: Date): EmployeeWorkshift[] => {
         if (!employeeWorkshifts) return [];
-        const dateStr = date.toISOString().split('T')[0];
-        return employeeWorkshifts.filter(ws =>
-            new Date(ws.date).toISOString().split('T')[0] === dateStr
-        );
+
+        // 2. Lọc các ca làm việc
+        return employeeWorkshifts.filter(ws => {
+            // Parse ngày từ API, NHƯNG chỉ lấy YYYY-MM-DD, bỏ qua timezone.
+            // Giả sử `ws.date` là chuỗi có format "2025-09-11T17:00:00Z"
+            const apiDateStr = ws.date;
+            // Tách phần date (YYYY-MM-DD) ra khỏi chuỗi
+            const [datePart] = apiDateStr.split('T'); // -> "2025-09-11"
+            // Tách datePart thành các thành phần
+            const [apiYear, apiMonth, apiDay] = datePart.split('-').map(Number); // -> [2025, 9, 11]
+
+            // 3. So sánh năm, tháng, ngày một cách thủ công
+            // Lưu ý: Tháng trong JS Date là 0-indexed, nên apiMonth - 1
+            const apiDateObj = new Date(apiYear, apiMonth - 1, apiDay);
+
+            // So sánh timestamp của hai ngày (đã được set cùng 1 múi giờ xác định)
+            return apiDateObj.getTime() === date.getTime();
+        });
     };
 
     const isDateInPast = (date: Date) => {
@@ -213,7 +242,22 @@ const RegisterWorkshift = () => {
     };
 
     const getWorkshiftName = (workshiftId: string) => {
-        return allWorkshifts?.find(ws => ws.workshift_id === workshiftId)?.work_shift.workshift_name || 'Unknown';
+        // Ưu tiên tìm trong registerWorkshifts trước
+        const workshiftFromRegister = registerWorkshifts?.find(ws =>
+            ws.workshift_id === workshiftId && ws.work_shift !== null
+        );
+        if (workshiftFromRegister) {
+            return workshiftFromRegister.work_shift.workshift_name;
+        }
+
+        // Nếu không tìm thấy trong registerWorkshifts, thử tìm trong allWorkshifts
+        const workshiftFromAll = allWorkshifts?.find(ws => ws.workshift_id === workshiftId);
+        if (workshiftFromAll) {
+            return workshiftFromAll.workshift_name;
+        }
+
+        // Nếu vẫn không tìm thấy, trả về 'Unknown'
+        return 'Unknown';
     };
 
     return (

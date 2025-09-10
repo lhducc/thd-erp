@@ -1,6 +1,5 @@
 import {useGetPersonalTimesheet} from "@/query/timesheet.query.ts";
 import {useState} from "react";
-import {useAuth} from "@/context/AuthContext.tsx";
 import lateAttendance from "@/assets/late-attendance.svg"
 import trueAttendance from "@/assets/true-attendance.svg"
 import absentAttendance from "@/assets/absent-attendance.svg"
@@ -78,14 +77,17 @@ const AttendanceReport = () => {
         return date < today;
     };
 
-    // Function to get attendance detail for a specific date
     const getAttendanceDetail = (date: Date) => {
         if (!timesheetData?.details) return null;
 
-        const dateStr = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+        // Chuyển đổi date thành string với format YYYY-MM-DD (cân nhắc timezone)
+        const dateStr = date.toLocaleDateString('en-CA'); // Format: YYYY-MM-DD
+
         return timesheetData.details.find(detail => {
-            const detailDate = new Date(detail.date).toISOString().split('T')[0];
-            return detailDate === dateStr;
+            // Chuyển đổi detail.date thành Date object và format thành YYYY-MM-DD
+            const detailDate = new Date(detail.date);
+            const detailDateStr = detailDate.toLocaleDateString('en-CA');
+            return detailDateStr === dateStr;
         });
     };
 

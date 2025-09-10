@@ -56,7 +56,7 @@ const DayCell = memo(({
         mutationFn: (id: number) => deleteEmployeeWorkshiftApi(id),
         onSuccess: () => {
             toast.success("Xóa ca làm việc thành công!");
-            queryClient.invalidateQueries({ queryKey: ["employee-workshifts", currentMonth, currentYear] });
+            queryClient.invalidateQueries({ queryKey: ["employee-workshifts"] });
         },
         onError: (error: any) => {
             toast.error(`Xóa ca làm việc thất bại: ${error.message}`);
@@ -111,26 +111,28 @@ const DayCell = memo(({
                     </div>
 
                     {/* Hiển thị ca thực tế */}
-                    {actualShifts.map((shift, index) => (
+                    {actualShifts.map((shiftData, index) => (
                         <div
-                            key={`actual-${shift.workshift_id}-${index}`}
+                            key={`actual-${shiftData.id}-${index}`}
                             className="group mb-2 p-2 bg-white border border-gray-300 rounded min-w-[100px]"
                         >
                             <div className="flex justify-between items-center">
                                 <p className="text-sm font-medium min-w-[50px]">
-                                    {shift.workshift_name} - {shift.date}
+                                    {shiftData.workshift.workshift_name}
                                 </p>
-                                <button onClick={() => {
-                                    deleteMutation.mutate(shift.workshift_id);
-                                }} className="hidden group-hover:inline bg-red-500/60 w-fit h-fit px-2 cursor-pointer">
-      x
-    </button>
+                                <button
+                                    onClick={() => {
+                                        deleteMutation.mutate(shiftData.id); // Sử dụng id của employee-workshift
+                                    }}
+                                    className="hidden group-hover:inline bg-red-500/60 w-fit h-fit px-2 cursor-pointer"
+                                >
+                                    x
+                                </button>
                             </div>
                             <p className="text-xs text-gray-600">
-                                {formatTime(shift.start_time)} - {formatTime(shift.end_time)}
+                                {formatTime(shiftData.workshift.start_time)} - {formatTime(shiftData.workshift.end_time)}
                             </p>
                         </div>
-
                     ))}
 
                     {/* Hiển thị ca dự đoán */}
@@ -501,7 +503,6 @@ const Rota = () => {
         setSelectedSchedule(prev => prev === scheduleName ? null : scheduleName);
     }, []);
 
-    // Hàm để lấy ca làm việc thực tế của nhân viên
     const getActualEmployeeShift = useCallback((employeeId: string, dayIndex: number) => {
         const day = monthDays[dayIndex];
 
@@ -523,7 +524,11 @@ const Rota = () => {
                     return false;
                 }
             })
-            .map((shift: EmployeeWorkshift) => shift.workshift);
+            .map((shift: EmployeeWorkshift) => ({
+                id: shift.id, // Thêm id của employee-workshift
+                workshift: shift.workshift,
+                date: shift.date
+            }));
     }, [monthDays, processedEmployeeWorkshifts]);
 
 

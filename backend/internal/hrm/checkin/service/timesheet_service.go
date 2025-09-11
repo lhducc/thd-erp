@@ -159,11 +159,22 @@ func (t *timesheetServiceImp) calculateForEmployee(
 	// Map day-shift
 	shiftMap := make(map[time.Time]model.EmployeeWorkshift)
 	for _, shift := range employeeShifts {
-		// Ensure shift.Date has a location before using it
-		if shift.Date.Location() == nil {
-			shift.Date = shift.Date.In(vietnamLoc)
+		log.Printf("[DEBUG] shift.Date gốc từ DB: %v, location: %v", shift.Date, shift.Date.Location())
+		// Ensure shift.Date has a location before using it, but do NOT convert value
+		if shift.Date.Location() == nil || shift.Date.Location().String() == "UTC" {
+			log.Printf("[DEBUG] shift.Date trước khi chuyển về giờ VN: %v", shift.Date)
+			// Nếu đang ở UTC, chuyển về giờ Việt Nam bằng cách trừ đi 7 tiếng
+			shift.Date = shift.Date.Add(-7 * time.Hour)
+			shift.Date = time.Date(
+				shift.Date.Year(), shift.Date.Month(), shift.Date.Day(),
+				shift.Date.Hour(), shift.Date.Minute(), shift.Date.Second(), shift.Date.Nanosecond(),
+				vietnamLoc,
+			)
+			log.Printf("[DEBUG] shift.Date sau khi chuyển về giờ VN: %v, location: %v", shift.Date, shift.Date.Location())
 		}
+		log.Printf("[DEBUG] shift.Date trước normalize: %v", shift.Date)
 		dateKey := normalizeToDay(shift.Date, vietnamLoc)
+		log.Printf("[DEBUG] dateKey sau normalize: %v", dateKey)
 		shiftMap[dateKey] = shift
 	}
 
@@ -384,7 +395,8 @@ func (t *timesheetServiceImp) classifyRecords(records []model.AttendanceRecord,
 		record := &records[i]
 
 		// Ensure record timestamp has a location before calling In()
-		if record.Timestamp.Location() == nil {
+		if record.Timestamp.Location() == nil || record.Timestamp.Location().String() == "UTC" {
+			log.Printf("[DEBUG] record.Timestamp trước khi gán zone VN: %v", record.Timestamp)
 			record.Timestamp = time.Date(
 				record.Timestamp.Year(),
 				record.Timestamp.Month(),
@@ -395,9 +407,17 @@ func (t *timesheetServiceImp) classifyRecords(records []model.AttendanceRecord,
 				record.Timestamp.Nanosecond(),
 				vietnamLoc,
 			)
+			log.Printf("[DEBUG] record.Timestamp sau khi gán zone VN: %v, location: %v", record.Timestamp, record.Timestamp.Location())
 		}
 
 		recordTime := record.Timestamp.In(vietnamLoc)
+		log.Printf("[DEBUG] recordTime: %v", recordTime)
+		if checkinFrom != nil && checkinTo != nil {
+			log.Printf("[DEBUG] checkinFrom: %v, checkinTo: %v", *checkinFrom, *checkinTo)
+		}
+		if checkoutFrom != nil && checkoutTo != nil {
+			log.Printf("[DEBUG] checkoutFrom: %v, checkoutTo: %v", *checkoutFrom, *checkoutTo)
+		}
 
 		if checkinFrom != nil && checkinTo != nil {
 			if (recordTime.After(*checkinFrom) || recordTime.Equal(*checkinFrom)) &&

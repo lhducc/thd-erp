@@ -331,8 +331,8 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                         </div>
 
                         {/* Time Settings */}
-                        <div className="grid md:grid-cols-1 grid-cols-2 gap-4 justify-between mt-5">
-                            <div className="flex justify-between gap-3 md:flex-row flex-col">
+                        <div className="grid md:grid-cols-1 grid-rows-2 gap-4 justify-between mt-5">
+                            <div className="flex justify-between gap-3 md:flex-row">
                                 {type === "view" ? (
                                     <ReadOnlyField label="Giờ bắt đầu" value={form.watch('start_time')} />
                                 ) : (
@@ -370,14 +370,14 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                                 )}
 
                                 {type === "view" ? (
-                                    <ReadOnlyField label="Check-out từ" value={form.watch('checkout_from') || 'Không có'} />
+                                    <ReadOnlyField label="Check-in đến" value={form.watch('checkin_to') || 'Không có'} />
                                 ) : (
                                     <FormField
                                         control={form.control}
-                                        name="checkout_from"
+                                        name="checkin_to"
                                         render={({field}) => (
                                             <FormItem className={`w-full`}>
-                                                <FormLabel>Check-out từ (tùy chọn)</FormLabel>
+                                                <FormLabel>Check-in đến (tùy chọn)</FormLabel>
                                                 <FormControl>
                                                     <Input type="time" step="1" {...field} />
                                                 </FormControl>
@@ -408,14 +408,14 @@ const WorkshiftForm = ({editBtn, data, type, refetch}: Props) => {
                                 )}
 
                                 {type === "view" ? (
-                                    <ReadOnlyField label="Check-in đến" value={form.watch('checkin_to') || 'Không có'} />
+                                    <ReadOnlyField label="Check-out từ" value={form.watch('checkout_from') || 'Không có'} />
                                 ) : (
                                     <FormField
                                         control={form.control}
-                                        name="checkin_to"
+                                        name="checkout_from"
                                         render={({field}) => (
                                             <FormItem className={`w-full`}>
-                                                <FormLabel>Check-in đến (tùy chọn)</FormLabel>
+                                                <FormLabel>Check-out từ (tùy chọn)</FormLabel>
                                                 <FormControl>
                                                     <Input type="time" step="1" {...field} />
                                                 </FormControl>

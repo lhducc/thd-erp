@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {
-    deleteEmployeeWorkshiftApi, deleteEmployeeWorkshiftByEmployeeApi, getAllWorkshiftApi,
+    deleteEmployeeWorkshiftByEmployeeApi, getAllWorkshiftApi,
     getEmployeeWorkshiftsApi, getRegisterWorkshiftApi,
     registerEmployeeWorkshiftApi, updateEmployeeWorkshiftApi
 } from "@/apis/workshift.api.ts";
@@ -260,6 +260,13 @@ const RegisterWorkshift = () => {
         return 'Unknown';
     };
 
+    function getHourAndMinutesFromTime(timeString) {
+        if (!/^\d{2}:\d{2}(:\d{2})?$/.test(timeString)) {
+            throw new Error("Invalid time string");
+        }
+        return timeString.slice(0, 5); // keeps only HH:MM
+    }
+
     return (
         <div className="p-2 sm:p-4 max-w-4xl mx-auto">
             <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-800">Lịch làm việc</h2>
@@ -327,7 +334,7 @@ const RegisterWorkshift = () => {
                         const isToday = date.toDateString() === new Date().toDateString();
                         const isPast = isDateInPast(date);
                         const workshifts = getWorkshiftsForDate(date); // Đổi thành số nhiều
-
+                        console.log(workshifts);
                         return (
                             <div
                                 key={index}
@@ -346,7 +353,12 @@ const RegisterWorkshift = () => {
                                         <div className="space-y-1">
                                             {workshifts.map((workshift) => (
                                                 <div key={workshift.id} className="bg-blue-100 text-blue-800 p-1 rounded text-center">
-                                                    {getWorkshiftName(workshift.workshift_id)}
+                                                    <div className={`flex flex-col gap-3`}>
+                                                    <p>
+                                                        {getWorkshiftName(workshift.workshift_id)}
+                                                    </p>
+                                                    <p className={`text-black mb-2`}>{getHourAndMinutesFromTime(workshift.workshift.checkin_from)} - {getHourAndMinutesFromTime(workshift.workshift.checkout_from)}</p>
+                                                    </div>
                                                     {!isPast && (
                                                         <button
                                                             onClick={(e) => {

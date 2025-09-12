@@ -299,6 +299,9 @@ func (t *timesheetServiceImp) calculateForEmployee(
 					} else {
 						detail.IsLate = false
 					}
+					// reset absent status
+					detail.IsAbsent = false
+					detail.AbsentReason = nil
 				} else {
 					detail.WorkDays = 0
 					detail.IsAbsent = true

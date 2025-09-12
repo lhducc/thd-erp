@@ -7,7 +7,6 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { createAttendanceRecordByAdminId } from "@/apis/attendance-record.api.ts";
 import type { CreateManualRecord } from "@/types/attendance.ts";
-import {toRFC3339} from "@/lib/utils.ts";
 
 type Props = {
     employeeId: string;
@@ -15,12 +14,18 @@ type Props = {
 };
 
 export const CreateAttendant = ({ employeeId, refresh }: Props) => {
-    const [timestamp, setTimestamp] = useState(() => toRFC3339(new Date()));
+    // Mặc định lấy thời gian hiện tại theo định dạng UTC, không chuyển đổi gì thêm
+    const getDefaultTimestamp = () => {
+        const now = new Date();
+        // Lấy chuỗi yyyy-MM-ddTHH:mm:ssZ
+        return now.toISOString().slice(0, 19) + "Z";
+    };
+    const [timestamp, setTimestamp] = useState(getDefaultTimestamp());
     const [open, setOpen] = useState(false);
 
     const [form, setForm] = useState<CreateManualRecord>({
         employee_id: employeeId,
-        timestamp: toRFC3339(new Date()),
+        timestamp: timestamp,
     });
 
     useEffect(() => {
@@ -72,8 +77,11 @@ export const CreateAttendant = ({ employeeId, refresh }: Props) => {
                         type="datetime-local"
                         value={timestamp.slice(0, 16)}
                         onChange={(e) => {
-                            const newTimestamp = toRFC3339(new Date(e.target.value));
-                            setTimestamp(newTimestamp);
+                            // Lấy giá trị từ input, mặc định giây là 00, thêm đuôi Z
+                            const value = e.target.value.length === 16
+                                ? e.target.value + ":00Z"
+                                : e.target.value + "Z";
+                            setTimestamp(value);
                         }}
                         required
                     />

@@ -264,7 +264,7 @@ const TimesheetDetailPage = () => {
                             </div>
                             {detail.checkin_record && (
                                 <div className="text-sm mt-1">
-                                    Checkin: {new Date(detail.checkin_record.timestamp).toLocaleTimeString('vi-VN')}
+                                    Checkin: {detail.checkin_record.timestamp.slice(11, 19)}
                                     {detail.is_late && (
                                         <span className="text-orange-600 ml-2">(Trễ: {detail.late_minutes} phút)</span>
                                     )}
@@ -272,7 +272,7 @@ const TimesheetDetailPage = () => {
                             )}
                             {detail.checkout_record && (
                                 <div className="text-sm mt-1">
-                                    Checkout: {new Date(detail.checkout_record.timestamp).toLocaleTimeString('vi-VN')}
+                                    Checkout: {detail.checkout_record.timestamp.slice(11, 19)}
                                 </div>
                             )}
                             <div className="text-sm mt-1">
@@ -337,7 +337,7 @@ const TimesheetDetailPage = () => {
                         {selectedDetail.checkin_record && (
                             <div>
                                 <span className="font-semibold">Check-in:</span>{" "}
-                                {new Date(selectedDetail.checkin_record.timestamp).toLocaleTimeString('vi-VN')}
+                                {selectedDetail.checkin_record.timestamp.slice(11, 19)}
                                 {selectedDetail.is_late && (
                                     <span className="text-orange-600 ml-2">(Trễ: {selectedDetail.late_minutes} phút)</span>
                                 )}
@@ -347,7 +347,7 @@ const TimesheetDetailPage = () => {
                         {selectedDetail.checkout_record && (
                             <div>
                                 <span className="font-semibold">Check-out:</span>{" "}
-                                {new Date(selectedDetail.checkout_record.timestamp).toLocaleTimeString('vi-VN')}
+                                {selectedDetail.checkout_record.timestamp.slice(11, 19)}
                             </div>
                         )}
 

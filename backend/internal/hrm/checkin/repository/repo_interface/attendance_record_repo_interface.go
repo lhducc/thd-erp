@@ -18,4 +18,5 @@ type AttendanceRecordRepository interface {
 	ListHistoryRecordEmployee(ctx context.Context, employeeID string, limit int, offset int) ([]model.AttendanceRecord, error)
 	ListHistoryRecordApproveByEmpID(ctx context.Context, employeeID string, startTime time.Time, endTime time.Time) ([]model.AttendanceRecord, error)
 	GetByIDPersonal(ctx context.Context, recordId, employeeId string) (*model.AttendanceRecord, error)
+	ListHistoryByDate(ctx context.Context, targetDate time.Time) ([]dto.AttendanceRecordHistoryByDate, error)
 }

@@ -364,6 +364,8 @@ func setupAttandanceRecordRoutes(amdinRouter, userRouter *gin.RouterGroup, handl
 		adminGroup.DELETE("/:id", handler.DeleteAttendanceRecord())
 		adminGroup.GET("/history-record/:employee-id", handler.GetHistoryRecordByEmployee())
 		adminGroup.POST("/history-record/manual", handler.CreateAttendanceRecordByAdmin())
+		adminGroup.GET("/history/by-date", handler.GetHistoryByDate())
+		adminGroup.GET("/attendance/export", handler.ExportExcelByDate())
 	}
 	userGr := userRouter.Group("/attendance-record")
 	{

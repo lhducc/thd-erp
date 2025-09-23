@@ -384,3 +384,49 @@ func (h *AttendanceRecordHandler) GetPersonalRecordDetailById() gin.HandlerFunc 
 		utils.ResponseSuccess(c, "Attendance record found", http.StatusOK, &record)
 	}
 }
+
+func (h *AttendanceRecordHandler) GetHistoryByDate() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		dateStr := c.Query("date")
+		if dateStr == "" {
+			utils.ResponseMessage(c, "Missing 'date' query param", http.StatusBadRequest, nil)
+			return
+		}
+
+		records, err := h.biz.GetHistoryByDate(ctx, dateStr)
+		if err != nil {
+			utils.ResponseMessage(c, "Failed to get records: "+err.Error(), http.StatusBadRequest, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Danh sách chấm công theo ngày", http.StatusOK, records)
+	}
+}
+
+func (h *AttendanceRecordHandler) ExportExcelByDate() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		dateStr := c.Query("date")
+		if dateStr == "" {
+			utils.ResponseMessage(c, "Missing 'date' query param", http.StatusBadRequest, nil)
+			return
+		}
+
+		targetDate, err := time.Parse("2006-01-02", dateStr)
+		if err != nil {
+			utils.ResponseMessage(c, "Invalid date format. Use YYYY-MM-DD", http.StatusBadRequest, nil)
+			return
+		}
+
+		file, err := h.biz.ExportAttendanceExcel(c.Request.Context(), targetDate)
+		if err != nil {
+			utils.ResponseMessage(c, "Failed to export excel: "+err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+		filename := fmt.Sprintf("%s.xlsx", targetDate.Format("2006-01-02"))
+
+		c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+		c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+		c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", file)
+	}
+}

@@ -8,8 +8,8 @@ import { useMutation } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { SquarePen } from "lucide-react";
 import { toast } from "sonner";
-import type {JobTitle} from "@/types/job-title.ts";
-import {useJobTitle} from "@/query/useJobTitle.ts";
+import type { JobTitle } from "@/types/job-title.ts";
+import { useJobTitle } from "@/query/useJobTitle.ts";
 
 const JobTitlePage = () => {
   const {
@@ -47,36 +47,36 @@ const JobTitlePage = () => {
         const jobTitle = row.original;
 
         return (
-            <div className="flex gap-4">
-              <CreateJobTitleForm
-                  editBtn={
-                    <Button variant="outline">
-                      <SquarePen />
-                    </Button>
-                  }
-                  type="edit"
-                  refetch={refetchJobTitles}
-                  jobTitle={jobTitle}
-              />
-              <ConfirmDelete
-                  deleteFn={() => deleteJobTitle(jobTitle.job_title_id)}
-              />
-            </div>
+          <div className="flex gap-4">
+            <CreateJobTitleForm
+              editBtn={
+                <Button variant="outline">
+                  <SquarePen />
+                </Button>
+              }
+              type="edit"
+              refetch={refetchJobTitles}
+              jobTitle={jobTitle}
+            />
+            <ConfirmDelete
+              deleteFn={() => deleteJobTitle(jobTitle.job_title_id)}
+            />
+          </div>
         );
       },
     },
   ];
 
   return (
-      <DataTable
-          columns={columns}
-          data={jobTitles || []}
-          title="Chức danh"
-          isLoading={pendingJobTitles}
-          navLink={<TitleNavLink />}
-          buttonCreate={<CreateJobTitleForm refetch={refetchJobTitles} />}
-          keyFilter="job_title"
-      />
+    <DataTable
+      columns={columns}
+      data={jobTitles || []}
+      title="Chức danh"
+      isLoading={pendingJobTitles}
+      navLink={<TitleNavLink />}
+      buttonCreate={<CreateJobTitleForm refetch={refetchJobTitles} />}
+      keyFilter="job_title"
+    />
   );
 };
 

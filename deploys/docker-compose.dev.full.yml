@@ -20,8 +20,8 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ../backend:/app
-      - go-mod:/go/pkg/mod      # Cache module (go mod download)
-      - go-build:/root/.cache/go-build  # Cache build
+      - go-mod:/go/pkg/mod # Cache module (go mod download)
+      - go-build:/root/.cache/go-build # Cache build
     ports:
       - "8080:8080"
     env_file:
@@ -60,4 +60,3 @@ volumes:
   minio_data:
   go-mod:
   go-build:
-

@@ -13,7 +13,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { SquarePen } from "lucide-react";
 import { toast } from "sonner";
-import {useHierarchyLevel} from "@/query/useHierarchyLevel.ts";
+import { useHierarchyLevel } from "@/query/useHierarchyLevel.ts";
 
 const HierarchyLevelPage = () => {
   const {

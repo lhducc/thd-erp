@@ -75,9 +75,21 @@ func (s *employeeWorkshiftService) RegisterMany(assigns []*model.EmployeeWorkshi
 		return fmt.Errorf("no workshift assignments provided")
 	}
 
+	loc, _ := time.LoadLocation("Asia/Ho_Chi_Minh")
+	nowVN := time.Now().In(loc)
+	today := time.Date(nowVN.Year(), nowVN.Month(), nowVN.Day(), 0, 0, 0, 0, loc)
+
 	var newAssigns []*model.EmployeeWorkshift
 
 	for _, assign := range assigns {
+
+		vnDate := assign.Date.In(loc)
+
+		if vnDate.Before(today) {
+			continue
+		}
+
+		assign.Date = assign.Date.In(loc)
 		existing := s.repo.IsExisting(assign.EmployeeID, assign.WorkShiftID, assign.Date)
 		if !existing {
 			newAssigns = append(newAssigns, assign)

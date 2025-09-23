@@ -1,4 +1,4 @@
-import type {AttendanceRecord, CreateManualRecord} from "@/types/attendance.ts";
+import type {AttendanceRecord, AttendanceRecordHistoryByDate, CreateManualRecord} from "@/types/attendance.ts";
 import api from "@/apis/api.ts";
 
 export const getAttendanceRecordByEmployeeId = async (id: string): Promise<AttendanceRecord[]> => {
@@ -22,3 +22,23 @@ export const createAttendanceRecord = async (payload): Promise<AttendanceRecord>
     });
     return response.data.data;
 }
+
+export const exportAttendanceExcelApi = async (params: {date?: string;}): Promise<Blob> => {
+  const response = await api.get("/attendance-record/attendance/export", {
+    params,
+    responseType: "blob",
+  });
+  return response.data;
+};
+
+
+export const getEmployeesByDateApi = async (date: string): Promise<AttendanceRecordHistoryByDate[]> => {
+  const q = encodeURIComponent(date); 
+  const response = await api.get(`/attendance-record/history/by-date?date=${q}`);
+  return response.data.data;
+};
+
+export const getEmployeesByMonthApi = async (month: string): Promise<AttendanceRecordHistoryByDate[]> => {
+  const response = await api.get(`/attendance-record/attendance?month=${month}`);
+  return response.data.data;
+};

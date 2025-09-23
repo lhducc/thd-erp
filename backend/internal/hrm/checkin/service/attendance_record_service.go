@@ -11,6 +11,7 @@ import (
 	"erp/backend/pkg/variable"
 	"errors"
 	"fmt"
+	"github.com/xuri/excelize/v2"
 	"time"
 )
 
@@ -156,4 +157,101 @@ func ParseDateTime(value string) (time.Time, error) {
 		}
 	}
 	return time.Time{}, fmt.Errorf("invalid datetime format")
+}
+
+func (s *attendanceRecordService) GetHistoryByDate(
+	ctx context.Context,
+	dateStr string,
+) ([]dto.AttendanceRecordHistoryByDate, error) {
+	date, err := time.Parse("2006-01-02", dateStr) // format yyyy-mm-dd
+	if err != nil {
+		return nil, fmt.Errorf("invalid date format, expected yyyy-mm-dd")
+	}
+
+	loc, _ := time.LoadLocation("Asia/Ho_Chi_Minh")
+	date = date.In(loc)
+
+	return s.repo.ListHistoryByDate(ctx, date)
+}
+
+func (s *attendanceRecordService) ExportAttendanceExcel(ctx context.Context, targetDate time.Time) ([]byte, error) {
+	records, err := s.repo.ListHistoryByDate(ctx, targetDate)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(records) == 0 {
+		return nil, fmt.Errorf("Không có dữ liệu chấm công cho ngày %s", targetDate.Format("2006-01-02"))
+	}
+
+	f := excelize.NewFile()
+	sheet := "Attendance"
+	f.NewSheet(sheet)
+	f.DeleteSheet("Sheet1")
+
+	// Header
+	headers := []string{"Mã Nhân Viên", "Tên", "Phòng Ban", "Văn Phòng", "Thời gian chấm công", "Đúng giờ", "Trễ giờ"}
+	for i, h := range headers {
+		col := string(rune('A' + i))
+		cell := col + "1"
+		f.SetCellValue(sheet, cell, h)
+	}
+
+	// Style cho header
+	headerStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{Bold: true},
+		Fill: excelize.Fill{Type: "pattern", Color: []string{"#DDDDDD"}, Pattern: 1},
+	})
+	f.SetCellStyle(sheet, "A1", "G1", headerStyle)
+
+	// Time limit để tính trễ
+	redLimit := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 8, 31, 0, 0, targetDate.Location())
+	redStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{Color: "FF0000"},
+	})
+
+	// Biến đếm số lượng đúng giờ và trễ
+	onTimeCount := 0
+	lateCount := 0
+
+	// Fill data
+	for i, r := range records {
+		row := i + 2
+		f.SetCellValue(sheet, "A"+itoa(row), r.EmployeeID)
+		f.SetCellValue(sheet, "B"+itoa(row), r.FullName)
+		f.SetCellValue(sheet, "C"+itoa(row), r.DepartmentName)
+		f.SetCellValue(sheet, "D"+itoa(row), r.OfficeName)
+		timeCell := "E" + itoa(row)
+		f.SetCellValue(sheet, timeCell, r.Timestamp.Format("2006-01-02 15:04:05"))
+
+		onTime := r.Timestamp.Before(redLimit) || r.Timestamp.Equal(redLimit)
+		if onTime {
+			f.SetCellValue(sheet, "F"+itoa(row), "X")
+			onTimeCount++
+		} else {
+			f.SetCellValue(sheet, "G"+itoa(row), "X")
+			f.SetCellStyle(sheet, timeCell, timeCell, redStyle)
+			lateCount++
+		}
+	}
+
+	f.SetColWidth(sheet, "A", "G", 20)
+
+	// Thêm dòng tổng
+	totalRow := len(records) + 3
+	f.SetCellValue(sheet, "E"+itoa(totalRow), "Tổng")
+	f.SetCellValue(sheet, "F"+itoa(totalRow), onTimeCount)
+	f.SetCellValue(sheet, "G"+itoa(totalRow), lateCount)
+
+	// Xuất file ra []byte
+	buf, err := f.WriteToBuffer()
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+func itoa(i int) string {
+	return fmt.Sprintf("%d", i)
 }

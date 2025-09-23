@@ -27,6 +27,14 @@ type AttendanceRecordUpdate struct {
 	NoteReject *string             `gorm:"column:note_reject;type:text" json:"note_reject"`
 }
 
+type AttendanceRecordHistoryByDate struct {
+	EmployeeID     string     `gorm:"employee_id" json:"employee_id"`
+	FullName       string     `gorm:"full_name" json:"full_name"`
+	OfficeName     string     `gorm:"office_name" json:"office_name"`
+	DepartmentName string     `gorm:"department_name" json:"department_name"`
+	Timestamp      *time.Time `gorm:"timestamp" json:"timestamp"`
+}
+
 func (r *AttendanceRecordCreate) Validate() error {
 	if r.Timestamp.IsZero() {
 		return errors.New("timestamp is required")

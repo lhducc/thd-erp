@@ -4,6 +4,7 @@ import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/checkin/model/dto"
+	"time"
 )
 
 type AttendanceRecordService interface {
@@ -18,4 +19,6 @@ type AttendanceRecordService interface {
 	CheckCategoryExists(ctx context.Context, record *model.AttendanceRecord) (*model.AttendanceCategory, error)
 	GetHistoryRecordByEmployee(ctx context.Context, employeeID string, page int, limit int) ([]model.AttendanceRecord, error)
 	GetAttendanceRecordByIDPersonal(ctx context.Context, recordID, employeeID string) (*model.AttendanceRecord, error)
+	GetHistoryByDate(ctx context.Context, dateStr string) ([]dto.AttendanceRecordHistoryByDate, error)
+	ExportAttendanceExcel(ctx context.Context, targetDate time.Time) ([]byte, error)
 }

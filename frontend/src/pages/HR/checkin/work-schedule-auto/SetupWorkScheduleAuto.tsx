@@ -14,7 +14,7 @@ import PATH from "@/constants/Path.ts";
 import {useOffice} from "@/query/useOffice.ts";
 import {useQueryWorkshift} from "@/query/workshift.query.ts";
 import {useWorkScheduleById} from "@/query/useWorkSchedule.ts";
-import {useEffect} from "react";
+import {useEffect, useState} from "react";
 import Loading from "@/components/Loading.tsx";
 import {Skeleton} from "@/components/ui/skeleton.tsx";
 import {Building2} from "lucide-react";
@@ -24,7 +24,7 @@ export const RepeatTypeEnum = z.enum(["weekly", "monthly"]);
 export type RepeatTypeEnum = z.infer<typeof RepeatTypeEnum>;
 
 // Strongly typed weekday map
-const WEEKDAY_MAP: Record<number, WeekDay> = {
+const WEEKDAY_MAP: Record<number, string> = {
     2: "monday",
     3: "tuesday",
     4: "wednesday",
@@ -37,20 +37,40 @@ const WEEKDAY_MAP: Record<number, WeekDay> = {
 // Strongly typed week days
 type WeekDay = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
 
-// Strongly typed day schema với validation
+// Strongly typed day schema với conditional validation
 const daySchema = z.object({
     day_of_week: z.number().min(2).max(8),
     enabled: z.boolean(),
     shift_count: z.number().min(1),
-    shifts: z.array(z.string().min(1, "Ca làm việc là bắt buộc"))
-        .refine(
-            (shifts) => shifts.every(shift => shift !== ""),
-            "Tất cả ca làm việc phải được chọn"
-        )
+    shifts: z.array(z.string())
+}).superRefine((data, ctx) => {
+    // CHỈ validate khi day được enabled
+    if (data.enabled) {
+        // Kiểm tra không có shift nào rỗng
+        data.shifts.forEach((shift, index) => {
+            if (shift === "") {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Ca làm việc là bắt buộc",
+                    path: [`shifts`, index]
+                });
+            }
+        });
+
+        // Kiểm tra có ít nhất 1 shift không rỗng
+        if (data.shifts.length === 0 || data.shifts.every(shift => shift === "")) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Ít nhất một ca làm việc phải được chọn",
+                path: ['shifts']
+            });
+        }
+    }
 });
+
 type Day = z.infer<typeof daySchema>;
 
-// Strongly typed form schema với validation đầy đủ
+// Strongly typed form schema với conditional validation
 const auto_schedule = z.object({
     work_schedule_name: z.string().min(1, "Tên lịch làm việc là bắt buộc"),
     office_id: z.string().optional(),
@@ -58,11 +78,24 @@ const auto_schedule = z.object({
     repeat_cycle: z.coerce.number().min(1, "Chu kỳ lặp phải lớn hơn 0"),
     effective_date: z.string().min(1, "Ngày hiệu lực là bắt buộc"),
     expiration_date: z.string().optional(),
-    days: z.array(daySchema).refine(
-        (days) => days.some(day => day.enabled && day.shifts.length > 0),
-        "Ít nhất một ngày phải được chọn và có ca làm việc"
-    ),
+    days: z.array(daySchema).superRefine((days, ctx) => {
+        // CHỈ kiểm tra có ít nhất 1 ngày được enabled và có shift hợp lệ
+        const hasValidDay = days.some(day => 
+            day.enabled && 
+            day.shifts.length > 0 && 
+            day.shifts.some(shift => shift !== "")
+        );
+        
+        if (!hasValidDay) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Ít nhất một ngày phải được chọn và có ca làm việc",
+                path: ['days']
+            });
+        }
+    }),
 });
+
 type AutoScheduleFormValues = z.infer<typeof auto_schedule>;
 
 // Strongly typed work schedule payload
@@ -78,7 +111,7 @@ type WorkSchedulePayload = Omit<AutoScheduleFormValues, 'days'> & {
 
 const SetupWorkScheduleAuto = () => {
     const { id } = useParams<{ id?: string }>();
-    const isEditMode = id !== "create";
+    const isEditMode = id !== "create" && id !== undefined;
 
     const { data: offices } = useOffice();
     const { data: workshifts, isPending: pendingWorkshift } = useQueryWorkshift();
@@ -86,14 +119,20 @@ const SetupWorkScheduleAuto = () => {
 
     const queryClient = useQueryClient();
     const navigate = useNavigate();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { mutateAsync: createWorkSchedule, isPending } = useMutation({
-        mutationFn: (data: WorkSchedulePayload) =>
-            isEditMode ? updateWorkshiftSchedule(id || "", data) : createWorkshiftSchedule(data),
+        mutationFn: (data: WorkSchedulePayload) => {
+            if (isEditMode) {
+                return updateWorkshiftSchedule(id, data);
+            } else {
+                return createWorkshiftSchedule(data);
+            }
+        },
         onSuccess: async () => {
             toast.success(isEditMode ? "Cập nhật lịch làm việc thành công" : "Tạo lịch làm việc thành công");
-            await queryClient.invalidateQueries({queryKey: ["work-schedule"]})
-            await queryClient.invalidateQueries({queryKey: ["work-schedules", id]})
+            await queryClient.invalidateQueries({queryKey: ["work-schedule"]});
+            await queryClient.invalidateQueries({queryKey: ["work-schedules", id]});
             navigate(PATH.WORK_SCHEDULE);
         },
         onError: (error: Error) => {
@@ -119,43 +158,57 @@ const SetupWorkScheduleAuto = () => {
         },
     });
 
-    if (Object.keys(form.formState.errors).length > 0) {
-        console.log("Form Errors:", form.formState.errors);
-    }
-
+    // Debug chi tiết validation errors
+    useEffect(() => {
+        if (Object.keys(form.formState.errors).length > 0) {
+            console.log("=== FORM VALIDATION ERRORS ===");
+            console.log("Form Errors:", JSON.stringify(form.formState.errors, null, 2));
+            
+            // Log chi tiết lỗi của từng day
+            form.watch('days').forEach((day, index) => {
+                if (form.formState.errors.days?.[index]) {
+                    console.log(`Day ${index} errors:`, form.formState.errors.days[index]);
+                }
+            });
+        }
+    }, [form.formState.errors]);
 
     useEffect(() => {
         if (isEditMode && workSchedule && workshifts && offices) {
-            // Kiểm tra cấu trúc thực tế
-            const officeId = workSchedule.office_id ||
-                workSchedule.office?.office_id ||
-                workSchedule.office_id ||
-                "";
+            const officeId = workSchedule.office_id || workSchedule.office?.office_id || "";
 
             const days = Array.from({ length: 7 }, (_, i) => {
                 const dayOfWeek = i + 2;
                 const weekdayKey = WEEKDAY_MAP[dayOfWeek];
                 const shiftsForDay = workSchedule.weekdays
-                    .filter(w => w.week_day === weekdayKey)
-                    .map(w => w.work_shift);
+                    ?.filter(w => w.week_day === weekdayKey)
+                    .map(w => w.work_shift) || [];
+
+                // Đảm bảo shifts luôn có giá trị hợp lệ
+                const validShifts = shiftsForDay
+                    .filter(shift => shift?.workshift_id)
+                    .map(shift => shift.workshift_id);
 
                 return {
                     day_of_week: dayOfWeek,
-                    enabled: shiftsForDay.length > 0,
-                    shift_count: shiftsForDay.length || 1,
-                    shifts: shiftsForDay?.map(shift => shift?.workshift_id) || [""]
+                    enabled: validShifts.length > 0,
+                    shift_count: Math.max(validShifts.length, 1),
+                    shifts: validShifts.length > 0 ? validShifts : [""]
                 };
             });
 
-            form.reset({
-                work_schedule_name: workSchedule.work_schedule_name,
-                office_id: officeId,
-                repeat_type: workSchedule.repeat_type as RepeatTypeEnum,
-                repeat_cycle: workSchedule.repeat_cycle || 1,
-                effective_date: workSchedule.effective_date.split('T')[0],
-                expiration_date: workSchedule?.expiration_date?.split('T')[0],
-                days: days
-            });
+            // Reset form với delay nhỏ để đảm bảo component đã render
+            setTimeout(() => {
+                form.reset({
+                    work_schedule_name: workSchedule.work_schedule_name || "",
+                    office_id: officeId,
+                    repeat_type: (workSchedule.repeat_type as RepeatTypeEnum) || RepeatTypeEnum.enum.weekly,
+                    repeat_cycle: workSchedule.repeat_cycle || 1,
+                    effective_date: workSchedule.effective_date?.split('T')[0] || new Date().toISOString().split('T')[0],
+                    expiration_date: workSchedule?.expiration_date?.split('T')[0] || "",
+                    days: days
+                });
+            }, 150);
         }
     }, [workSchedule, offices, workshifts, isEditMode, form]);
 
@@ -163,69 +216,108 @@ const SetupWorkScheduleAuto = () => {
         return !(end1 <= start2 || start1 >= end2);
     };
 
-    const onSubmit = async (data: AutoScheduleFormValues) => {
-        // Kiểm tra lại validation trước khi submit
-        const validatedDays = data.days.map(day => {
-            if (day.enabled) {
-                // Đảm bảo không có ca nào bị rỗng
-                const validShifts = day.shifts.filter(shift => shift !== "");
-                return {
-                    ...day,
-                    shifts: validShifts.length > 0 ? validShifts : [""]
-                };
-            }
-            return day;
-        });
+    const handleToggleDay = (index: number) => {
+        const currentDays = [...form.getValues('days')];
+        const newEnabledState = !currentDays[index].enabled;
 
-        // Cập nhật lại form values
-        form.setValue('days', validatedDays);
-
-        // Kiểm tra lại validation
-        const isValid = await form.trigger('days');
-        if (!isValid) {
-            toast.error("Vui lòng kiểm tra lại thông tin các ca làm việc");
-            return;
+        currentDays[index].enabled = newEnabledState;
+        
+        if (!newEnabledState) {
+            // Nếu bỏ tick, reset shifts (không cần validate vì disabled)
+            currentDays[index].shifts = [""];
+            currentDays[index].shift_count = 1;
+        } else {
+            // Nếu tick, thêm shift mặc định hợp lệ
+            const firstValidShift = workshifts?.find(ws => ws.workshift_id)?.workshift_id;
+            currentDays[index].shifts = firstValidShift ? [firstValidShift] : [""];
+            currentDays[index].shift_count = 1;
         }
-        const weekdays = data.days
-            .filter((day): day is Day & { enabled: true; shifts: string[] } =>
-                day.enabled && day.shifts.length > 0 && day.shifts.every(shift => shift !== "")
-            )
-            .flatMap((day) =>
-                day.shifts.map((shiftId) => ({
-                    week_day: WEEKDAY_MAP[day.day_of_week],
-                    workshift_id: shiftId,
-                }))
-            );
 
-        const finalPayload: WorkSchedulePayload = {
-            ...data,
-            repeat_cycle: data.repeat_cycle,
-            repeat_type: data.repeat_type,
-            status: "active",
-            weekdays,
-            effective_date: data.effective_date ? `${data.effective_date}T00:00:00Z` : undefined,
-            expiration_date: data.expiration_date ? `${data.expiration_date}T00:00:00Z` : undefined,
-        };
-
-        createWorkSchedule(finalPayload);
+        // Delay validation để UI kịp cập nhật
+        setTimeout(() => {
+            form.setValue("days", currentDays, { shouldValidate: true });
+        }, 50);
     };
 
-    useEffect(() => {
-        if (isEditMode && workSchedule && offices) {
-            const officeId = workSchedule.office?.office_id || workSchedule.office_id || "";
+    const onSubmit = async (data: AutoScheduleFormValues) => {
+        if (isSubmitting) return;
+        
+        setIsSubmitting(true);
+        try {
+            // Thêm delay nhỏ trước khi validate
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Validate form trước khi submit
+            const isValid = await form.trigger();
+            if (!isValid) {
+                console.log("Validation Errors:", form.formState.errors);
+                toast.error("Vui lòng kiểm tra lại thông tin các trường");
+                return;
+            }
 
-            // Set giá trị sau một khoảng delay nhỏ để đảm bảo Select component đã render
-            setTimeout(() => {
-                form.setValue("office_id", officeId);
-            }, 100);
+            // LỌC CHỈ những ngày được enabled và có shift hợp lệ
+            const enabledDays = data.days.filter(day => 
+                day.enabled && 
+                day.shifts.length > 0 && 
+                day.shifts.some(shift => shift !== "")
+            );
+
+            if (enabledDays.length === 0) {
+                toast.error("Ít nhất một ngày phải được chọn và có ca làm việc");
+                return;
+            }
+
+            // Tạo weekdays chỉ từ những ngày enabled
+            const weekdays = enabledDays
+                .flatMap((day) =>
+                    day.shifts
+                        .filter(shift => shift !== "") // Chỉ lấy shifts không rỗng
+                        .map((shiftId) => ({
+                            week_day: WEEKDAY_MAP[day.day_of_week] as WeekDay,
+                            workshift_id: shiftId,
+                        }))
+                );
+
+            if (weekdays.length === 0) {
+                toast.error("Vui lòng chọn ít nhất một ca làm việc");
+                return;
+            }
+
+            const finalPayload: WorkSchedulePayload = {
+                work_schedule_name: data.work_schedule_name,
+                office_id: data.office_id,
+                repeat_type: data.repeat_type,
+                repeat_cycle: data.repeat_cycle,
+                status: "active",
+                weekdays,
+                effective_date: data.effective_date ? `${data.effective_date}T00:00:00Z` : undefined,
+                expiration_date: data.expiration_date ? `${data.expiration_date}T00:00:00Z` : undefined,
+            };
+
+            console.log("Submitting payload:", finalPayload);
+            await createWorkSchedule(finalPayload);
+        } catch (error) {
+            console.error("Submit error:", error);
+            toast.error("Có lỗi xảy ra khi gửi dữ liệu");
+        } finally {
+            setIsSubmitting(false);
         }
-    }, [workSchedule, offices, isEditMode, form]);
+    };
 
     if (isEditMode && (pendingWorkSchedule || !offices || pendingWorkshift)) {
         return <Loading />;
     }
 
     const renderShiftSelect = (day: Day, dayIndex: number, shiftIndex: number) => {
+        // Fallback khi workshifts chưa load xong
+        if (!workshifts || workshifts.length === 0) {
+            return (
+                <SelectTrigger className="w-52" disabled>
+                    <SelectValue placeholder="Đang tải ca..." />
+                </SelectTrigger>
+            );
+        }
+
         const selectedShifts = day.shifts
             .filter((_, i) => i !== shiftIndex)
             .map((id) => workshifts?.find((ws) => ws.workshift_id === id))
@@ -269,30 +361,13 @@ const SetupWorkScheduleAuto = () => {
 
     const renderDayRow = (day: Day, index: number) => {
         const dayNames = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
+        
         return (
             <div key={index} className="flex items-center gap-4 border-b pb-2">
                 <input
                     type="checkbox"
                     checked={day.enabled}
-                    onChange={() => {
-                        let days = [...form.getValues('days')];
-                        const newEnabledState = !days[index].enabled;
-
-                        if (!newEnabledState) {
-                            // Bỏ tick -> loại bỏ hẳn ngày khỏi mảng
-                            days = days.filter((_, i) => i !== index);
-                        } else {
-                            // Tick lại -> thêm ngày mới với default shift
-                            days.splice(index, 0, {
-                                day_of_week: index + 2,
-                                enabled: true,
-                                shift_count: 1,
-                                shifts: workshifts?.[0]?.workshift_id ? [workshifts[0].workshift_id] : [""],
-                            });
-                        }
-
-                        form.setValue("days", days, { shouldValidate: true });
-                    }}
+                    onChange={() => handleToggleDay(index)}
                 />
                 <span className="w-16">{dayNames[index]}</span>
 
@@ -305,7 +380,7 @@ const SetupWorkScheduleAuto = () => {
                             value={day.shift_count}
                             onChange={(e) => {
                                 const days = [...form.getValues('days')];
-                                const newCount = parseInt(e.target.value) || 1;
+                                const newCount = Math.max(1, parseInt(e.target.value) || 1);
                                 days[index].shift_count = newCount;
 
                                 // Adjust shifts array length
@@ -318,7 +393,10 @@ const SetupWorkScheduleAuto = () => {
                                     days[index].shifts = days[index].shifts.slice(0, newCount);
                                 }
 
-                                form.setValue('days', days);
+                                // Delay validation để UI kịp cập nhật
+                                setTimeout(() => {
+                                    form.setValue('days', days, { shouldValidate: true });
+                                }, 50);
                             }}
                         />
 
@@ -497,8 +575,10 @@ const SetupWorkScheduleAuto = () => {
                             </Link>
                         </div>
                         <div className="flex justify-end">
-                            {!isPending ? (
-                                <Button type="submit">{isEditMode ? "Cập nhật" : "Tạo"} lịch làm việc</Button>
+                            {!isPending && !isSubmitting ? (
+                                <Button type="submit" disabled={isSubmitting}>
+                                    {isEditMode ? "Cập nhật" : "Tạo"} lịch làm việc
+                                </Button>
                             ) : <Loading />}
                         </div>
                     </div>

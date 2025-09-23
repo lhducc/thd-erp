@@ -187,3 +187,29 @@ func (r *attendanceRecordRepository) ListHistoryRecordApproveByEmpID(
 
 	return records, nil
 }
+
+func (r *attendanceRecordRepository) ListHistoryByDate(
+	ctx context.Context,
+	targetDate time.Time,
+) ([]dto.AttendanceRecordHistoryByDate, error) {
+	var records []dto.AttendanceRecordHistoryByDate
+
+	startOfDay := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 0, 0, 0, 0, targetDate.Location())
+	limitTime := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 9, 0, 0, 0, targetDate.Location())
+
+	err := r.db.WithContext(ctx).
+		Table("attendance_records AS ar").
+		Select("ar.employee_id, e.full_name, o.office_name, d.department_name, ar.timestamp").
+		Joins("JOIN employee e ON ar.employee_id = e.employee_id").
+		Joins("JOIN office o ON ar.office_id = o.office_id").
+		Joins("JOIN department d ON e.department_id = d.department_id").
+		Where("ar.timestamp >= ? AND ar.timestamp < ?", startOfDay, limitTime).
+		Order("ar.timestamp ASC").
+		Scan(&records).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return records, nil
+}

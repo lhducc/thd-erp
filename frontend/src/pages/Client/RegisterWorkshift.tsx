@@ -354,10 +354,8 @@ const RegisterWorkshift = () => {
                                             {workshifts.map((workshift) => (
                                                 <div key={workshift.id} className="bg-blue-100 text-blue-800 p-1 rounded text-center">
                                                     <div className={`flex flex-col gap-3`}>
-                                                    <p>
-                                                        {getWorkshiftName(workshift.workshift_id)}
-                                                    </p>
-                                                    <p className={`text-black mb-2`}>{getHourAndMinutesFromTime(workshift.workshift.checkin_from)} - {getHourAndMinutesFromTime(workshift.workshift.checkout_from)}</p>
+                                                    <p>{workshift.workshift.workshift_name}</p>
+                                                    <p className={`text-black mb-2`}>{getHourAndMinutesFromTime(workshift.workshift.start_time)} - {getHourAndMinutesFromTime(workshift.workshift.end_time)}</p>
                                                     </div>
                                                     {!isPast && (
                                                         <button

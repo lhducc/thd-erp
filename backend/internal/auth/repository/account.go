@@ -28,7 +28,6 @@ func (r *accountRepo) GetAccountByEmail(ctx context.Context, email string) (hrmm
 	var account hrmmodel.Account
 	err := r.db.WithContext(ctx).Joins("JOIN employee on employee.employee_id = account.employee_id").
 		Where("account.login_mail = ? AND employee.status = ?", email, "active").
-		Preload("Role").
 		First(&account).Error
 	return account, err
 }

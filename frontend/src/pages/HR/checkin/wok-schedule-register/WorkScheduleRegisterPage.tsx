@@ -39,19 +39,6 @@ const WorkScheduleRegisterPage = () => {
             header: "Văn phòng",
         },
         {
-            header: "Quản lý",
-            cell: ({ row }) => {
-                const managers = row.original.managers
-                return (
-                    <div className={`flex flex-col space-y-2`}>
-                        {managers.map((manager) => (
-                            <p>{manager.manager.full_name}</p>
-                        ))}
-                    </div>
-                )
-            }
-        },
-        {
             accessorKey: "status",
             header: "Trạng thái áp dụng",
             cell: ({row}) => {

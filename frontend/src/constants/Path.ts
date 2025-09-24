@@ -32,6 +32,7 @@ const PATH = {
   ATTENDANT_HISTORY_BY_DATE: "/attendant-history/by-date",
   ATTENDANT_HISTORY_EMPLOYEES: "/attendant-history/employees",
   WORK_SCHEDULE: "/setup-work-schedule",
+  WORK_SCHEDULE_REGISTER: "/setup-work-schedule-register",
   // HR Setting
   SETTING: SETTING_BASE,
   SETTING_OFFICE: `${SETTING_BASE}/office`,

@@ -79,12 +79,12 @@ func (a *Authentication) CreateToken(ctx context.Context, account hrmmodel.Accou
 	}
 	fullname = emp.Fullname
 
-	accessToken, _, err := a.tokenMaker.CreateToken(emp.EmployeeID, fullname, account.Role.RoleName, 24*time.Hour) //1day
+	accessToken, _, err := a.tokenMaker.CreateToken(emp.EmployeeID, fullname, account.RoleID, 24*time.Hour) //1day
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, _, err := a.tokenMaker.CreateToken(emp.EmployeeID, fullname, account.Role.RoleName, 7*24*time.Hour)
+	refreshToken, _, err := a.tokenMaker.CreateToken(emp.EmployeeID, fullname, account.RoleID, 7*24*time.Hour)
 	if err != nil {
 		return "", "", err
 	}

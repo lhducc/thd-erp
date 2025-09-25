@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -40,6 +41,16 @@ var AppConfig Config
 
 func LoadConfig() {
 	LoadEnv()
+
+	// Load SSL
+	if ssl := os.Getenv("SSL"); ssl != "" {
+		parsed, err := strconv.ParseBool(ssl)
+		if err != nil {
+			log.Printf("Không thể parse SSL=%s thành bool, dùng mặc định false\n", ssl)
+		}
+		AppConfig.Server.SSL = parsed
+		log.Printf("SSL loaded from .env: %v", AppConfig.Server.SSL)
+	}
 
 	// Load DB_SOURCE từ biến môi trường
 	if dbSource := os.Getenv("DB_SOURCE"); dbSource != "" {

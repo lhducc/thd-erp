@@ -6,6 +6,6 @@ type SignInRequest struct {
 }
 
 type ChangePasswordRequest struct {
-	OldPassword string `json:"old_password" binding:"required" example:"old_password123"`
+	OldPassword string `json:"current_password" binding:"required" example:"old_password123"`
 	NewPassword string `json:"new_password" binding:"required" example:"new_password123"`
 }

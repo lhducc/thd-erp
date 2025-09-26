@@ -12,6 +12,7 @@ type AccountRepository interface {
 	GetAccountByID(ctx context.Context, id string) (hrmmodel.Account, error)
 	UpdateAccount(ctx context.Context, account hrmmodel.Account) error
 	GetEmployeeByAccountID(ctx context.Context, accountID int64) (hrmmodel.Employee, error)
+	GetAccountByEmployeeID(ctx context.Context, employeeID string) (*hrmmodel.Account, error)
 }
 
 // accountRepo struct chứa db connection và implement interface
@@ -51,17 +52,23 @@ func (r *accountRepo) GetEmployeeByAccountID(ctx context.Context, accountID int6
     e.full_name,
     e.account_id,
     a.role_id,
-    r.role_name, 
     e.created_date
 FROM
     employee AS e   
 JOIN
     account AS a      
     ON e.account_id = a.id
-JOIN
-    role AS r
-    ON a.role_id = r.id 
 WHERE
     e.account_id = ?`, accountID).Scan(&employee).Error
 	return employee, err
+}
+
+func (r *accountRepo) GetAccountByEmployeeID(ctx context.Context, employeeID string) (*hrmmodel.Account, error) {
+	var account hrmmodel.Account
+	if err := r.db.WithContext(ctx).
+		Where("employee_id = ?", employeeID).
+		First(&account).Error; err != nil {
+		return nil, err
+	}
+	return &account, nil
 }

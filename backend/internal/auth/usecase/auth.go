@@ -11,8 +11,10 @@ import (
 )
 
 type AuthenticationInterface interface {
-	SignIn(ctx context.Context, email, password string) (string, string, error)
+	SignIn(ctx context.Context, email, password string) (string, string, bool, error)
 	ChangePassword(ctx context.Context, accountId, newPassword string) error
+	GetAccountByID(ctx context.Context, id string) (hrmmodel.Account, error)
+	GetAccountByEmployeeID(ctx context.Context, employeeID string) (*hrmmodel.Account, error)
 }
 
 type Authentication struct {
@@ -27,22 +29,22 @@ func NewAuthentication(accountRepo authRepository.AccountRepository, tokenMaker 
 	}
 }
 
-func (a *Authentication) SignIn(ctx context.Context, email, password string) (string, string, error) {
+func (a *Authentication) SignIn(ctx context.Context, email, password string) (string, string, bool, error) {
 	account, err := a.accountRepo.GetAccountByEmail(ctx, email)
 	if err != nil {
-		return "", "", fmt.Errorf("email or password is incorrect")
+		return "", "", false, fmt.Errorf("email or password is incorrect")
 	}
 
 	if err := utils.CheckPassword(password, account.Password); err != nil {
-		return "", "", fmt.Errorf("password is incorrect")
+		return "", "", false, fmt.Errorf("password is incorrect")
 	}
 
 	accessToken, refreshToken, err := a.CreateToken(ctx, account)
 	if err != nil {
-		return "", "", err
+		return "", "", false, err
 	}
 
-	return accessToken, refreshToken, nil
+	return accessToken, refreshToken, account.FirstLogin, nil
 }
 
 func (a *Authentication) ChangePassword(ctx context.Context, accountId, newPassword string) error {
@@ -90,4 +92,12 @@ func (a *Authentication) CreateToken(ctx context.Context, account hrmmodel.Accou
 	}
 
 	return accessToken, refreshToken, nil
+}
+
+func (a *Authentication) GetAccountByID(ctx context.Context, id string) (hrmmodel.Account, error) {
+	return a.accountRepo.GetAccountByID(ctx, id)
+}
+
+func (a *Authentication) GetAccountByEmployeeID(ctx context.Context, employeeID string) (*hrmmodel.Account, error) {
+	return a.accountRepo.GetAccountByEmployeeID(ctx, employeeID)
 }

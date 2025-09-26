@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import Loading from "@/components/Loading";
+import PATH from "@/constants/Path";
 
 const formSchema = z.object({
   email: z.string().email("Email không hợp lệ."),
@@ -52,8 +53,15 @@ const SignInPage = () => {
       if (res.statuscode === 200) {
         localStorage.setItem("access_token", res.data.access_token);
         localStorage.setItem("refresh_token", res.data.refresh_token);
-        toast.success("Đăng nhập thành công");
-        navigate("/"); 
+        
+        // Xử lý chuyển hướng dựa trên first_login
+        if (res.data.first_login) {
+          toast.success("Đăng nhập thành công. Vui lòng đổi mật khẩu lần đầu.");
+          navigate(PATH.FIRST_CHANGE_PASSWORD); // Đường dẫn đến trang đổi mật khẩu đầu tiên
+        } else {
+          toast.success("Đăng nhập thành công");
+          navigate("/"); 
+        }
       }
     },
     onError: (error: any) => {

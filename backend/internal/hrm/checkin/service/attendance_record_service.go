@@ -204,8 +204,7 @@ func (s *attendanceRecordService) ExportAttendanceExcel(ctx context.Context, tar
 	})
 	f.SetCellStyle(sheet, "A1", "G1", headerStyle)
 
-	// Time limit để tính trễ
-	redLimit := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 8, 31, 0, 0, targetDate.Location())
+	// Style chữ đỏ cho giờ đi trễ
 	redStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{Color: "FF0000"},
 	})
@@ -224,7 +223,25 @@ func (s *attendanceRecordService) ExportAttendanceExcel(ctx context.Context, tar
 		timeCell := "E" + itoa(row)
 		f.SetCellValue(sheet, timeCell, r.Timestamp.Format("2006-01-02 15:04:05"))
 
-		onTime := r.Timestamp.Before(redLimit) || r.Timestamp.Equal(redLimit)
+		startTime, err := time.Parse("15:04:05", r.StartTime) // Format: HH:MM:SS
+		if err != nil {
+			return nil, fmt.Errorf("invalid start_time format in work shift data")
+		}
+
+		// Ghép start_time với ngày targetDate
+		shiftStart := time.Date(
+			targetDate.Year(),
+			targetDate.Month(),
+			targetDate.Day(),
+			startTime.Hour(),
+			startTime.Minute(),
+			startTime.Second(),
+			0,
+			targetDate.Location(),
+		)
+
+		// So sánh giờ chấm công với giờ bắt đầu ca
+		onTime := r.Timestamp.Before(shiftStart) || r.Timestamp.Equal(shiftStart)
 		if onTime {
 			f.SetCellValue(sheet, "F"+itoa(row), "X")
 			onTimeCount++

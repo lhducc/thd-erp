@@ -59,7 +59,6 @@ const ManagementAttendantHistory = () => {
         isLoading={pendingGetEmployees}
         navLink={<NavLinkAttendantHistory />}
         title="Bảng lịch sử chấm công"
-        buttonCreate={<CreateExcelFileForm />}
         keyFilter="full_name"
       />
     </>

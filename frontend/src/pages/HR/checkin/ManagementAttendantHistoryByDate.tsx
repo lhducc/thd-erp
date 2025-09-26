@@ -34,23 +34,29 @@ const ManagementAttendantHistory = () => {
       accessorKey: "timestamp",
       header: "Thời gian chấm công",
       cell: ({ row }) => {
-        const ts = row.original.timestamp;
-        if (!ts) return "-";
+        const record = row.original;
+        const ts = record.timestamp;
+        const startTime = record.start_time;
+        
+        if (!ts || !startTime) return "-";
 
         const display = ts.replace("T", " ").replace("Z", "");
 
-        const timePart = ts.slice(11, 16); // "08:29"
-        const [hour, minute] = timePart.split(":").map(Number);
+        // Lấy phần thời gian từ timestamp (HH:MM:SS)
+        const timestampTime = ts.slice(11, 19); // "08:29:45"
+        // Lấy start_time (HH:MM:SS hoặc HH:MM)
+        const shiftStartTime = startTime.length === 5 ? startTime + ":00" : startTime; // Đảm bảo cùng format
 
-        const isLate = hour > 8 || (hour === 8 && minute > 30);
+        // So sánh thời gian
+        const isLate = timestampTime > shiftStartTime;
 
         return (
           <span style={{ color: isLate ? "red" : "inherit", fontWeight: isLate ? "600" : "normal" }}>
-          {display}
-         </span>
+            {display}
+          </span>
         );
-     },
-    }
+      },
+    },
 
   ];
 

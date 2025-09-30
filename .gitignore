@@ -9,7 +9,7 @@
 
 ssl/
 sample_db/
-# vendor/
+vendor/
 go.work
 *tmp/*
 *tmp

@@ -25,6 +25,7 @@ func NewAccountRepository(db *gorm.DB) AccountRepository {
 	return &accountRepo{db: db}
 }
 
+// tối ưu ở đây
 func (r *accountRepo) GetAccountByEmail(ctx context.Context, email string) (hrmmodel.Account, error) {
 	var account hrmmodel.Account
 	err := r.db.WithContext(ctx).Joins("JOIN employee on employee.employee_id = account.employee_id").

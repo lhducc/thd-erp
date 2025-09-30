@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 
 const AttendanceReport = () => {
-    const {data: timesheetData} = useGetPersonalTimesheet(5, 2025);
+   
     const [currentDate] = useState(new Date());
     const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
     const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
@@ -43,6 +43,11 @@ const AttendanceReport = () => {
     for (let day = 1; day <= daysInMonth; day++) {
         calendarDays.push(new Date(selectedYear, selectedMonth, day));
     }
+
+     const { data: timesheetData } = useGetPersonalTimesheet(
+  selectedMonth + 1,
+  selectedYear
+);
 
     const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedMonth(parseInt(e.target.value));

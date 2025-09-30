@@ -163,6 +163,7 @@ func (t *timesheetServiceImp) calculateForEmployee(
 		// Ensure shift.Date has a location before using it, but do NOT convert value
 		if shift.Date.Location() == nil || shift.Date.Location().String() == "UTC" {
 			log.Printf("[DEBUG] shift.Date trước khi chuyển về giờ VN: %v", shift.Date)
+			// Nếu đang ở UTC, chuyển về giờ Việt Nam bằng cách trừ đi 7 tiếng
 			shift.Date = shift.Date.In(vietnamLoc)
 			log.Printf("[DEBUG] shift.Date sau khi chuyển về giờ VN: %v, location: %v", shift.Date, shift.Date.Location())
 		}

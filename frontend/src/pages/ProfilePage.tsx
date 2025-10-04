@@ -5,7 +5,7 @@ const HRProfilePage = lazy(() => import("@/pages/HR/profile/index.tsx"))
 const ClientProfilePage = lazy(() => import("@/pages/Client/ClientProfilePage.tsx"))
 const PROFILE_COMPONENTS: Record<string, ReactNode> = {
     admin: <HRProfilePage/>,
-    manager: <HRProfilePage/>,
+    manager: <ClientProfilePage/>,
     employee: <ClientProfilePage/>,
 };
 

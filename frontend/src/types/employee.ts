@@ -1,4 +1,5 @@
 import type { Decision, Position } from "@/types/index.ts";
+import type { off } from "process";
 
 type Office = {
   office_id: string;
@@ -69,3 +70,14 @@ export interface AssignParams {
     employee_ids: string[];
   };
 }
+
+export type ManagerEmployee = {
+  employee_id: string;
+  full_name: string;
+  phone_number: string;
+  email: string;
+  position_name: string;
+  job_title: string;
+  department_name: string;
+  office_name: string;
+};

@@ -35,6 +35,7 @@ type EmployeeRepo interface {
 	CheckExistEmployeeID(employeeID string) (bool, error)
 	GetUserByRoleID(roleID string) ([]model.ManagerResponse, error)
 	UpdateStatusEmployee(employeeID, statusChange string) error
+	GetEmployeesByManager(ctx context.Context, managerID string) ([]model.Employee, error)
 }
 
 type AccountRepo interface {
@@ -378,4 +379,33 @@ func (e *EmployeeBiz) UpdateStatus(employeeID, statusChange string) error {
 		return fmt.Errorf("not_found")
 	}
 	return e.repo.UpdateStatusEmployee(employeeID, statusChange)
+}
+
+func (biz *EmployeeBiz) GetEmployeesByManager(ctx context.Context, managerID string) ([]dto.ManagerEmployeeDTO, error) {
+	if strings.TrimSpace(managerID) == "" {
+		return nil, errors.New("invalid manager ID")
+	}
+
+	employees, err := biz.repo.GetEmployeesByManager(ctx, managerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get employees by manager: %w", err)
+	}
+
+	// Map sang DTO
+	var results []dto.ManagerEmployeeDTO
+	for _, e := range employees {
+		dtoItem := dto.ManagerEmployeeDTO{
+			EmployeeID:     e.EmployeeID,
+			FullName:       e.Fullname,
+			PhoneNumber:    e.PhoneNumber,
+			Email:          e.Email,
+			PositionName:   e.Position.Name,
+			JobTitle:       e.JobTitle.JobTitle,
+			DepartmentName: e.Department.Name,
+			OfficeName:     e.Department.Office.Name,
+		}
+		results = append(results, dtoItem)
+	}
+
+	return results, nil
 }

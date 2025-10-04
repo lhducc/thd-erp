@@ -1,5 +1,5 @@
 import {useQuery} from "@tanstack/react-query";
-import {getAllEmployeesApi, getEmployeeByIdApi, getEmployeeByRoleNameApi} from "@/apis/profile.api.ts";
+import {getAllEmployeesApi, getEmployeeByIdApi, getEmployeeByRoleNameApi, getEmployeesByManagerApi} from "@/apis/profile.api.ts";
 
 export const useGetAllEmployee = () =>
     useQuery({
@@ -18,4 +18,11 @@ export const useEmployeeByRoleNameQuery = (roleName: string) =>
     useQuery({
         queryKey: ["employeeByRole", roleName],
         queryFn: () => getEmployeeByRoleNameApi(roleName),
-    })
+    });
+
+export const useGetManagerEmployees = () =>
+  useQuery({
+    queryKey: ["managerEmployees"],
+    queryFn: () => getEmployeesByManagerApi(),
+  });
+

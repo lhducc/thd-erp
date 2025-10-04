@@ -348,3 +348,21 @@ func (s *UserStore) UpdateStatusEmployee(employeeID, statusChange string) error 
 	}
 	return nil
 }
+
+func (s *UserStore) GetEmployeesByManager(ctx context.Context, managerID string) ([]model.Employee, error) {
+	var employees []model.Employee
+
+	err := s.db.WithContext(ctx).
+		Where("manager = ?", managerID).
+		Preload("Position").
+		Preload("JobTitle").
+		Preload("Department").
+		Preload("Department.Office").
+		Find(&employees).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get employees by manager_id %s: %w", managerID, err)
+	}
+
+	return employees, nil
+}

@@ -23,6 +23,7 @@ type EmployeeBiz interface {
 	ExportEmployeeTest(selectedFields []string) ([]byte, string, error)
 	GetUserByRoleID(roleID string) ([]model.ManagerResponse, error)
 	UpdateStatus(employeeID, statusChange string) error
+	GetEmployeesByManager(ctx context.Context, managerID string) ([]dto.ManagerEmployeeDTO, error)
 }
 
 type EmployeeHandler struct {
@@ -236,5 +237,24 @@ func (biz *EmployeeHandler) UpdateStatusEmp() gin.HandlerFunc {
 		}
 
 		utils.ResponseMessage(c, "Update status successfully", http.StatusOK, nil)
+	}
+}
+
+func (h *EmployeeHandler) GetEmployeesByManagerID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		managerID := c.GetString("employeeId") // lấy từ AuthMiddleware
+
+		if managerID == "" {
+			utils.ResponseMessage(c, "Manager ID không hợp lệ", http.StatusUnauthorized, nil)
+			return
+		}
+
+		employees, err := h.employeeBiz.GetEmployeesByManager(c.Request.Context(), managerID)
+		if err != nil {
+			utils.ResponseMessage(c, fmt.Sprintf("Lỗi: %s", err.Error()), http.StatusInternalServerError, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Danh sách nhân viên dưới quyền", http.StatusOK, employees)
 	}
 }

@@ -144,7 +144,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupJobTitleRoutes(adminRouter, jobtitleHandler)
 	setupPositionRoutes(adminRouter, positionHandler)
 	setuphierarchyLevelRoutes(adminRouter, hierarchyLevel)
-	setupEmployeeRouters(adminRouter, hrmRouter, employeeHandler)
+	setupEmployeeRouters(adminRouter, hrmRouter, managerRouter, employeeHandler)
 	setupContractRoutes(adminRouter, contractHandler)
 	setupDecisionRoutes(adminRouter, decisionHandler)
 	setupDocumentTypeRoutes(adminRouter, documentTypeHandler)
@@ -251,7 +251,7 @@ func setuphierarchyLevelRoutes(router *gin.RouterGroup, handler *handler.Hierarc
 	}
 }
 
-func setupEmployeeRouters(adminRouter, userRouter *gin.RouterGroup, handler *handler.EmployeeHandler) {
+func setupEmployeeRouters(adminRouter, userRouter, managerRouter *gin.RouterGroup, handler *handler.EmployeeHandler) {
 	adminEmployeeRouter := adminRouter.Group("/employee")
 	{
 		adminEmployeeRouter.GET("", handler.GetAllEmployees())
@@ -267,6 +267,11 @@ func setupEmployeeRouters(adminRouter, userRouter *gin.RouterGroup, handler *han
 	userEmployeeRouter := userRouter.Group("/employee")
 	{
 		userEmployeeRouter.GET("/personal", handler.GetPersonalInfById())
+	}
+
+	managerEmployeeRouter := managerRouter.Group("/employee")
+	{
+		managerEmployeeRouter.GET("/manager/employees", handler.GetEmployeesByManagerID())
 	}
 }
 

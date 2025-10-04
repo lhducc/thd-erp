@@ -13,6 +13,7 @@ import logo from "@/assets/LogoSignInPage.svg";
 import {
     House,
     Users,
+    User,
     ReceiptText,
     Calendar, CalendarRange,
 } from "lucide-react";
@@ -29,6 +30,11 @@ const ClientSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
         {
             name: "Hồ sơ nhân viên",
             url: PATH.PROFILE,
+            icon: User,
+        },
+        {
+            name: "Quản lý trực tiếp",
+            url: PATH.PROFILE_MANAGER,
             icon: Users,
         },
         {
@@ -43,14 +49,14 @@ const ClientSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
         },
         {
             name: "Bảng công cá nhân",
-            url: PATH.ATTENDANT_HISTORY,
+            url: PATH.ATTENDANCE_REPORT,
             icon: CalendarRange,
         },
         {
-            name: "Lịch làm việc nhân viên",
-            url: PATH.ROTA,
-            icon: ReceiptText,
-        }
+            name: "Lịch sử chấm công",
+            url: PATH.ATTENDANT_HISTORY,
+            icon: Users,
+        },
     ];
 
     return (

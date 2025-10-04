@@ -71,6 +71,9 @@ const TimesheetPage = lazy(
 const TimesheetDetail = lazy(
   () => import("@/pages/HR/checkin/timesheet/TimesheetDetail")
 );
+const ManagerEmployee = lazy(
+  () => import("@/pages/Manager/ManagerEmployeePage.tsx")
+);
 
 export const hrRoutes = [
   {
@@ -299,6 +302,14 @@ export const hrRoutes = [
         element: (
           <Suspense fallback={<Loading />}>
             <RegisterWorkshift />
+          </Suspense>
+        ),
+      },
+      {
+        path: PATH.PROFILE_MANAGER,
+        element: (
+          <Suspense fallback={<Loading />}>
+            <ManagerEmployee />
           </Suspense>
         ),
       },

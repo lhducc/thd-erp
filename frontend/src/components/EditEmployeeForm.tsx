@@ -24,7 +24,7 @@ import {useDepartment} from "@/query/useDepartment.ts";
 import {useOffice} from "@/query/useOffice.ts";
 import type {Employee} from "@/types/employee.ts";
 import {useJobTitle} from "@/query/useJobTitle.ts";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import Loading from "@/components/Loading.tsx";
 import {toast} from "sonner";
 import {useGetRoles} from "@/query/role.query.ts";
@@ -116,7 +116,8 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
                 manager_id: values.manager === "" ? null : values.manager,
                 address: values.current_address,
                 department_id: values.department,
-                schedule_id: Number(values.schedule_id)
+                schedule_id: Number(values.schedule_id),
+                role_id: values.role_id
             };
             await updateEmployeeApi(data.employee_id, payload);
             await clientQuery.invalidateQueries({queryKey: ["employees"]})
@@ -132,6 +133,16 @@ const EditEmployeeForm = ({open, setOpen, data, refetchEmployee}: Props) => {
             setIsLoading(false);
         }
     }
+
+    useEffect(() => {
+        if (!data.schedule_id) return;
+        if (workschedulesAuto?.some(s => s.work_schedule_id === Number(data.schedule_id))) {
+            setWorkScheduleType(true); // lịch tự động
+        } else {
+            setWorkScheduleType(false); // lịch đăng ký
+        }
+    }, [data.schedule_id, workschedulesAuto]);
+
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>

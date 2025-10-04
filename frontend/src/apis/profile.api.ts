@@ -1,6 +1,6 @@
 import type {PayloadEmployee} from "@/types";
 import api from "./api";
-import type {Employee, EmployeeNameAndRole} from "@/types/employee.ts";
+import type {Employee, EmployeeNameAndRole, ManagerEmployee} from "@/types/employee.ts";
 import {unwrap} from "@/lib/utils.ts";
 
 export const createEmployeeApi = async (payload: PayloadEmployee) => {
@@ -71,3 +71,8 @@ export const changeStatusEmployeeApi = async (
     throw new Error("Không thể thay đổi trạng thái");
 };
 
+
+export const getEmployeesByManagerApi = async (): Promise<ManagerEmployee[]> => {
+  const response = await api.get(`/employee/manager/employees`);
+  return response.data.data;
+};

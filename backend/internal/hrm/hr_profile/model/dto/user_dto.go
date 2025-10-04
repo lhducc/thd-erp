@@ -43,3 +43,14 @@ type EmployeeResponse struct {
 	Employee *model.Employee `json:"employee"`
 	Role     *model.Role     `json:"role"`
 }
+
+type ManagerEmployeeDTO struct {
+	EmployeeID     string `json:"employee_id"`
+	FullName       string `json:"full_name"`
+	PhoneNumber    string `json:"phone_number"`
+	Email          string `json:"email"`
+	PositionName   string `json:"position_name"`
+	JobTitle       string `json:"job_title"`
+	DepartmentName string `json:"department_name"`
+	OfficeName     string `json:"office_name"`
+}

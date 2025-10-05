@@ -184,6 +184,8 @@ func (s *attendanceRecordService) ExportAttendanceExcel(ctx context.Context, tar
 		return nil, fmt.Errorf("Không có dữ liệu chấm công cho ngày %s", targetDate.Format("2006-01-02"))
 	}
 
+	loc, _ := time.LoadLocation("Asia/Ho_Chi_Minh")
+
 	f := excelize.NewFile()
 	sheet := "Attendance"
 	f.NewSheet(sheet)
@@ -223,7 +225,7 @@ func (s *attendanceRecordService) ExportAttendanceExcel(ctx context.Context, tar
 		timeCell := "E" + itoa(row)
 		f.SetCellValue(sheet, timeCell, r.Timestamp.Format("2006-01-02 15:04:05"))
 
-		startTime, err := time.Parse("15:04:05", r.StartTime) // Format: HH:MM:SS
+		startTime, err := time.ParseInLocation("15:04:05", r.StartTime, loc) // Format: HH:MM:SS
 		if err != nil {
 			return nil, fmt.Errorf("invalid start_time format in work shift data")
 		}
@@ -237,7 +239,7 @@ func (s *attendanceRecordService) ExportAttendanceExcel(ctx context.Context, tar
 			startTime.Minute(),
 			startTime.Second(),
 			0,
-			targetDate.Location(),
+			loc,
 		)
 
 		// So sánh giờ chấm công với giờ bắt đầu ca

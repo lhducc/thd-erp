@@ -19,7 +19,7 @@ type ExportOptions = {
 };
 
 type Props = {
-  selectedDate: string | null;  
+  selectedDate: string | null;
   onConfirm?: (options: ExportOptions) => void;
 };
 
@@ -93,7 +93,14 @@ export default function ExportFileDialog({ selectedDate, onConfirm }: Props) {
               checked={byDateChecked}
               onCheckedChange={(v) => setByDateChecked(Boolean(v))}
             />
-            <Label htmlFor="byDate"> Theo ngày (ngày đã chọn:{" "}{selectedDate? new Date(selectedDate).toLocaleDateString("vi-VN")  : "chưa có"} )</Label>
+            <Label htmlFor="byDate">
+              {" "}
+              Theo ngày (ngày đã chọn:{" "}
+              {selectedDate
+                ? new Date(selectedDate).toLocaleDateString("vi-VN")
+                : "chưa có"}{" "}
+              )
+            </Label>
           </div>
 
           {/* Theo tháng */}

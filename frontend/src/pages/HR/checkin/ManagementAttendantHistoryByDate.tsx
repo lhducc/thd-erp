@@ -1,17 +1,19 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import DataTable from "@/components/DataTable.tsx";
 import NavLinkAttendantHistory from "@/components/ui/NavLinkAttendantHistory";
-import {useEmployeesByDate } from "@/query/attendance-history-by-date.ts";
+import { useEmployeesByDate } from "@/query/attendance-history-by-date.ts";
 import type { AttendanceRecordHistoryByDate } from "@/types/attendance.ts";
 import ExportFileDialog from "@/components/CreateExcelFileForm.tsx";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
 const ManagementAttendantHistory = () => {
-  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+  const today = new Date().toLocaleDateString("sv-SE", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
   const [selectedDate, setSelectedDate] = useState<string>(today);
 
-  const { data: records, isLoading } = useEmployeesByDate(selectedDate);  
+  const { data: records, isLoading } = useEmployeesByDate(selectedDate);
 
   const columns: ColumnDef<AttendanceRecordHistoryByDate>[] = [
     {
@@ -37,27 +39,43 @@ const ManagementAttendantHistory = () => {
         const record = row.original;
         const ts = record.timestamp;
         const startTime = record.start_time;
-        
+
         if (!ts || !startTime) return "-";
 
-        const display = ts.replace("T", " ").replace("Z", "");
+        // Parse ISO string thành Date object
+        const date = new Date(ts);
 
-        // Lấy phần thời gian từ timestamp (HH:MM:SS)
-        const timestampTime = ts.slice(11, 19); // "08:29:45"
-        // Lấy start_time (HH:MM:SS hoặc HH:MM)
-        const shiftStartTime = startTime.length === 5 ? startTime + ":00" : startTime; // Đảm bảo cùng format
+        // Format: yyyy-MM-dd HH:mm:ss
+        const display = date
+          .toLocaleString("sv-SE", {
+            timeZone: "Asia/Ho_Chi_Minh",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })
+          .replace("T", " "); // "2025-09-30 10:33:28"
 
-        // So sánh thời gian
+        // So sánh giờ check-in với giờ ca làm
+        const timestampTime = display.slice(11, 19); // "10:33:28"
+        const shiftStartTime =
+          startTime.length === 5 ? startTime + ":00" : startTime;
         const isLate = timestampTime > shiftStartTime;
 
         return (
-          <span style={{ color: isLate ? "red" : "inherit", fontWeight: isLate ? "600" : "normal" }}>
+          <span
+            style={{
+              color: isLate ? "red" : "inherit",
+              fontWeight: isLate ? "600" : "normal",
+            }}
+          >
             {display}
           </span>
         );
       },
     },
-
   ];
 
   return (
@@ -76,7 +94,7 @@ const ManagementAttendantHistory = () => {
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
             />
-            <ExportFileDialog selectedDate={selectedDate}/>
+            <ExportFileDialog selectedDate={selectedDate} />
           </div>
         }
       />

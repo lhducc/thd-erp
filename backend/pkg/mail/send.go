@@ -78,6 +78,9 @@ func SendEmailWithAccountInfo(receiver, receiverName, accountPassword string) er
 			<div class="account-info">
 				<p><strong>Email đăng nhập:</strong> %s</p>
 				<p><strong>Mật khẩu:</strong> %s</p>
+				<p><strong>Đường dẫn truy cập hệ thống:</strong> 
+					<a href="https://erp.thdcybersecurity.com/" target="_blank">https://erp.thdcybersecurity.com/</a>
+				</p>
 			</div>
 			<div class="notice">
 				<strong>Lưu ý quan trọng:</strong>

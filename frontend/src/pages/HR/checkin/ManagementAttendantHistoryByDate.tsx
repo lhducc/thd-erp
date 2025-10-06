@@ -45,7 +45,7 @@ const ManagementAttendantHistory = () => {
         // Parse ISO string thành Date object
         const date = new Date(ts);
 
-        // Format: yyyy-MM-dd HH:mm:ss
+        // Format hiển thị: yyyy-MM-dd HH:mm:ss
         const display = date
           .toLocaleString("sv-SE", {
             timeZone: "Asia/Ho_Chi_Minh",
@@ -58,11 +58,21 @@ const ManagementAttendantHistory = () => {
           })
           .replace("T", " "); // "2025-09-30 10:33:28"
 
-        // So sánh giờ check-in với giờ ca làm
-        const timestampTime = display.slice(11, 19); // "10:33:28"
+        // Lấy ngày từ timestamp
+        const [dayPart] = display.split(" "); // "2025-09-30"
+
+        // Giờ bắt đầu ca làm
         const shiftStartTime =
-          startTime.length === 5 ? startTime + ":00" : startTime;
-        const isLate = timestampTime > shiftStartTime;
+          startTime.length === 5 ? startTime + ":00" : startTime; // "08:30:00"
+
+        // Convert sang Date (shiftStart + 3 phút)
+        const shiftStartDate = new Date(`${dayPart}T${shiftStartTime}+07:00`);
+        const shiftStartWithGrace = new Date(
+          shiftStartDate.getTime() + 3 * 60 * 1000
+        );
+
+        // Check trễ
+        const isLate = date > shiftStartWithGrace;
 
         return (
           <span

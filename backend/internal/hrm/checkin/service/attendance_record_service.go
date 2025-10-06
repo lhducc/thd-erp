@@ -241,9 +241,11 @@ func (s *attendanceRecordService) ExportAttendanceExcel(ctx context.Context, tar
 			0,
 			loc,
 		)
+		// So sánh giờ chấm công với giờ bắt đầu ca (+3 phút grace period)
+		shiftStartWithGrace := shiftStart.Add(3 * time.Minute)
 
 		// So sánh giờ chấm công với giờ bắt đầu ca
-		onTime := r.Timestamp.Before(shiftStart) || r.Timestamp.Equal(shiftStart)
+		onTime := r.Timestamp.Before(shiftStartWithGrace) || r.Timestamp.Equal(shiftStartWithGrace)
 		if onTime {
 			f.SetCellValue(sheet, "F"+itoa(row), "X")
 			onTimeCount++

@@ -34,7 +34,9 @@ type AttendanceRecordHistoryByDate struct {
 	DepartmentName string     `gorm:"department_name" json:"department_name"`
 	Timestamp      *time.Time `gorm:"timestamp" json:"timestamp"`
 	WorkShiftID    string     `gorm:"workshift_id" json:"workshift_id"`
+	WorkShiftName  string     `gorm:"workshift_name" json:"workshift_name"`
 	StartTime      string     `gorm:"start_time" json:"start_time"`
+	CheckinTo      string     `gorm:"checkin_to" json:"checkin_to"`
 }
 
 func (r *AttendanceRecordCreate) Validate() error {

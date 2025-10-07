@@ -199,13 +199,14 @@ func (r *attendanceRecordRepository) ListHistoryByDate(
 	err := r.db.WithContext(ctx).
 		Session(&gorm.Session{PrepareStmt: false}).
 		Table("attendance_records AS ar").
-		Select("ar.employee_id, e.full_name, o.office_name, d.department_name, ar.timestamp, w.workshift_id, w.start_time").
+		Select("ar.employee_id, e.full_name, o.office_name, d.department_name, ar.timestamp, w.workshift_id, w.workshift_name, w.start_time, w.checkin_to").
 		Joins("INNER JOIN employee e ON ar.employee_id = e.employee_id").
 		Joins("INNER JOIN office o ON ar.office_id = o.office_id").
 		Joins("INNER JOIN department d ON e.department_id = d.department_id").
 		Joins("INNER JOIN employee_workshift ew ON e.employee_id = ew.employee_id AND ew.date = ?", targetDate.Format("2006-01-02")).
 		Joins("INNER JOIN workshifts w ON ew.workshift_id = w.workshift_id").
 		Where("ar.timestamp >= ? AND ar.timestamp < ?", startOfDay, endOfDay).
+		Where("ar.timestamp::time <= w.checkin_to::time").
 		Order("ar.timestamp ASC").
 		Scan(&records).Error
 

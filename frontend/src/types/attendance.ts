@@ -49,6 +49,8 @@ export type AttendanceRecordHistoryByDate = {
   office_name: string;
   department_name: string;
   timestamp: string;
-  work_shift: string;
+  workshift_id: string;
+  workshift_name: string;
   start_time: string;
+  checkin_to: string;
 };

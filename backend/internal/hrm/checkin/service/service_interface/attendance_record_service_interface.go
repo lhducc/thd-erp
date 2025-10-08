@@ -21,4 +21,5 @@ type AttendanceRecordService interface {
 	GetAttendanceRecordByIDPersonal(ctx context.Context, recordID, employeeID string) (*model.AttendanceRecord, error)
 	GetHistoryByDate(ctx context.Context, dateStr string) ([]dto.AttendanceRecordHistoryByDate, error)
 	ExportAttendanceExcel(ctx context.Context, targetDate time.Time) ([]byte, error)
+	GetListHistoryByDateForManager(ctx context.Context, managerID string, dateStr string) ([]dto.AttendanceRecordHistoryByDate, error)
 }

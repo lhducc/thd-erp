@@ -276,3 +276,15 @@ func (s *attendanceRecordService) ExportAttendanceExcel(ctx context.Context, tar
 func itoa(i int) string {
 	return fmt.Sprintf("%d", i)
 }
+
+func (s *attendanceRecordService) GetListHistoryByDateForManager(ctx context.Context, managerId string, dateStr string) ([]dto.AttendanceRecordHistoryByDate, error) {
+	date, err := time.Parse("2006-01-02", dateStr) // format yyyy-mm-dd
+	if err != nil {
+		return nil, fmt.Errorf("invalid date format, expected yyyy-mm-dd")
+	}
+
+	loc, _ := time.LoadLocation("Asia/Ho_Chi_Minh")
+	date = date.In(loc)
+
+	return s.repo.ListHistoryByDateForManager(ctx, managerId, date)
+}

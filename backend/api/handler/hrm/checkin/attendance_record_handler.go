@@ -430,3 +430,24 @@ func (h *AttendanceRecordHandler) ExportExcelByDate() gin.HandlerFunc {
 		c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", file)
 	}
 }
+
+func (h *AttendanceRecordHandler) GetListHistoryByDateForManager() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		managerID := c.GetString("employeeId") // Lấy ID của manager đang đăng nhập
+		ctx := c.Request.Context()
+		dateStr := c.Query("date")
+
+		if dateStr == "" {
+			utils.ResponseMessage(c, "Missing 'date' query param", http.StatusBadRequest, nil)
+			return
+		}
+
+		records, err := h.biz.GetListHistoryByDateForManager(ctx, managerID, dateStr)
+		if err != nil {
+			utils.ResponseMessage(c, "Failed to get employee history: "+err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Danh sách lịch sử chấm công theo ngày", http.StatusOK, records)
+	}
+}

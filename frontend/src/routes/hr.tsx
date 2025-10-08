@@ -22,7 +22,7 @@ const WorkScheduleRegister = lazy(
 );
 const SetupWorkScheduleAuto = lazy(
   () => import("@/pages/HR/checkin/work-schedule-auto/SetupWorkScheduleAuto")
-); 
+);
 const SetupWorkScheduleRegister = lazy(
   () =>
     import("@/pages/HR/checkin/wok-schedule-register/SetupWorkScheduleRegister")
@@ -73,6 +73,9 @@ const TimesheetDetail = lazy(
 );
 const ManagerEmployee = lazy(
   () => import("@/pages/Manager/ManagerEmployeePage.tsx")
+);
+const ManagerEmployeeHistory = lazy(
+  () => import("@/pages/Manager/ManagerEmployeeHistoryPage.tsx")
 );
 
 export const hrRoutes = [
@@ -310,6 +313,14 @@ export const hrRoutes = [
         element: (
           <Suspense fallback={<Loading />}>
             <ManagerEmployee />
+          </Suspense>
+        ),
+      },
+      {
+        path: PATH.ATTENDANT_HISTORY_MANAGER,
+        element: (
+          <Suspense fallback={<Loading />}>
+            <ManagerEmployeeHistory />
           </Suspense>
         ),
       },

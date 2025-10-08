@@ -1,15 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 
 import type { AttendanceRecordHistoryByDate } from "@/types/attendance";
-import {getEmployeesByDateApi, getEmployeesByMonthApi } from "@/apis/attendance-record.api";
-
-
+import {
+  getEmployeeHistoryByManagerApi,
+  getEmployeesByDateApi,
+  getEmployeesByMonthApi,
+} from "@/apis/attendance-record.api";
 
 export const useEmployeesByDate = (date: string | null) => {
   return useQuery<AttendanceRecordHistoryByDate[]>({
     queryKey: ["employeesByDate", date],
     queryFn: () => getEmployeesByDateApi(date!),
-    enabled: !!date, 
+    enabled: !!date,
   });
 };
 
@@ -18,5 +20,13 @@ export const useEmployeesByMonth = (month: string | null) => {
     queryKey: ["employeesByMonth", month],
     queryFn: () => getEmployeesByMonthApi(month!),
     enabled: !!month,
+  });
+};
+
+export const useEmployeeHistoryByManager = (targetDate: string | null) => {
+  return useQuery<AttendanceRecordHistoryByDate[]>({
+    queryKey: ["employeeHistoryByManager", targetDate],
+    queryFn: () => getEmployeeHistoryByManagerApi(targetDate!),
+    enabled: !!targetDate, // chỉ gọi khi có ngày hợp lệ
   });
 };

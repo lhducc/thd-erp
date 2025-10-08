@@ -157,7 +157,7 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 
 	//CheckIn
 	setupWorkShiftRoutes(adminRouter, hrmRouter, workShiftHandler)
-	setupAttandanceRecordRoutes(adminRouter, hrmRouter, attandanceRecord)
+	setupAttandanceRecordRoutes(adminRouter, managerRouter, hrmRouter, attandanceRecord)
 	setupAttendanceCategory(adminRouter, hrmRouter, attendanceCategoryHandler)
 	setupEmployeeWorkshiftRoutes(adminRouter, managerRouter, hrmRouter, employeeWorkShiftHandler)
 	setupWorkScheduleRoutes(adminRouter, workScheduleHandler)
@@ -358,7 +358,7 @@ func setupWorkShiftRoutes(adminRouter, userRouter *gin.RouterGroup, workShiftHan
 
 }
 
-func setupAttandanceRecordRoutes(amdinRouter, userRouter *gin.RouterGroup, handler *checkin.AttendanceRecordHandler) {
+func setupAttandanceRecordRoutes(amdinRouter, managerRouter, userRouter *gin.RouterGroup, handler *checkin.AttendanceRecordHandler) {
 	adminGroup := amdinRouter.Group("/attendance-record")
 	{
 		adminGroup.GET("/:id", handler.GetAttendanceRecordByID())
@@ -377,6 +377,10 @@ func setupAttandanceRecordRoutes(amdinRouter, userRouter *gin.RouterGroup, handl
 		userGr.POST("", handler.CreateAttendanceRecord())
 		userGr.GET("/personal", handler.GetPersonalHistoryRecord())
 		userGr.GET("/:id/personal", handler.GetPersonalRecordDetailById())
+	}
+	managerGr := managerRouter.Group("/attendance-record")
+	{
+		managerGr.GET("/employee-history", handler.GetListHistoryByDateForManager())
 	}
 
 }

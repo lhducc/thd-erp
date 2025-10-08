@@ -52,6 +52,8 @@ const PATH = {
 
   // Manager
   PROFILE_MANAGER: "/profile-manager",
+  ATTENDANT_HISTORY_MANAGER: "/attendant-history-manager",
+  WORKSHIFT_EMPLOYEE: "/workshift-employee",
 };
 
 export default PATH;

@@ -3,6 +3,7 @@ package service_interface
 import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/model/dto"
 	"time"
 )
 
@@ -19,4 +20,5 @@ type EmployeeWorkshiftService interface {
 	Assign(ctx context.Context, empWorkshifts []model.EmployeeWorkshift, scheduleIDs []int) error
 	RegisterMany(assigns []*model.EmployeeWorkshift) error
 	GetAllEmployeeWorkshiftsByMonthYear(ctx context.Context, month, year int) ([]model.EmployeeWorkshift, error)
+	GetEmployeeWorkShiftsByManager(ctx context.Context, managerID string, targetDate string) ([]dto.ManagerEmployeeScheduleDTO, error)
 }

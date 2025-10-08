@@ -187,6 +187,7 @@ func setupEmployeeWorkshiftRoutes(adminRouter, managerRouter, userRouter *gin.Ro
 	}
 	managerGr := managerRouter.Group("/employee-workshifts")
 	{
+		managerGr.GET("/by-manager", handler.GetEmployeeWorkShiftsByManager())
 		managerGr.DELETE("/:id", handler.DeleteByManager())
 		managerGr.POST("/manager", handler.Register())
 	}

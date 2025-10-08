@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	"erp/backend/internal/hrm/hr_profile/usecase"
@@ -214,4 +215,8 @@ func (s *employeeWorkshiftService) GetAllEmployeeWorkshiftsByMonthYear(ctx conte
 	endDate := startDate.AddDate(0, 1, -1)
 
 	return s.repo.GetAllEmployeeWorkShiftsByMonthYear(ctx, startDate, endDate)
+}
+
+func (s *employeeWorkshiftService) GetEmployeeWorkShiftsByManager(ctx context.Context, managerID string, targetDate string) ([]dto.ManagerEmployeeScheduleDTO, error) {
+	return s.repo.GetEmployeeWorkShiftsByManager(ctx, managerID, targetDate)
 }

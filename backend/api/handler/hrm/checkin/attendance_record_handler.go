@@ -271,7 +271,7 @@ func (h *AttendanceRecordHandler) GetHistoryRecordByEmployee() gin.HandlerFunc {
 		ctx := c.Request.Context()
 
 		pageStr := c.DefaultQuery("page", "1")
-		limitStr := c.DefaultQuery("limit", "10")
+		limitStr := c.DefaultQuery("limit", "70")
 
 		page, err := strconv.Atoi(pageStr)
 		if err != nil || page < 1 {

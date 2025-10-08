@@ -3,6 +3,7 @@ package repo_interface
 import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/model/dto"
 	"time"
 )
 
@@ -21,4 +22,5 @@ type EmployeeWorkShiftRepo interface {
 	CheckShiftConflict(ctx context.Context, employeeID string, workshiftID string, date time.Time) (bool, error)
 	SaveMany(assigns []*model.EmployeeWorkshift) error
 	GetAllEmployeeWorkShiftsByMonthYear(ctx context.Context, startDate, endDate time.Time) ([]model.EmployeeWorkshift, error)
+	GetEmployeeWorkShiftsByManager(ctx context.Context, managerID string, targetDate string) ([]dto.ManagerEmployeeScheduleDTO, error)
 }

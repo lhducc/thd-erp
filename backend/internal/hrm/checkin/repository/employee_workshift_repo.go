@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	utils "erp/backend/pkg/transaction"
 	"errors"
@@ -197,4 +198,37 @@ func (r *employeeWorkShiftRepo) GetAllEmployeeWorkShiftsByMonthYear(ctx context.
 	}
 
 	return workshifts, nil
+}
+
+func (r *employeeWorkShiftRepo) GetEmployeeWorkShiftsByManager(ctx context.Context, managerID string, targetDate string) ([]dto.ManagerEmployeeScheduleDTO, error) {
+	var results []dto.ManagerEmployeeScheduleDTO
+
+	t, _ := time.Parse("2006-01-02", targetDate)
+
+	firstDay := time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
+	lastDay := firstDay.AddDate(0, 1, -1)
+
+	query := `
+				SELECT
+					ew.id,
+					ew.employee_id,
+					e.full_name,
+					e.manager,
+					ew.workshift_id,
+					ew.date,
+					ws.workshift_name,
+					ws.start_time,
+					ws.end_time
+				FROM employee_workshift AS ew
+				JOIN employee AS e ON ew.employee_id = e.employee_id
+				JOIN workshifts AS ws ON ew.workshift_id = ws.workshift_id
+				WHERE e.manager = ?
+				  AND DATE(ew.date) BETWEEN ? AND ?
+				ORDER BY ew.date ASC
+`
+	if err := r.db.WithContext(ctx).Raw(query, managerID, firstDay.Format("2006-01-02"), lastDay.Format("2006-01-02")).Scan(&results).Error; err != nil {
+		return nil, fmt.Errorf("failed to get employee workshifts by manager: %w", err)
+	}
+
+	return results, nil
 }

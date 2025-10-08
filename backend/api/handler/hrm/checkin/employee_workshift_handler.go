@@ -346,3 +346,19 @@ func (h *EmployeeWorkshiftHandler) RegisterMany() gin.HandlerFunc {
 		utils.ResponseMessage(c, "Register workshift successfully", http.StatusOK, nil)
 	}
 }
+
+func (h *EmployeeWorkshiftHandler) GetEmployeeWorkShiftsByManager() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		managerID := c.GetString("employeeId")
+		targetDate := c.Query("targetDate")
+
+		result, err := h.biz.GetEmployeeWorkShiftsByManager(ctx, managerID, targetDate)
+		if err != nil {
+			utils.ResponseMessage(c, "Failed to get employee workshifts: "+err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+
+		utils.ResponseMessage(c, "Get employee workshifts by manager successfully", http.StatusOK, result)
+	}
+}

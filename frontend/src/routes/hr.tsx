@@ -77,6 +77,7 @@ const ManagerEmployee = lazy(
 const ManagerEmployeeHistory = lazy(
   () => import("@/pages/Manager/ManagerEmployeeHistoryPage.tsx")
 );
+const RotaManager = lazy(() => import("@/pages/Manager/RotaManager.tsx"));
 
 export const hrRoutes = [
   {
@@ -321,6 +322,14 @@ export const hrRoutes = [
         element: (
           <Suspense fallback={<Loading />}>
             <ManagerEmployeeHistory />
+          </Suspense>
+        ),
+      },
+      {
+        path: PATH.WORKSHIFT_EMPLOYEE,
+        element: (
+          <Suspense fallback={<Loading />}>
+            <RotaManager />
           </Suspense>
         ),
       },

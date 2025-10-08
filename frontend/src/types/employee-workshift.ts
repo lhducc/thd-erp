@@ -1,21 +1,33 @@
-import type {Workshift} from "@/types/workshift.ts";
+import type { Workshift } from "@/types/workshift.ts";
 
 export type EmployeeWorkshift = {
-    id: string;
-    CreatedAt: string;
-    UpdatedAt: string;
-    DeletedAt: string;
-    employee_id: string;
-    workshift_id: string;
-    workshift: Workshift
-}
+  id: string;
+  CreatedAt: string;
+  UpdatedAt: string;
+  DeletedAt: string;
+  employee_id: string;
+  workshift_id: string;
+  workshift: Workshift;
+};
 
 export interface EmployeeWorkshiftResponse {
-    [employeeId: string]: EmployeeWorkshift[];
+  [employeeId: string]: EmployeeWorkshift[];
 }
 
 export interface RegisterWorkshiftRequest {
-    employee_id: string;
-    workshift_id: string;
-    date: string;
+  employee_id: string;
+  workshift_id: string;
+  date: string;
 }
+
+export type ManagerEmployeeSchedule = {
+  id: string;
+  employee_id: string;
+  full_name: string;
+  manager: string;
+  workshift_id: string;
+  date: string;
+  workshift_name: string;
+  start_time: string;
+  end_time: string;
+};

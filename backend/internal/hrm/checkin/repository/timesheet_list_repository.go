@@ -154,6 +154,7 @@ func (r *timesheetListRepo) GetForExport(ctx context.Context, id string) (*model
 		}).
 		Preload("Timesheets.Employee").
 		Preload("Timesheets.Office").
+		Preload("Timesheets.Department.Office").
 		Preload("Timesheets.Employee.JobTitle").
 		Preload("Timesheets.Employee.Position").
 		Preload("Timesheets.Employee.JobTitle.HierarchyLevel").

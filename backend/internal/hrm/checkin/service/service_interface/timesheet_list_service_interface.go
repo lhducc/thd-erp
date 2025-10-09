@@ -12,4 +12,5 @@ type TimesheetListServiceInterface interface {
 	Delete(ctx context.Context, id string) error
 	List(ctx context.Context, page, limit int) ([]model.TimeSheetList, int64, error)
 	LockedTimesheet(ctx context.Context, timesheet *model.TimeSheetList) error
+	ExportCheckinCheckout(ctx context.Context, id string) ([]byte, string, error)
 }

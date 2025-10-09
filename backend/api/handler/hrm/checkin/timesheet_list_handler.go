@@ -6,6 +6,7 @@ import (
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	"erp/backend/pkg"
 	"erp/backend/pkg/struct_support"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -146,5 +147,21 @@ func (h *TimesheetListHandler) LockedTimeSheet() gin.HandlerFunc {
 		}
 
 		utils.ResponseMessage(c, "Chốt công thành công", http.StatusOK, lockeModel.TimeSheetListID)
+	}
+}
+
+func (h *TimesheetListHandler) ExportCheckinCheckout() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		fileBytes, fileName, err := h.service.ExportCheckinCheckout(c.Request.Context(), id)
+		if err != nil {
+			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+
+		c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
+		c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+		c.Data(http.StatusOK, "application/octet-stream", fileBytes)
 	}
 }

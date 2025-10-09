@@ -464,6 +464,8 @@ func setupTimesheetListRoutes(adminRouter *gin.RouterGroup, timesheetListHandler
 		adminGr.POST("", timesheetListHandler.Create())
 		adminGr.PUT("/:id", timesheetListHandler.Update())
 		adminGr.PUT("/:id/locked", timesheetListHandler.LockedTimeSheet())
+		adminGr.GET("/:id/export", timesheetListHandler.ExportCheckinCheckout())
+
 	}
 }
 

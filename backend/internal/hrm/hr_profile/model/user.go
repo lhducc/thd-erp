@@ -71,7 +71,7 @@ type EmployeeInforResponse struct {
 	JobTitle       *JobTitle       `gorm:"foreignKey:JobTitleID;references:job_title_id" json:"-"`
 	HierarchyLevel *HierarchyLevel `gorm:"-" json:"hierarchy_level,omitempty"`
 	Position       *Position       `gorm:"foreignKey:PositionID;references:position_id" json:"position,omitempty"`
-	Department     Department      `gorm:"column:department_id" json:"department,omitempty"`
+	Department     *Department     `gorm:"column:department_id" json:"department,omitempty"`
 }
 
 func (JobTitleResponse) TableName() string { return "jobtitle" }

@@ -183,6 +183,18 @@ func (s *timesheetListService) ExportCheckinCheckout(ctx context.Context, id str
 		return nil, "", fmt.Errorf("không có dữ liệu để xuất")
 	}
 
+	activeTimesheets := make([]checkinmodel.TimeSheet, 0)
+	for _, t := range ts.Timesheets {
+		if t.Employee != nil && t.Employee.Status == "active" {
+			activeTimesheets = append(activeTimesheets, t)
+		}
+	}
+	ts.Timesheets = activeTimesheets
+
+	if len(ts.Timesheets) == 0 {
+		return nil, "", fmt.Errorf("không có nhân viên active để xuất")
+	}
+
 	f := excelize.NewFile()
 	sheet := "Checkin-Checkout"
 	f.NewSheet(sheet)

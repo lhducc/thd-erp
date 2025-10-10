@@ -25,10 +25,16 @@ func NewEmployeeWorkShiftRepo(db *gorm.DB) repo_interface.EmployeeWorkShiftRepo 
 
 func (r *employeeWorkShiftRepo) GetAll() ([]model.EmployeeWorkshift, error) {
 	var employeeWorkShifts []model.EmployeeWorkshift
-	result := r.db.Preload("WorkShift").Find(&employeeWorkShifts)
+
+	result := r.db.
+		Joins("JOIN employee e ON e.employee_id = employee_workshift.employee_id AND e.status = 'active'").
+		Preload("WorkShift").
+		Find(&employeeWorkShifts)
+
 	if result.Error != nil {
 		return []model.EmployeeWorkshift{}, result.Error
 	}
+
 	return employeeWorkShifts, nil
 }
 
@@ -119,11 +125,12 @@ func (r *employeeWorkShiftRepo) GetEmployeeWorkShiftsByMonthYear(ctx context.Con
 	var workShifts []model.EmployeeWorkshift
 
 	err := r.db.WithContext(ctx).
-		Model(&model.EmployeeWorkshift{}).
-		Where("employee_id = ?", employeeID).
-		Where("date BETWEEN ? AND ?", startDate, endDate).
+		Table("employee_workshift AS ew").
+		Joins("JOIN employee AS e ON e.employee_id = ew.employee_id AND e.status = 'active'").
+		Where("ew.employee_id = ?", employeeID).
+		Where("ew.date BETWEEN ? AND ?", startDate, endDate).
 		Preload("WorkShift").
-		Order("date").
+		Order("ew.date").
 		Find(&workShifts).Error
 
 	if err != nil {
@@ -187,10 +194,11 @@ func (r *employeeWorkShiftRepo) GetAllEmployeeWorkShiftsByMonthYear(ctx context.
 	var workshifts []model.EmployeeWorkshift
 
 	err := r.db.WithContext(ctx).
-		Where("date BETWEEN ? AND ?", startDate, endDate).
-		//Preload("Employee").
+		Model(&model.EmployeeWorkshift{}).
+		Joins("JOIN employee AS e ON e.employee_id = employee_workshift.employee_id AND e.status = 'active'").
+		Where("employee_workshift.date BETWEEN ? AND ?", startDate, endDate).
 		Preload("WorkShift").
-		Order("employee_id, date").
+		Order("employee_workshift.employee_id, employee_workshift.date").
 		Find(&workshifts).Error
 
 	if err != nil {

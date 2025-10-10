@@ -230,7 +230,8 @@ func (s *UserStore) GetBySchedule(ctx context.Context, scheduleIDs []int, manage
 		Select("employee.employee_id", "employee.full_name", "employee.schedule_id", "employee.department_id", "employee.job_title_id").
 		Preload("Department").
 		Preload("JobTitle").
-		Preload("JobTitle.HierarchyLevel")
+		Preload("JobTitle.HierarchyLevel").
+		Where("employee.status = ?", "active")
 
 	// Xử lý managerID trước
 	if strings.TrimSpace(managerID) != "" {
@@ -365,4 +366,52 @@ func (s *UserStore) GetEmployeesByManager(ctx context.Context, managerID string)
 	}
 
 	return employees, nil
+}
+
+func (s *UserStore) GetAllEmployeesActivePagination(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error) {
+	var employees []model.Employee
+	var totalRecords int64
+
+	db := s.db.Model(&model.Employee{}).
+		Where("employee.status = ?", "active") //chỉ lấy nhân viên active
+
+	for key, value := range filters {
+		switch key {
+		case "office_id":
+			if arr, ok := value.([]string); ok && len(arr) > 0 {
+				db = db.Joins("JOIN department d ON employee.department_id = d.department_id").
+					Where("d.office_id IN (?)", arr)
+			}
+		case "department_id":
+			if arr, ok := value.([]string); ok && len(arr) > 0 {
+				db = db.Where("employee.department_id IN (?)", arr)
+			}
+		default:
+			if arr, ok := value.([]string); ok && len(arr) > 0 {
+				db = db.Where(fmt.Sprintf("employee.%s IN (?)", key), arr)
+			} else if value != nil && value != "" {
+				db = db.Where(fmt.Sprintf("employee.%s = ?", key), value)
+			}
+		}
+	}
+
+	if err := db.Count(&totalRecords).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to count active employees: %w", err)
+	}
+
+	offset := (page - 1) * pageSize
+	if err := db.Order("employee.employee_id ASC").
+		Limit(pageSize).
+		Offset(offset).
+		Preload("Account").
+		Preload("Manager").
+		Preload("JobTitle").
+		Preload("Position").
+		Preload("Department").
+		Preload("Department.Office").
+		Find(&employees).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to get active employees: %w", err)
+	}
+
+	return employees, totalRecords, nil
 }

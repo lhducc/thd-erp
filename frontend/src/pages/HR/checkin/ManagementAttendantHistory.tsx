@@ -1,14 +1,14 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import more from "../../../assets/more.svg";
 import DataTable from "@/components/DataTable.tsx";
-import { useGetAllEmployee } from "@/query/employee.query.ts";
+import { useGetAllEmployeesActive } from "@/query/employee.query.ts";
 import type { Employee } from "@/types/employee.ts";
 import { Link } from "react-router-dom";
 import NavLinkAttendantHistory from "@/components/ui/NavLinkAttendantHistory";
 
 const ManagementAttendantHistory = () => {
   const { data: employees, isLoading: pendingGetEmployees } =
-    useGetAllEmployee();
+    useGetAllEmployeesActive();
   const columns: ColumnDef<Employee>[] = [
     {
       accessorKey: "employee_id",

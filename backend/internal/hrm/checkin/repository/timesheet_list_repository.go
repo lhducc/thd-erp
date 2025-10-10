@@ -28,7 +28,7 @@ func (r *timesheetListRepo) GetByID(ctx context.Context, id string) (*model.Time
 	var ts model.TimeSheetList
 	err := r.db.WithContext(ctx).
 		Preload("Timesheets").
-		Preload("Timesheets.Employee").
+		Preload("Timesheets.Employee", "status = ?", "active").
 		Preload("Timesheets.Employee.JobTitle").
 		Preload("Timesheets.Employee.Position").
 		Preload("Timesheets.Employee.JobTitle.HierarchyLevel").
@@ -152,7 +152,7 @@ func (r *timesheetListRepo) GetForExport(ctx context.Context, id string) (*model
 			// Sắp xếp timesheet theo EmployeeID để đảm bảo thứ tự
 			return db.Order("employee_id ASC")
 		}).
-		Preload("Timesheets.Employee").
+		Preload("Timesheets.Employee", "status = ?", "active").
 		Preload("Timesheets.Office").
 		Preload("Timesheets.Department.Office").
 		Preload("Timesheets.Employee.JobTitle").

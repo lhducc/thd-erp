@@ -36,6 +36,7 @@ type EmployeeRepo interface {
 	GetUserByRoleID(roleID string) ([]model.ManagerResponse, error)
 	UpdateStatusEmployee(employeeID, statusChange string) error
 	GetEmployeesByManager(ctx context.Context, managerID string) ([]model.Employee, error)
+	GetAllEmployeesActivePagination(page, pageSize int, filters map[string]interface{}) ([]model.Employee, int64, error)
 }
 
 type AccountRepo interface {
@@ -408,4 +409,29 @@ func (biz *EmployeeBiz) GetEmployeesByManager(ctx context.Context, managerID str
 	}
 
 	return results, nil
+}
+
+func (biz *EmployeeBiz) GetAllEmployeesActive(page, pageSize int, filters map[string]interface{}) ([]dto.EmployeeResponse, int64, error) {
+	employees, totalRecords, err := biz.repo.GetAllEmployeesActivePagination(page, pageSize, filters)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get all active employees: %w", err)
+	}
+
+	var employeeInfs []dto.EmployeeResponse
+	for _, employee := range employees {
+		var employeeInf dto.EmployeeResponse
+		acc, err := biz.account.GetAccountNoCtx(*employee.AccountID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		employeeInf.Employee = &employee
+		if acc != nil && acc.Role != nil {
+			employeeInf.Role = acc.Role
+		}
+
+		employeeInfs = append(employeeInfs, employeeInf)
+	}
+
+	return employeeInfs, totalRecords, nil
 }

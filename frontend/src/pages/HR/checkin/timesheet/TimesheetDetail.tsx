@@ -536,59 +536,68 @@ const TimesheetDetailPage = () => {
             </tr>
           </thead>
           <tbody>
-            {timesheetData.timesheets?.map((timesheet) => (
-              <>
-                <tr key={timesheet.timesheet_id} className="hover:bg-gray-50">
-                  <td className="p-2 border">
-                    {timesheet.details && timesheet.details.length > 0 && (
-                      <button
-                        onClick={() =>
-                          toggleRowExpansion(timesheet.timesheet_id)
-                        }
-                        className="p-1 rounded hover:bg-gray-200"
-                      >
-                        {expandedRows.has(timesheet.timesheet_id) ? "▼" : "►"}
-                      </button>
-                    )}
-                  </td>
-                  <td className="p-2 border">
-                    {timesheet.employee.employee_id}
-                  </td>
-                  <td className="p-2 border">{timesheet.employee.full_name}</td>
-                  <td className="p-2 border">
-                    {timesheet.department.department_name}
-                  </td>
-                  <td className="p-2 border">
-                    {timesheet.employee.position.position_name}
-                  </td>
-                  <td className="p-2 border">
-                    {timesheet.employee.hierarchy_level.hierarchy_level}
-                  </td>
-                  {/* Day cells */}
-                  {dayColumns?.map((col, idx) => {
-                    const cell = col.cell!({ row: { original: timesheet } });
-                    return (
-                      <td key={idx} className="p-1 border">
-                        {cell}
-                      </td>
-                    );
-                  })}
-                  <td className="p-2 border text-center">
-                    {timesheet.total_late_minutes}
-                  </td>
-                  <td className="p-2 border text-center font-semibold">
-                    {timesheet.total_work_days}
-                  </td>
-                </tr>
-                {expandedRows.has(timesheet.timesheet_id) && (
-                  <tr>
-                    <td colSpan={6 + dayColumns.length + 2} className="p-0">
-                      {renderRowExpansion(timesheet)}
+            {timesheetData.timesheets
+              ?.filter((t) => t.employee) // chỉ hiển thị những nhân viên còn active
+              .map((timesheet) => (
+                <>
+                  <tr key={timesheet.timesheet_id} className="hover:bg-gray-50">
+                    <td className="p-2 border">
+                      {timesheet.details && timesheet.details.length > 0 && (
+                        <button
+                          onClick={() =>
+                            toggleRowExpansion(timesheet.timesheet_id)
+                          }
+                          className="p-1 rounded hover:bg-gray-200"
+                        >
+                          {expandedRows.has(timesheet.timesheet_id) ? "▼" : "►"}
+                        </button>
+                      )}
+                    </td>
+                    <td className="p-2 border">
+                      {timesheet.employee
+                        ? timesheet.employee.employee_id
+                        : "N/A"}
+                    </td>
+                    <td className="p-2 border">
+                      {timesheet.employee?.full_name ||
+                        "Nhân viên không hoạt động"}
+                    </td>
+                    <td className="p-2 border">
+                      {timesheet.department.department_name}
+                    </td>
+                    <td className="p-2 border">
+                      {timesheet.employee?.position?.position_name || ""}
+                    </td>
+                    <td className="p-2 border">
+                      {timesheet.employee?.hierarchy_level?.hierarchy_level ||
+                        ""}
+                    </td>
+
+                    {/* Day cells */}
+                    {dayColumns?.map((col, idx) => {
+                      const cell = col.cell!({ row: { original: timesheet } });
+                      return (
+                        <td key={idx} className="p-1 border">
+                          {cell}
+                        </td>
+                      );
+                    })}
+                    <td className="p-2 border text-center">
+                      {timesheet.total_late_minutes}
+                    </td>
+                    <td className="p-2 border text-center font-semibold">
+                      {timesheet.total_work_days}
                     </td>
                   </tr>
-                )}
-              </>
-            ))}
+                  {expandedRows.has(timesheet.timesheet_id) && (
+                    <tr>
+                      <td colSpan={6 + dayColumns.length + 2} className="p-0">
+                        {renderRowExpansion(timesheet)}
+                      </td>
+                    </tr>
+                  )}
+                </>
+              ))}
           </tbody>
         </table>
       </div>

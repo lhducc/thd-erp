@@ -67,6 +67,7 @@ type EmployeeInforResponse struct {
 	JobTitleID   string `gorm:"column:job_title_id" json:"-"`
 	DepartmentID string `gorm:"column:department_id" json:"-"`
 	WorkType     string `gorm:"column:work_type" json:"work_type"`
+	Status       string `gorm:"column:status" json:"status"`
 
 	JobTitle       *JobTitle       `gorm:"foreignKey:JobTitleID;references:job_title_id" json:"-"`
 	HierarchyLevel *HierarchyLevel `gorm:"-" json:"hierarchy_level,omitempty"`

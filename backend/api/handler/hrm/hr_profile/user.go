@@ -24,6 +24,7 @@ type EmployeeBiz interface {
 	GetUserByRoleID(roleID string) ([]model.ManagerResponse, error)
 	UpdateStatus(employeeID, statusChange string) error
 	GetEmployeesByManager(ctx context.Context, managerID string) ([]dto.ManagerEmployeeDTO, error)
+	GetAllEmployeesActive(page, pageSize int, filters map[string]interface{}) ([]dto.EmployeeResponse, int64, error)
 }
 
 type EmployeeHandler struct {
@@ -256,5 +257,41 @@ func (h *EmployeeHandler) GetEmployeesByManagerID() gin.HandlerFunc {
 		}
 
 		utils.ResponseMessage(c, "Danh sách nhân viên dưới quyền", http.StatusOK, employees)
+	}
+}
+
+func (h *EmployeeHandler) GetAllEmployeesActive() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		page, err := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+		if err != nil || page < 1 {
+			page = 1
+		}
+		pageSize, err := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
+		if err != nil || pageSize < 1 {
+			pageSize = 10
+		}
+
+		// filter
+		filterFields := []string{"job_title_id", "department_id", "position_id", "office_id", "work_type"}
+		filters := utils.ExtractFilterArrays(ctx, filterFields)
+
+		// get data (chỉ lấy active)
+		employees, totalRecords, err := h.employeeBiz.GetAllEmployeesActive(page, pageSize, filters)
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+
+		totalPages := (totalRecords + int64(pageSize) - 1) / int64(pageSize)
+
+		response := gin.H{
+			"data":         &employees,
+			"totalRecords": totalRecords,
+			"page":         page,
+			"pageSize":     pageSize,
+			"totalPages":   totalPages,
+		}
+
+		utils.ResponseMessage(ctx, "Danh sách nhân viên đang hoạt động", http.StatusOK, response)
 	}
 }

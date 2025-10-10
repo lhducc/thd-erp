@@ -263,6 +263,7 @@ func setupEmployeeRouters(adminRouter, userRouter, managerRouter *gin.RouterGrou
 		adminEmployeeRouter.GET("/export", handler.ExportEmployees())
 		adminEmployeeRouter.GET("/user", handler.GetEmployeesByRoleID())
 		adminEmployeeRouter.PUT("/:id/status", handler.UpdateStatusEmp())
+		adminEmployeeRouter.GET("/active", handler.GetAllEmployeesActive())
 	}
 
 	userEmployeeRouter := userRouter.Group("/employee")

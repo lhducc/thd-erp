@@ -102,7 +102,7 @@ const EditEmployeeForm = ({ open, setOpen, data, refetchEmployee }: Props) => {
   const { data: offices } = useOffice();
   const { data: jobTitle } = useJobTitle();
   const { data: roles } = useGetRoles();
-  const { data: managers } = useEmployeeByRoleNameQuery("manager");
+  const { data: managers } = useEmployeeByRoleNameQuery(["manager", "admin"]);
   const clientQuery = useQueryClient();
   async function onSubmit(values: z.infer<typeof form>) {
     setIsLoading(true);

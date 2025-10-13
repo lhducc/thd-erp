@@ -20,10 +20,16 @@ export const useGetEmployeeById = (employeeId: string) =>
     enabled: !!employeeId,
   });
 
-export const useEmployeeByRoleNameQuery = (roleName: string) =>
+export const useEmployeeByRoleNameQuery = (roleNames: string | string[]) =>
   useQuery({
-    queryKey: ["employeeByRole", roleName],
-    queryFn: () => getEmployeeByRoleNameApi(roleName),
+    queryKey: ["employeeByRole", roleNames],
+    queryFn: async () => {
+      const roles = Array.isArray(roleNames) ? roleNames : [roleNames];
+      const results = await Promise.all(
+        roles.map((role) => getEmployeeByRoleNameApi(role))
+      );
+      return results.flat();
+    },
   });
 
 export const useGetManagerEmployees = () =>

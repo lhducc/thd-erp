@@ -348,6 +348,17 @@ const HRProfilePage = () => {
               label: value as string,
             })),
           },
+          {
+            id: "role",
+            label: "Vai trò",
+            field: "role",
+            options: Array.from(
+              new Set(employees.map((e) => e.role?.role_name).filter(Boolean))
+            ).map((value) => ({
+              value: value as string,
+              label: value as string,
+            })),
+          },
         ];
         setFilterOptions(options);
       }
@@ -484,6 +495,8 @@ const HRProfilePage = () => {
               return values.includes(employee.job_title?.job_title || "");
             case "position":
               return values.includes(employee.position?.position_name || "");
+            case "role":
+              return values.includes(employee.role?.role_name || "");
             default:
               return true;
           }

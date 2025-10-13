@@ -355,6 +355,7 @@ func (s *UserStore) GetEmployeesByManager(ctx context.Context, managerID string)
 
 	err := s.db.WithContext(ctx).
 		Where("manager = ?", managerID).
+		Where("status = ?", "active").
 		Preload("Position").
 		Preload("JobTitle").
 		Preload("Department").

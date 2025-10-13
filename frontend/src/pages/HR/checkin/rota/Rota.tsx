@@ -315,6 +315,9 @@ const Rota = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [draggingItem, setDraggingItem] = useState<string | null>(null);
   const { currentUser } = useAuth();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     const handleMouseUp = () => setIsDraggingColumns(false);
@@ -424,13 +427,50 @@ const Rota = () => {
   }, [shiftAllocation]);
 
   const filteredEmployees = useMemo(() => {
-    if (!selectedSchedule) return shiftAllocation;
-    return shiftAllocation.filter((employee) =>
-      employee.schedules?.some(
-        (schedule) => schedule.work_schedule_name === selectedSchedule
-      )
-    );
-  }, [shiftAllocation, selectedSchedule]);
+    let employees = shiftAllocation;
+
+    // Lọc theo schedule
+    if (selectedSchedule) {
+      employees = employees.filter((employee) =>
+        employee.schedules?.some(
+          (schedule) => schedule.work_schedule_name === selectedSchedule
+        )
+      );
+    }
+
+    // Lọc theo phòng ban
+    if (selectedDepartment) {
+      employees = employees.filter(
+        (e) =>
+          e.department_name &&
+          e.department_name.toLowerCase() === selectedDepartment.toLowerCase()
+      );
+    }
+
+    // Lọc theo tên nhân viên
+    if (searchTerm.trim()) {
+      employees = employees.filter((e) =>
+        e.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Sort theo tên phòng ban
+    employees = [...employees].sort((a, b) => {
+      const depA = a.department_name?.toLowerCase() || "";
+      const depB = b.department_name?.toLowerCase() || "";
+      return sortOrder === "asc"
+        ? depA.localeCompare(depB)
+        : depB.localeCompare(depA);
+    });
+
+    return employees;
+  }, [
+    shiftAllocation,
+    selectedSchedule,
+    selectedDepartment,
+    searchTerm,
+    sortOrder,
+  ]);
 
   const {
     data: workshifts = [],
@@ -782,6 +822,7 @@ const Rota = () => {
     <div className="relative">
       <div className="space-y-4">
         <Nav />
+
         <hr />
         <SecondNav
           currentDate={currentDate}
@@ -792,6 +833,38 @@ const Rota = () => {
           onSelectSchedule={handleScheduleFilter}
           isSidebarOpen={isSidebarOpen}
         />
+
+        <div className="flex items-center gap-3 my-3">
+          <input
+            type="text"
+            placeholder="Tìm theo tên nhân viên..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="border rounded px-3 py-2 w-64"
+          />
+
+          <select
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
+            className="border rounded px-3 py-2"
+          >
+            <option value="">Tất cả phòng ban</option>
+            {Array.from(
+              new Set(shiftAllocation.map((e) => e.department_name))
+            ).map((dept) => (
+              <option key={dept} value={dept}>
+                {dept}
+              </option>
+            ))}
+          </select>
+
+          <Button
+            variant="outline"
+            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+          >
+            Sắp xếp theo phòng ban {sortOrder === "asc" ? "↑" : "↓"}
+          </Button>
+        </div>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>

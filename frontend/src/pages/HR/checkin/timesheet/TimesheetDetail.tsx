@@ -50,6 +50,10 @@ const TimesheetDetailPage = () => {
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
   const timesheetData = data as unknown as TimesheetList;
 
   // Generate columns for each day in the month
@@ -506,12 +510,46 @@ const TimesheetDetailPage = () => {
             <Button onClick={handleLockTimesheet}>
               {isLockTimesheet ? <Loading /> : "Chốt công"}
             </Button>
-            <Button onClick={handleExport}>Xuất file</Button>
+            <Button onClick={handleExport}>Xuất bảng công</Button>
             <Button onClick={() => exportCheckinCheckout(id)}>
-              Xuất file check-in/check-out
+              Xuất công thời gian
             </Button>
           </div>
         </div>
+      </div>
+
+      <div className="flex items-center gap-3 my-4">
+        <input
+          type="text"
+          placeholder="Tìm theo tên nhân viên..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border rounded px-3 py-2 w-64"
+        />
+
+        <select
+          value={selectedDepartment}
+          onChange={(e) => setSelectedDepartment(e.target.value)}
+          className="border rounded px-3 py-2"
+        >
+          <option value="">Tất cả phòng ban</option>
+          {Array.from(
+            new Set(
+              timesheetData.timesheets.map((t) => t.department.department_name)
+            )
+          ).map((dept) => (
+            <option key={dept} value={dept}>
+              {dept}
+            </option>
+          ))}
+        </select>
+
+        <Button
+          variant="outline"
+          onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+        >
+          Sắp xếp theo phòng ban {sortOrder === "asc" ? "↑" : "↓"}
+        </Button>
       </div>
 
       {/* Timesheet Table */}
@@ -537,7 +575,24 @@ const TimesheetDetailPage = () => {
           </thead>
           <tbody>
             {timesheetData.timesheets
-              ?.filter((t) => t.employee) // chỉ hiển thị những nhân viên còn active
+              ?.filter((t) => t.employee)
+              .filter((t) =>
+                t.employee.full_name
+                  .toLowerCase()
+                  .includes(searchTerm.toLowerCase())
+              )
+              .filter(
+                (t) =>
+                  !selectedDepartment ||
+                  t.department.department_name === selectedDepartment
+              )
+              .sort((a, b) => {
+                const depA = a.department.department_name.toLowerCase();
+                const depB = b.department.department_name.toLowerCase();
+                return sortOrder === "asc"
+                  ? depA.localeCompare(depB)
+                  : depB.localeCompare(depA);
+              })
               .map((timesheet) => (
                 <>
                   <tr key={timesheet.timesheet_id} className="hover:bg-gray-50">

@@ -356,6 +356,7 @@ func setupWorkShiftRoutes(adminRouter, userRouter *gin.RouterGroup, workShiftHan
 	workshiftUser := userRouter.Group("/workshifts")
 	{
 		workshiftUser.GET("/allow-register", workShiftHandler.GetWorkshiftForRegister())
+		workshiftUser.GET("/info", workShiftHandler.GetWorkshiftInfo())
 	}
 
 }

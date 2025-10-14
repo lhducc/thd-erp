@@ -78,3 +78,8 @@ func (req *WorkScheduleRequest) Validate() error {
 
 	return nil
 }
+
+type WorkScheduleInfo struct {
+	WorkScheduleName string `json:"work_schedule_name"`
+	IsScheduleAuto   bool   `json:"is_schedule_auto"`
+}

@@ -3,6 +3,7 @@ package service_interface
 import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/model/dto"
 )
 
 type WorkShiftService interface {
@@ -12,4 +13,5 @@ type WorkShiftService interface {
 	UpdateWorkShift(ctx context.Context, data *model.WorkShifts) error
 	DeleteWorkShift(ctx context.Context, id string) error
 	GetListShiftForRegister(ctx context.Context, employeeID string) ([]model.WorkScheduleShift, error)
+	GetWorkshiftInfo(ctx context.Context, employeeID string) (*dto.WorkScheduleInfo, error)
 }

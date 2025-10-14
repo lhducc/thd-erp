@@ -3,6 +3,7 @@ package repo_interface
 import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/model/dto"
 )
 
 type WorkScheduleRepo interface {
@@ -20,4 +21,5 @@ type WorkScheduleRepo interface {
 	GetListShiftRegister(ctx context.Context, scheduleID *int) ([]model.WorkScheduleShift, error)
 	CheckManagerPermission(ctx context.Context, managerID, employeeID string) (*model.WorkScheduleManager, error)
 	UpdateStatusRecuringSchedule(ctx context.Context, scheduleID int, isAuto bool) error
+	GetWorkshiftInfo(ctx context.Context, employeeID string) (*dto.WorkScheduleInfo, error)
 }

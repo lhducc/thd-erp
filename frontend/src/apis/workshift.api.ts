@@ -143,3 +143,19 @@ export const getEmployeeWorkshiftsByManagerApi = async (
     throw error;
   }
 };
+
+export const getWorkshiftInfoApi = async (): Promise<{
+  work_schedule_name: string;
+  is_schedule_auto: boolean;
+}> => {
+  try {
+    const response = await api.get("/workshifts/info");
+    console.log("Workshift info:", response.data.data);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Error fetching workshift info:", error);
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi lấy thông tin lịch làm việc"
+    );
+  }
+};

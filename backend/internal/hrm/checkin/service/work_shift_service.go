@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	"erp/backend/internal/hrm/checkin/service/service_interface"
 	"erp/backend/internal/hrm/hr_profile/repository"
@@ -18,13 +19,16 @@ type WorkShiftService struct {
 	scheduleRepo repo_interface.WorkScheduleRepo
 }
 
-func NewWorkShiftService(repo repo_interface.WorkShiftRepo,
+func NewWorkShiftService(
+	repo repo_interface.WorkShiftRepo,
 	employeeRepo *repository.UserStore,
 	scheduleRepo repo_interface.WorkScheduleRepo,
 ) service_interface.WorkShiftService {
-	return &WorkShiftService{repo: repo,
+	return &WorkShiftService{
+		repo:         repo,
 		employeeRepo: employeeRepo,
-		scheduleRepo: scheduleRepo}
+		scheduleRepo: scheduleRepo,
+	}
 }
 
 func (sv *WorkShiftService) CreateWorkShift(ctx context.Context, w *model.WorkShifts) error {
@@ -156,4 +160,13 @@ func (biz *WorkShiftService) GetListShiftForRegister(ctx context.Context, employ
 	}
 	workShifts = schedule.Weekdays
 	return workShifts, nil
+}
+
+func (biz *WorkShiftService) GetWorkshiftInfo(ctx context.Context, employeeID string) (*dto.WorkScheduleInfo, error) {
+	info, err := biz.scheduleRepo.GetWorkshiftInfo(ctx, employeeID)
+	if err != nil {
+		return nil, err
+	}
+
+	return info, nil
 }

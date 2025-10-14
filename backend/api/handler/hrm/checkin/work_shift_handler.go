@@ -143,3 +143,17 @@ func (h *WorkShiftHandler) GetWorkshiftForRegister() gin.HandlerFunc {
 		utils.ResponseMessage(c, "Danh sách ca làm việc được phép đăng ký của nhân viên", http.StatusOK, &result)
 	}
 }
+
+func (h *WorkShiftHandler) GetWorkshiftInfo() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		employeeID := c.GetString("employeeId")
+		result, err := h.biz.GetWorkshiftInfo(ctx, employeeID)
+		if err != nil {
+			utils.ResponseMessage(c, err.Error(), http.StatusInternalServerError, nil)
+			return
+		}
+		fmt.Println(result)
+		utils.ResponseMessage(c, "Thông tin lịch làm việc của nhân viên", http.StatusOK, &result)
+	}
+}

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"erp/backend/internal/hrm/checkin/model"
+	"erp/backend/internal/hrm/checkin/model/dto"
 	"erp/backend/internal/hrm/checkin/repository/repo_interface"
 	hrm_model "erp/backend/internal/hrm/hr_profile/model"
 	utils "erp/backend/pkg/transaction"
@@ -344,4 +345,23 @@ func (r *workScheduleRepoImpl) UpdateStatusRecuringSchedule(ctx context.Context,
 		Updates(map[string]interface{}{
 			"is_auto_recurring": isAuto,
 		}).Error
+}
+
+func (r *workScheduleRepoImpl) GetWorkshiftInfo(ctx context.Context, employeeID string) (*dto.WorkScheduleInfo, error) {
+	var info dto.WorkScheduleInfo
+
+	query := `
+		SELECT 
+			ws.work_schedule_name,
+			ws.is_schedule_auto
+		FROM employee e
+		JOIN work_schedule ws ON e.schedule_id = ws.work_schedule_id
+		WHERE e.employee_id = ?
+	`
+
+	if err := r.db.WithContext(ctx).Raw(query, employeeID).Scan(&info).Error; err != nil {
+		return nil, err
+	}
+
+	return &info, nil
 }

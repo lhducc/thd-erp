@@ -6,13 +6,10 @@ import (
 	"gorm.io/gorm"
 )
 
-// AccountRepository định nghĩa interface cho repo
 type AccountRepository interface {
-	GetAccountByEmail(ctx context.Context, email string) (hrmmodel.Account, error)
-	GetAccountByID(ctx context.Context, id string) (hrmmodel.Account, error)
-	UpdateAccount(ctx context.Context, account hrmmodel.Account) error
-	GetEmployeeByAccountID(ctx context.Context, accountID int64) (hrmmodel.Employee, error)
-	GetAccountByEmployeeID(ctx context.Context, employeeID string) (*hrmmodel.Account, error)
+	GetEmployeeByEmail(ctx context.Context, email string) (hrmmodel.Employee, error)
+	GetEmployeeByID(ctx context.Context, id string) (hrmmodel.Employee, error)
+	UpdatePasswordAndFirstLogin(ctx context.Context, employeeID string, hashedPassword string) error
 }
 
 // accountRepo struct chứa db connection và implement interface
@@ -25,51 +22,28 @@ func NewAccountRepository(db *gorm.DB) AccountRepository {
 	return &accountRepo{db: db}
 }
 
-// tối ưu ở đây
-func (r *accountRepo) GetAccountByEmail(ctx context.Context, email string) (hrmmodel.Account, error) {
-	var account hrmmodel.Account
-	err := r.db.WithContext(ctx).Joins("JOIN employee on employee.employee_id = account.employee_id").
-		Where("account.login_mail = ? AND employee.status = ?", email, "active").
-		First(&account).Error
-	return account, err
-}
-
-func (r *accountRepo) GetAccountByID(ctx context.Context, id string) (hrmmodel.Account, error) {
-	var account hrmmodel.Account
-	err := r.db.WithContext(ctx).
-		Preload("Role").
-		Where("id = ?", id).
-		First(&account).Error
-	return account, err
-}
-
-func (r *accountRepo) UpdateAccount(ctx context.Context, account hrmmodel.Account) error {
-	return r.db.WithContext(ctx).Save(&account).Error
-}
-func (r *accountRepo) GetEmployeeByAccountID(ctx context.Context, accountID int64) (hrmmodel.Employee, error) {
+func (r *accountRepo) GetEmployeeByEmail(ctx context.Context, email string) (hrmmodel.Employee, error) {
 	var employee hrmmodel.Employee
-	err := r.db.Raw(`SELECT
-    e.employee_id,
-    e.full_name,
-    e.account_id,
-    a.role_id,
-    e.created_date
-FROM
-    employee AS e   
-JOIN
-    account AS a      
-    ON e.account_id = a.id
-WHERE
-    e.account_id = ?`, accountID).Scan(&employee).Error
+	err := r.db.WithContext(ctx).
+		Where("email = ? AND status = ?", email, "active").
+		First(&employee).Error
 	return employee, err
 }
 
-func (r *accountRepo) GetAccountByEmployeeID(ctx context.Context, employeeID string) (*hrmmodel.Account, error) {
-	var account hrmmodel.Account
-	if err := r.db.WithContext(ctx).
+func (r *accountRepo) GetEmployeeByID(ctx context.Context, id string) (hrmmodel.Employee, error) {
+	var employee hrmmodel.Employee
+	err := r.db.WithContext(ctx).
+		Where("employee_id = ?", id).
+		First(&employee).Error
+	return employee, err
+}
+
+func (r *accountRepo) UpdatePasswordAndFirstLogin(ctx context.Context, employeeID string, hashedPassword string) error {
+	return r.db.WithContext(ctx).
+		Model(&hrmmodel.Employee{}).
 		Where("employee_id = ?", employeeID).
-		First(&account).Error; err != nil {
-		return nil, err
-	}
-	return &account, nil
+		Updates(map[string]interface{}{
+			"password":    hashedPassword,
+			"first_login": false,
+		}).Error
 }

@@ -13,8 +13,7 @@ import (
 type AuthenticationInterface interface {
 	SignIn(ctx context.Context, email, password string) (string, string, bool, error)
 	ChangePassword(ctx context.Context, accountId, newPassword string) error
-	GetAccountByID(ctx context.Context, id string) (hrmmodel.Account, error)
-	GetAccountByEmployeeID(ctx context.Context, employeeID string) (*hrmmodel.Account, error)
+	GetEmployeeByID(ctx context.Context, id string) (hrmmodel.Employee, error)
 }
 
 type Authentication struct {
@@ -30,7 +29,7 @@ func NewAuthentication(accountRepo authRepository.AccountRepository, tokenMaker 
 }
 
 func (a *Authentication) SignIn(ctx context.Context, email, password string) (string, string, bool, error) {
-	account, err := a.accountRepo.GetAccountByEmail(ctx, email)
+	account, err := a.accountRepo.GetEmployeeByEmail(ctx, email)
 	if err != nil {
 		return "", "", false, fmt.Errorf("email or password is incorrect")
 	}
@@ -47,8 +46,8 @@ func (a *Authentication) SignIn(ctx context.Context, email, password string) (st
 	return accessToken, refreshToken, account.FirstLogin, nil
 }
 
-func (a *Authentication) ChangePassword(ctx context.Context, accountId, newPassword string) error {
-	account, err := a.accountRepo.GetAccountByID(ctx, accountId)
+func (a *Authentication) ChangePassword(ctx context.Context, employeeID, newPassword string) error {
+	account, err := a.accountRepo.GetEmployeeByID(ctx, employeeID)
 	if err != nil {
 		return fmt.Errorf("account not found: %w", err)
 	}
@@ -62,31 +61,24 @@ func (a *Authentication) ChangePassword(ctx context.Context, accountId, newPassw
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	account.Password = hashedPassword
-	account.FirstLogin = false
-
-	if err := a.accountRepo.UpdateAccount(ctx, account); err != nil {
+	if err := a.accountRepo.UpdatePasswordAndFirstLogin(ctx, employeeID, hashedPassword); err != nil {
 		return fmt.Errorf("failed to update account: %w", err)
 	}
 
 	return nil
 }
 
-func (a *Authentication) CreateToken(ctx context.Context, account hrmmodel.Account) (string, string, error) {
-	var fullname string
+func (a *Authentication) CreateToken(ctx context.Context, emp hrmmodel.Employee) (string, string, error) {
+	fullname := emp.Fullname
+	roleID := emp.RoleID
+	employeeID := emp.EmployeeID
 
-	emp, err := a.accountRepo.GetEmployeeByAccountID(ctx, account.ID) // Lấy thông tin employee
-	if err != nil {
-		return "", "", fmt.Errorf("lỗi khi lấy thông tin nhân viên theo account id: %w", err)
-	}
-	fullname = emp.Fullname
-
-	accessToken, _, err := a.tokenMaker.CreateToken(emp.EmployeeID, fullname, account.RoleID, 24*time.Hour) //1day
+	accessToken, _, err := a.tokenMaker.CreateToken(employeeID, fullname, roleID, 24*time.Hour)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, _, err := a.tokenMaker.CreateToken(emp.EmployeeID, fullname, account.RoleID, 7*24*time.Hour)
+	refreshToken, _, err := a.tokenMaker.CreateToken(employeeID, fullname, roleID, 7*24*time.Hour)
 	if err != nil {
 		return "", "", err
 	}
@@ -94,10 +86,6 @@ func (a *Authentication) CreateToken(ctx context.Context, account hrmmodel.Accou
 	return accessToken, refreshToken, nil
 }
 
-func (a *Authentication) GetAccountByID(ctx context.Context, id string) (hrmmodel.Account, error) {
-	return a.accountRepo.GetAccountByID(ctx, id)
-}
-
-func (a *Authentication) GetAccountByEmployeeID(ctx context.Context, employeeID string) (*hrmmodel.Account, error) {
-	return a.accountRepo.GetAccountByEmployeeID(ctx, employeeID)
+func (a *Authentication) GetEmployeeByID(ctx context.Context, id string) (hrmmodel.Employee, error) {
+	return a.accountRepo.GetEmployeeByID(ctx, id)
 }

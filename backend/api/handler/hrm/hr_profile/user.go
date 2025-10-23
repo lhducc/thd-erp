@@ -14,12 +14,12 @@ import (
 )
 
 type EmployeeBiz interface {
-	CreateEmployeeWithAccount(ctx context.Context, employee *model.Employee, roleID string) error
+	CreateEmployee(ctx context.Context, employee *model.Employee, roleID string) error
 	GetUserById(id string) (*dto.EmployeeResponse, error)
-	UpdateEmployee(ctx context.Context, id string, updatedEmployee dto.EmployeeDTO) error
-	DeleteEmployee(id string) error
 	GetAllEmployees(page, pageSize int, filters map[string]interface{}) ([]dto.EmployeeResponse, int64, error)
 	GetAllEmployeesByStatus(status string, page, pageSize int) ([]model.Employee, error)
+	UpdateEmployee(ctx context.Context, id string, updated dto.EmployeeDTO) error
+	DeleteEmployee(id string) error
 	ExportEmployeeTest(selectedFields []string) ([]byte, string, error)
 	GetUserByRoleID(roleID string) ([]model.ManagerResponse, error)
 	UpdateStatus(employeeID, statusChange string) error
@@ -58,7 +58,7 @@ func (biz *EmployeeHandler) CreateEmployee() gin.HandlerFunc {
 			})
 			return
 		}
-		if err := biz.employeeBiz.CreateEmployeeWithAccount(c.Request.Context(), data, dataDTO.RoleID); err != nil {
+		if err := biz.employeeBiz.CreateEmployee(c.Request.Context(), data, dataDTO.RoleID); err != nil {
 			utils.ResponseMessage(c, "Error save db", http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})

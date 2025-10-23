@@ -91,7 +91,7 @@ const EditEmployeeForm = ({ open, setOpen, data, refetchEmployee }: Props) => {
       office: data.department.office.office_id || "",
       department: data.department.department_id || "",
       manager: data.manager_id || "",
-      role_id: data.role.id,
+      role_id: data.role_id,
       work_type: data.work_type,
       schedule_id: data.schedule_id?.toString(),
     },

@@ -1,13 +1,11 @@
 package auth
 
 import (
-	"context"
 	"erp/backend/internal/auth/types"
 	authusecase "erp/backend/internal/auth/usecase"
 	"erp/backend/pkg"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"strconv"
 )
 
 type AuthenticationHandler struct {
@@ -61,17 +59,25 @@ func (r *AuthenticationHandler) ChangePassword(ctx *gin.Context) {
 		return
 	}
 
-	account, _ := r.authUsecase.GetAccountByEmployeeID(ctx.Request.Context(), accountID)
-	if err := utils.CheckPassword(req.OldPassword, account.Password); err != nil {
+	// Lấy thông tin employee hiện tại
+	employee, err := r.authUsecase.GetEmployeeByID(ctx.Request.Context(), accountID)
+	if err != nil {
+		utils.ResponseMessage(ctx, "Employee not found", http.StatusNotFound, nil)
+		return
+	}
+
+	// Kiểm tra mật khẩu cũ
+	if err := utils.CheckPassword(req.OldPassword, employee.Password); err != nil {
 		utils.ResponseMessage(ctx, "Current password is incorrect", http.StatusBadRequest, nil)
 		return
 	}
 
-	err := r.authUsecase.ChangePassword(context.Background(), strconv.FormatInt(account.ID, 10), req.NewPassword)
+	// Cập nhật mật khẩu mới
+	err = r.authUsecase.ChangePassword(ctx.Request.Context(), accountID, req.NewPassword)
 	if err != nil {
-		utils.ResponseMessage(ctx, err.Error(), http.StatusBadRequest, nil)
+		utils.ResponseMessage(ctx, err.Error(), http.StatusInternalServerError, nil)
 		return
 	}
-
+	
 	utils.ResponseMessage(ctx, "Change password successfully", http.StatusOK, nil)
 }

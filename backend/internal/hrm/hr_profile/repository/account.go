@@ -1,12 +1,6 @@
 package repository
 
 import (
-	"context"
-	hrmmodel "erp/backend/internal/hrm/hr_profile/model"
-	"errors"
-	"fmt"
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -18,88 +12,88 @@ func NewAccountStore(db *gorm.DB) *accountStore {
 	return &accountStore{db: db}
 }
 
-func (s *accountStore) CreateAccount(tx *gorm.DB, employee *hrmmodel.Employee, hashedPassword, roleID string) (*hrmmodel.Account, error) {
-	var role hrmmodel.Role
-	if err := tx.First(&role, "id = ?", roleID).Error; err != nil {
-		return nil, fmt.Errorf("failed to get role %s: %w", roleID, err)
-	}
-
-	account := hrmmodel.Account{
-		LoginMail:   employee.Email,
-		Password:    hashedPassword,
-		FirstLogin:  true,
-		CreatedDate: time.Now(),
-		EmployeeId:  employee.EmployeeID,
-		RoleID:      role.ID,
-	}
-
-	if err := tx.Create(&account).Error; err != nil {
-		return nil, fmt.Errorf("failed to create account: %w", err)
-	}
-
-	return &account, nil
-}
-
-func (r *accountStore) GetAccount(ctx context.Context, id int64) (*hrmmodel.Account, error) {
-	var account hrmmodel.Account
-	if err := r.db.WithContext(ctx).Table("account").
-		Where("id = ?", id).
-		First(&account).Error; err != nil {
-		return nil, err
-	}
-	return &account, nil
-}
-
-func (r *accountStore) GetAccountNoCtx(id int64) (*hrmmodel.Account, error) {
-	var account hrmmodel.Account
-	if err := r.db.Table("account").
-		Preload("Role").
-		Where("id = ?", id).
-		First(&account).Error; err != nil {
-		return nil, err
-	}
-	return &account, nil
-}
-
-func (r *accountStore) GetAllAccount(ctx context.Context) ([]hrmmodel.Account, error) {
-
-	var positions []hrmmodel.Account
-	if err := r.db.WithContext(ctx).Table("account").Find(&positions).Error; err != nil {
-		return nil, err
-	}
-
-	return positions, nil
-}
-
-func (r *accountStore) UpdateAccount(ctx context.Context, id string, data *hrmmodel.Account) error {
-	return r.db.WithContext(ctx).Table("account").
-		Where("id = ?", id).
-		Updates(data).Error
-}
-
-func (r *accountStore) UpdateAccountTrans(tx *gorm.DB, id int64, data *hrmmodel.Account) error {
-	return tx.Table("account").
-		Where("id = ?", id).
-		Updates(data).Error
-}
-
-func (r *accountStore) DeleteAccount(ctx context.Context, id string) error {
-	return r.db.WithContext(ctx).Table("account").
-		Where("id = ?", id).
-		Delete(nil).Error
-}
-
-func (s *accountStore) CheckExistEmail(email string) (bool, error) {
-	var count int64
-	if err := s.db.Model(&hrmmodel.Account{}).Where("login_mail = ?", email).Count(&count).Error; err != nil {
-		return true, err
-	}
-	if count > 0 {
-		return true, errors.New("Account is already")
-	}
-	return false, nil
-}
-
-func (s *accountStore) CheckFirstLogin(email string) (bool, error) {
-	return false, nil
-}
+//func (s *accountStore) CreateAccount(tx *gorm.DB, employee *hrmmodel.Employee, hashedPassword, roleID string) (*hrmmodel.Account, error) {
+//	var role hrmmodel.Role
+//	if err := tx.First(&role, "id = ?", roleID).Error; err != nil {
+//		return nil, fmt.Errorf("failed to get role %s: %w", roleID, err)
+//	}
+//
+//	account := hrmmodel.Account{
+//		LoginMail:   employee.Email,
+//		Password:    hashedPassword,
+//		FirstLogin:  true,
+//		CreatedDate: time.Now(),
+//		EmployeeId:  employee.EmployeeID,
+//		RoleID:      role.ID,
+//	}
+//
+//	if err := tx.Create(&account).Error; err != nil {
+//		return nil, fmt.Errorf("failed to create account: %w", err)
+//	}
+//
+//	return &account, nil
+//}
+//
+//func (r *accountStore) GetAccount(ctx context.Context, id int64) (*hrmmodel.Account, error) {
+//	var account hrmmodel.Account
+//	if err := r.db.WithContext(ctx).Table("account").
+//		Where("id = ?", id).
+//		First(&account).Error; err != nil {
+//		return nil, err
+//	}
+//	return &account, nil
+//}
+//
+//func (r *accountStore) GetAccountNoCtx(id int64) (*hrmmodel.Account, error) {
+//	var account hrmmodel.Account
+//	if err := r.db.Table("account").
+//		Preload("Role").
+//		Where("id = ?", id).
+//		First(&account).Error; err != nil {
+//		return nil, err
+//	}
+//	return &account, nil
+//}
+//
+//func (r *accountStore) GetAllAccount(ctx context.Context) ([]hrmmodel.Account, error) {
+//
+//	var positions []hrmmodel.Account
+//	if err := r.db.WithContext(ctx).Table("account").Find(&positions).Error; err != nil {
+//		return nil, err
+//	}
+//
+//	return positions, nil
+//}
+//
+//func (r *accountStore) UpdateAccount(ctx context.Context, id string, data *hrmmodel.Account) error {
+//	return r.db.WithContext(ctx).Table("account").
+//		Where("id = ?", id).
+//		Updates(data).Error
+//}
+//
+//func (r *accountStore) UpdateAccountTrans(tx *gorm.DB, id int64, data *hrmmodel.Account) error {
+//	return tx.Table("account").
+//		Where("id = ?", id).
+//		Updates(data).Error
+//}
+//
+//func (r *accountStore) DeleteAccount(ctx context.Context, id string) error {
+//	return r.db.WithContext(ctx).Table("account").
+//		Where("id = ?", id).
+//		Delete(nil).Error
+//}
+//
+//func (s *accountStore) CheckExistEmail(email string) (bool, error) {
+//	var count int64
+//	if err := s.db.Model(&hrmmodel.Account{}).Where("login_mail = ?", email).Count(&count).Error; err != nil {
+//		return true, err
+//	}
+//	if count > 0 {
+//		return true, errors.New("Account is already")
+//	}
+//	return false, nil
+//}
+//
+//func (s *accountStore) CheckFirstLogin(email string) (bool, error) {
+//	return false, nil
+//}

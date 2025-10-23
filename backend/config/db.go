@@ -4,10 +4,10 @@ import (
 	checkin_model "erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/hr_profile/model"
 	"fmt"
+	"gorm.io/driver/postgres"
 	"log"
 	"time"
 
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
@@ -15,37 +15,37 @@ import (
 var DB *gorm.DB
 
 var AllModels = []interface{}{
-	// // HR profile models
-	// &model.Role{},
-	// &model.Office{},
-	// &model.Position{},
-	// &model.HierarchyLevel{},
-	// &model.EmployeeDocumentType{},
-	// &model.ContractType{},
-	// &model.DecisionType{},
-	// &model.Insurance{},
-	// &model.Allowance{},
-	// &model.Department{},
-	// &model.JobTitle{},
-	// &model.Contract{},
-	// &model.Employee{},
-	// &model.Account{},
-	// &model.Decision{},
-	// &model.DecisionEmployee{},
-	// &model.ContractAllowance{},
-	// &model.EmployeeDocument{},
+	// HR profile models
+	&model.Role{},
+	&model.Office{},
+	&model.Position{},
+	&model.HierarchyLevel{},
+	&model.EmployeeDocumentType{},
+	&model.ContractType{},
+	&model.DecisionType{},
+	&model.Insurance{},
+	&model.Allowance{},
+	&model.Department{},
+	&model.JobTitle{},
+	&model.Contract{},
+	&model.Employee{},
+	//&model.Account{},
+	&model.Decision{},
+	&model.DecisionEmployee{},
+	&model.ContractAllowance{},
+	&model.EmployeeDocument{},
 
-	// // Checkin models
-	// &checkin_model.WorkShifts{},
-	// &checkin_model.EmployeeWorkshift{},
-	// &checkin_model.AttendanceCategory{},
-	// &checkin_model.AttendanceRecord{},
-	// &checkin_model.WorkSchedule{},
-	// &checkin_model.WorkScheduleShift{},
-	// &checkin_model.WorkScheduleManager{},
-	// &checkin_model.TimeSheetList{},
-	// &checkin_model.TimeSheet{},
-	// &checkin_model.TimeSheetDetail{},
+	// Checkin models
+	&checkin_model.WorkShifts{},
+	&checkin_model.EmployeeWorkshift{},
+	&checkin_model.AttendanceCategory{},
+	&checkin_model.AttendanceRecord{},
+	&checkin_model.WorkSchedule{},
+	&checkin_model.WorkScheduleShift{},
+	&checkin_model.WorkScheduleManager{},
+	&checkin_model.TimeSheetList{},
+	&checkin_model.TimeSheet{},
+	&checkin_model.TimeSheetDetail{},
 }
 
 func ConnectPostgres() {
@@ -58,35 +58,33 @@ func ConnectPostgres() {
 		log.Fatal("Không thể kết nối PostgreSQL:", err)
 	}
 
-	// Create ENUM types first before AutoMigrate
+	// Tạo enum
 	if err := createEnums(db); err != nil {
 		log.Fatal("Không thể tạo enum types:", err)
 	}
 
-	errT := db.AutoMigrate(AllModels...)
-	if errT != nil {
-		fmt.Print(errT)
+	// Tạo bảng trước (AutoMigrate)
+	fmt.Println("Đang chạy AutoMigrate...")
+	if err := db.AutoMigrate(AllModels...); err != nil {
+		log.Fatalf("AutoMigrate lỗi: %v", err)
 	}
 
-	// Run AutoMigrate to create tables
-	if err := AutoMigrate(db); err != nil {
-		log.Fatal("Không thể tự động migrate:", err)
-	}
-	CreateAllContraints(db)
+	// Sau khi tất cả bảng đã có, mới thêm constraint
+	fmt.Println("Đang tạo constraint...")
+	CreateAllConstraints(db)
 
-	// Create default roles after tables are created
+	// Thêm dữ liệu mặc định
 	if err := createDefaultRoles(db); err != nil {
-		log.Fatal("Không thể tạo vai trò mặc định:", err)
+		log.Fatalf("Không thể tạo role mặc định: %v", err)
 	}
 
+	// Tạo foreign keys thủ công
 	if err := CreateForeignKeysFromModels(db, AllModels); err != nil {
 		log.Fatalf("Không tạo được FK cho bảng: %v", err)
 	}
 
-	fmt.Println("Đã kết nối PostgreSQL!")
+	fmt.Println("✅ Kết nối PostgreSQL thành công!")
 	DB = db
-
-	db.Exec("DISCARD ALL")
 }
 
 // Create ENUM types for AutoMigrate
@@ -375,95 +373,49 @@ func CreateForeignKeysFromModels(db *gorm.DB, models []interface{}) error {
 	return tx.Commit().Error
 }
 
-func CreateAllContraints(db *gorm.DB) {
-	db.Migrator().CreateConstraint(&model.Role{}, "Accounts")
+func CreateAllConstraints(db *gorm.DB) {
+	db.Migrator().CreateConstraint(&model.Role{}, "Employees")
 	db.Migrator().CreateConstraint(&model.HierarchyLevel{}, "JobTitles")
 	db.Migrator().CreateConstraint(&model.Department{}, "Office")
-	db.Migrator().CreateConstraint(&model.
-		JobTitle{}, "HierarchyLevel")
-	db.Migrator().CreateConstraint(&model.
-		Contract{}, "ContractType")
-	db.Migrator().CreateConstraint(&model.
-		Contract{}, "Employee")
-	db.Migrator().CreateConstraint(&model.
-		Contract{}, "Allowances")
-	db.Migrator().CreateConstraint(&model.
-		Employee{}, "Position")
-	db.Migrator().CreateConstraint(&model.
-		Employee{}, "JobTitle")
-	db.Migrator().CreateConstraint(&model.
-		Employee{}, "Manager")
-	db.Migrator().CreateConstraint(&model.
-		Employee{}, "Department")
-	db.Migrator().CreateConstraint(&model.
-		Employee{}, "Contracts")
-	db.Migrator().CreateConstraint(&model.
-		Employee{}, "Decisions")
-	db.Migrator().CreateConstraint(&model.
-		Account{}, "Role")
-	db.Migrator().CreateConstraint(&model.
-		Account{}, "Employee")
-	db.Migrator().CreateConstraint(&model.
-		Decision{}, "Employees")
-	db.Migrator().CreateConstraint(&model.
-		Decision{}, "DecisionType")
-	db.Migrator().CreateConstraint(&checkin_model.
-		WorkShifts{}, "Creator")
-	db.Migrator().CreateConstraint(&checkin_model.
-		EmployeeWorkshift{}, "WorkShift")
-	db.Migrator().CreateConstraint(&checkin_model.
-		AttendanceCategory{}, "Office")
-	db.Migrator().CreateConstraint(&checkin_model.
-		AttendanceRecord{}, "Employee")
-	db.Migrator().CreateConstraint(&checkin_model.
-		AttendanceRecord{}, "Office")
-	db.Migrator().CreateConstraint(&checkin_model.
-		AttendanceRecord{}, "CreateByInfo")
-	db.Migrator().CreateConstraint(&checkin_model.
-		AttendanceRecord{}, "AttendanceCategory")
-	db.Migrator().CreateConstraint(&model.
-		EmployeeDocument{}, "DocumentType")
-	db.Migrator().CreateConstraint(&model.
-		EmployeeDocument{}, "Employee")
-	db.Migrator().CreateConstraint(&checkin_model.
-		WorkSchedule{}, "Managers")
-	db.Migrator().CreateConstraint(&checkin_model.
-		WorkSchedule{}, "Weekdays")
-	db.Migrator().CreateConstraint(&checkin_model.
-		WorkSchedule{}, "Office")
-	db.Migrator().CreateConstraint(&checkin_model.
-		WorkScheduleShift{}, "WorkShift")
-	db.Migrator().CreateConstraint(&checkin_model.
-		WorkScheduleManager{}, "Employee")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheetList{}, "Office")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheetList{}, "Timesheets")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheetList{}, "Creator")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheetList{}, "Updater")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheetList{}, "LockedUser")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheet{}, "Employee")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheet{}, "Office")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheet{}, "Department")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheet{}, "Details")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheet{}, "Creator")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheet{}, "Updater")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheetDetail{}, "WorkShift")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheetDetail{}, "CheckInRecord")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheetDetail{}, "CheckOutRecord")
-	db.Migrator().CreateConstraint(&checkin_model.
-		TimeSheetDetail{}, "AdjustmentUser")
-
+	db.Migrator().CreateConstraint(&model.JobTitle{}, "HierarchyLevel")
+	db.Migrator().CreateConstraint(&model.Contract{}, "ContractType")
+	db.Migrator().CreateConstraint(&model.Contract{}, "Employee")
+	db.Migrator().CreateConstraint(&model.Contract{}, "Allowances")
+	db.Migrator().CreateConstraint(&model.Employee{}, "Position")
+	db.Migrator().CreateConstraint(&model.Employee{}, "JobTitle")
+	db.Migrator().CreateConstraint(&model.Employee{}, "Manager")
+	db.Migrator().CreateConstraint(&model.Employee{}, "Department")
+	db.Migrator().CreateConstraint(&model.Employee{}, "Contracts")
+	db.Migrator().CreateConstraint(&model.Employee{}, "Decisions")
+	db.Migrator().CreateConstraint(&model.Decision{}, "Employees")
+	db.Migrator().CreateConstraint(&model.Decision{}, "DecisionType")
+	db.Migrator().CreateConstraint(&checkin_model.WorkShifts{}, "Creator")
+	db.Migrator().CreateConstraint(&checkin_model.EmployeeWorkshift{}, "WorkShift")
+	db.Migrator().CreateConstraint(&checkin_model.AttendanceCategory{}, "Office")
+	db.Migrator().CreateConstraint(&checkin_model.AttendanceRecord{}, "Employee")
+	db.Migrator().CreateConstraint(&checkin_model.AttendanceRecord{}, "Office")
+	db.Migrator().CreateConstraint(&checkin_model.AttendanceRecord{}, "CreateByInfo")
+	db.Migrator().CreateConstraint(&checkin_model.AttendanceRecord{}, "AttendanceCategory")
+	db.Migrator().CreateConstraint(&model.EmployeeDocument{}, "DocumentType")
+	db.Migrator().CreateConstraint(&model.EmployeeDocument{}, "Employee")
+	db.Migrator().CreateConstraint(&checkin_model.WorkSchedule{}, "Managers")
+	db.Migrator().CreateConstraint(&checkin_model.WorkSchedule{}, "Weekdays")
+	db.Migrator().CreateConstraint(&checkin_model.WorkSchedule{}, "Office")
+	db.Migrator().CreateConstraint(&checkin_model.WorkScheduleShift{}, "WorkShift")
+	db.Migrator().CreateConstraint(&checkin_model.WorkScheduleManager{}, "Employee")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheetList{}, "Office")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheetList{}, "Timesheets")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheetList{}, "Creator")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheetList{}, "Updater")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheetList{}, "LockedUser")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheet{}, "Employee")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheet{}, "Office")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheet{}, "Department")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheet{}, "Details")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheet{}, "Creator")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheet{}, "Updater")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheetDetail{}, "WorkShift")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheetDetail{}, "CheckInRecord")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheetDetail{}, "CheckOutRecord")
+	db.Migrator().CreateConstraint(&checkin_model.TimeSheetDetail{}, "AdjustmentUser")
 }

@@ -47,7 +47,6 @@ func (s *UserStore) GetAllEmployeesByStatus(status string, page, pageSize int) (
 		Order("employee_id ASC").
 		Limit(pageSize).
 		Offset(offset).
-		Preload("Account").
 		Preload("Manager").
 		Preload("JobTitle").
 		Preload("Position").
@@ -64,7 +63,6 @@ func (s *UserStore) GetAllEmployeesByStatus(status string, page, pageSize int) (
 func (s *UserStore) GetUserById(id string) (model.Employee, error) {
 	var employee model.Employee
 	if err := s.db.Where("employee_id = ?", id).
-		Preload("Account").
 		Preload("Manager").
 		Preload("JobTitle").
 		Preload("Position").
@@ -80,7 +78,6 @@ func (s *UserStore) GetAllEmployees() ([]model.Employee, error) {
 	var employees []model.Employee
 	if err := s.db.
 		Order("employee_id ASC").
-		Preload("Account").
 		Preload("Manager").
 		Preload("JobTitle").
 		Preload("Position").
@@ -127,7 +124,6 @@ func (s *UserStore) GetAllEmployeesPagination(page, pageSize int, filters map[st
 	if err := db.Order("employee.employee_id ASC").
 		Limit(pageSize).
 		Offset(offset).
-		Preload("Account").
 		Preload("Manager").
 		Preload("JobTitle").
 		Preload("Position").
@@ -192,12 +188,7 @@ func (s *UserStore) GetLastEmployeeByCode(emp *model.Employee) error {
 }
 
 func (s *UserStore) UpdateEmployeeWithAccount(tx *gorm.DB, employee *model.Employee, accountID int64) error {
-	employee.AccountID = &accountID
-	if err := tx.Save(employee).Error; err != nil {
-		return fmt.Errorf("failed to update employee with account ID: %w", err)
-	}
-
-	return nil
+	return tx.Save(employee).Error
 }
 
 func (s *UserStore) CheckExistEmployees(employeeIDs []string) ([]string, error) {
@@ -327,8 +318,7 @@ func (s *UserStore) GetUserByRoleID(roleID string) ([]model.ManagerResponse, err
 	var employees []model.ManagerResponse
 	err := s.db.
 		Model(&model.Employee{}).Table(model.Employee{}.TableName()).
-		Joins("JOIN account ON account.employee_id = employee.employee_id").
-		Where("account.role_id = ?", roleID).
+		Where("role_id = ?", roleID).
 		Find(&employees).Error
 
 	if err != nil {
@@ -404,7 +394,6 @@ func (s *UserStore) GetAllEmployeesActivePagination(page, pageSize int, filters 
 	if err := db.Order("employee.employee_id ASC").
 		Limit(pageSize).
 		Offset(offset).
-		Preload("Account").
 		Preload("Manager").
 		Preload("JobTitle").
 		Preload("Position").

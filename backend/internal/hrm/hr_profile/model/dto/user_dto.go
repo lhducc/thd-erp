@@ -1,6 +1,8 @@
 package dto
 
-import "erp/backend/internal/hrm/hr_profile/model"
+import (
+	"erp/backend/internal/hrm/hr_profile/model"
+)
 
 type EmployeeDTO struct {
 	EmployeeID   string  `gorm:"primaryKey;column:employee_id" json:"employee_id"`
@@ -18,6 +20,7 @@ type EmployeeDTO struct {
 	DepartmentID string  `gorm:"column:department_id" json:"department_id"`
 	ScheduleID   *int    `gorm:"column:schedule_id" json:"schedule_id"`
 	RoleID       string  `gorm:"column:role_id" json:"role_id"`
+	StartDate    string  `gorm:"column:start_date;type:date" json:"start_date"`
 }
 
 func (dto *EmployeeDTO) ConvertToEmployeeModel() *model.Employee {
@@ -36,6 +39,7 @@ func (dto *EmployeeDTO) ConvertToEmployeeModel() *model.Employee {
 		ManagerID:    dto.ManagerID,
 		DepartmentID: dto.DepartmentID,
 		ScheduleID:   dto.ScheduleID,
+		StartDate:    dto.StartDate,
 	}
 }
 

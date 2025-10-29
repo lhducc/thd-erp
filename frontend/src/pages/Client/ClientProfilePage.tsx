@@ -36,7 +36,7 @@ const ClientProfilePage = () => {
             <InfoRow label="Địa chỉ" value={employee.address} />
             <InfoRow
               label="Ngày bắt đầu"
-              value={formatDate(employee.created_date)}
+              value={formatDate(employee.start_date)}
             />
             <InfoRow
               label="Chi nhánh"

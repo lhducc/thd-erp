@@ -18,19 +18,19 @@ type Employee struct {
 	CreatedDate time.Time `gorm:"column:created_date;autoCreateTime" json:"created_date"`
 
 	// THÔNG TIN NHÂN SỰ
-	Fullname     string     `gorm:"column:full_name;type:varchar(255);not null" json:"full_name" validate:"required"`
-	Birthday     string     `gorm:"column:birthday;type:date" json:"birthday"`
-	Gender       string     `gorm:"column:gender;type:varchar(10)" json:"gender" validate:"oneof=Nam Nữ Khác"`
-	WorkType     string     `gorm:"column:work_type;type:varchar(255)" json:"work_type"`
-	PhoneNumber  string     `gorm:"column:phone_number;type:varchar(20)" json:"phone_number"`
-	Address      string     `gorm:"column:address;type:text" json:"address"`
-	PositionID   string     `gorm:"column:position_id" json:"position_id"`
-	JobTitleID   string     `gorm:"column:job_title_id" json:"job_title_id"`
-	Status       string     `gorm:"column:status" json:"status" validate:"required,oneof=active inactive"`
-	ManagerID    *string    `gorm:"column:manager" json:"manager_id"`
-	DepartmentID string     `gorm:"column:department_id" json:"department_id"`
-	ScheduleID   *int       `gorm:"column:schedule_id" json:"schedule_id"`
-	StartingDate *time.Time `gorm:"column:starting_date" json:"starting_date"`
+	Fullname     string  `gorm:"column:full_name;type:varchar(255);not null" json:"full_name" validate:"required"`
+	Birthday     string  `gorm:"column:birthday;type:date" json:"birthday"`
+	Gender       string  `gorm:"column:gender;type:varchar(10)" json:"gender" validate:"oneof=Nam Nữ Khác"`
+	WorkType     string  `gorm:"column:work_type;type:varchar(255)" json:"work_type"`
+	PhoneNumber  string  `gorm:"column:phone_number;type:varchar(20)" json:"phone_number"`
+	Address      string  `gorm:"column:address;type:text" json:"address"`
+	PositionID   string  `gorm:"column:position_id" json:"position_id"`
+	JobTitleID   string  `gorm:"column:job_title_id" json:"job_title_id"`
+	Status       string  `gorm:"column:status" json:"status" validate:"required,oneof=active inactive"`
+	ManagerID    *string `gorm:"column:manager" json:"manager_id"`
+	DepartmentID string  `gorm:"column:department_id" json:"department_id"`
+	ScheduleID   *int    `gorm:"column:schedule_id" json:"schedule_id"`
+	StartDate    string  `gorm:"column:start_date; type:date" json:"start_date"`
 
 	// QUAN HỆ VÀ LIÊN KẾT
 	Role       *Role            `gorm:"foreignKey:RoleID;references:id" json:"role,omitempty"`

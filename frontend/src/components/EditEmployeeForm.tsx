@@ -87,7 +87,7 @@ const EditEmployeeForm = ({ open, setOpen, data, refetchEmployee }: Props) => {
       position: data.position_id,
       current_address: data.address || "",
       job_title_id: data.job_title_id || "",
-      start_date: toYMD(data.created_date),
+      start_date: toYMD(data.start_date),
       office: data.department.office.office_id || "",
       department: data.department.department_id || "",
       manager: data.manager_id || "",
@@ -122,6 +122,7 @@ const EditEmployeeForm = ({ open, setOpen, data, refetchEmployee }: Props) => {
         department_id: values.department,
         schedule_id: Number(values.schedule_id),
         role_id: values.role_id,
+        start_date: values.start_date,
       };
       await updateEmployeeApi(data.employee_id, payload);
       await clientQuery.invalidateQueries({ queryKey: ["employees"] });

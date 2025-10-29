@@ -88,6 +88,7 @@ func (s *EmployeeBiz) CreateEmployee(ctx context.Context, employee *model.Employ
 		employee.Password = hashedPassword
 		employee.RoleID = roleID
 		employee.Status = "active"
+		employee.FirstLogin = true
 
 		if err := s.repo.CreateEmployee(tx, employee); err != nil {
 			return err
@@ -221,6 +222,10 @@ func (biz *EmployeeBiz) UpdateEmployee(ctx context.Context, id string, updated d
 		emp := updated.ConvertToEmployeeModel()
 		emp.EmployeeID = id
 		emp.RoleID = existing.RoleID
+
+		if emp.Password == "" {
+			emp.Password = existing.Password
+		}
 
 		if err := biz.repo.UpdateEmployee(tx, *emp); err != nil {
 			return fmt.Errorf("failed to update employee: %w", err)

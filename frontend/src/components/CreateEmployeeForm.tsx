@@ -114,6 +114,7 @@ const CreateEmployeeForm = ({ open, setOpen, refetchEmployee }: Props) => {
         address: values.current_address,
         department_id: values.department,
         work_schedule_id: values.work_schedule_id,
+        start_date: values.start_date,
       };
       await createEmployeeApi(payload);
       refetchEmployee();

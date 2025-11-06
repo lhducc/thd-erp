@@ -5,6 +5,7 @@ import (
 	"erp/backend/api/handler/hrm/checkin"
 	checking_handler "erp/backend/api/handler/hrm/checkin"
 	handler "erp/backend/api/handler/hrm/hr_profile"
+	recruitment_handler "erp/backend/api/handler/hrm/recruitment"
 	"erp/backend/api/middleware"
 	"erp/backend/config"
 	authRepo "erp/backend/internal/auth/repository"
@@ -12,9 +13,10 @@ import (
 	authUsecase "erp/backend/internal/auth/usecase"
 	checkinRepo "erp/backend/internal/hrm/checkin/repository"
 	checkinService "erp/backend/internal/hrm/checkin/service"
-
 	"erp/backend/internal/hrm/hr_profile/repository"
 	"erp/backend/internal/hrm/hr_profile/usecase"
+	recruitment_repo "erp/backend/internal/hrm/recruitment/repository/implement"
+	recruitment_service "erp/backend/internal/hrm/recruitment/service/implement"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -125,6 +127,17 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	timesheetListHandler := checkin.NewTimesheetListHandler(timesheetListService)
 	timesheetHandler := checkin.NewTimesheetHandler(timesheetService)
 
+	// Recruitment repository
+	processFormRepo := recruitment_repo.NewProcessFormRepositoryImpl(db)
+	processStageRepo := recruitment_repo.NewProcessStageRepositoryImpl(db)
+
+	// Recruitment service
+	processFormService := recruitment_service.NewProcessFormServiceImpl(processFormRepo)
+	processStageService := recruitment_service.NewProcessStageServiceImpl(processStageRepo)
+	// Recruitment handler
+	processFormHandler := recruitment_handler.NewProcessFormHandler(processFormService)
+	processStageHandler := recruitment_handler.NewProcessStageHandler(processStageService)
+
 	//setup routes
 	public := router.Group("/auth")
 	public.POST("/login", accountHandler.SignIn)
@@ -163,6 +176,11 @@ func RegisterRoutes(router *gin.RouterGroup, db *gorm.DB) {
 	setupShiftAllocationRoutes(managerRouter, shiftAllocationHandler)
 	setupTimesheetListRoutes(adminRouter, timesheetListHandler)
 	setupTimesheetRoutes(adminRouter, hrmRouter, timesheetHandler)
+
+	// Recruitment
+	setupProcessFormRoutes(adminRouter, processFormHandler)
+	setupProcessStageRoutes(adminRouter, processStageHandler)
+	//setupJobPostingRoutes()
 
 }
 
@@ -489,5 +507,25 @@ func setupRoleRoutes(router *gin.RouterGroup, roleHandler *handler.RoleHandler) 
 	role := router.Group("/role")
 	{
 		role.GET("", roleHandler.GetAllRole())
+	}
+}
+
+func setupProcessFormRoutes(adminRouter *gin.RouterGroup, processForm *recruitment_handler.ProcessFormHandler) {
+	adminGr := adminRouter.Group("/process-form")
+	{
+		adminGr.GET("", processForm.GetAll())
+		adminGr.GET("/:id", processForm.GetById())
+		adminGr.POST("/create", processForm.CreateFormWithStages())
+		adminGr.PUT("/:id", processForm.Update())
+		adminGr.DELETE("/:id", processForm.Delete())
+	}
+}
+
+func setupProcessStageRoutes(adminRouter *gin.RouterGroup, processStage *recruitment_handler.ProcessStageHandler) {
+	adminGr := adminRouter.Group("/process-stage")
+	{
+		adminGr.POST("", processStage.CreateStage())
+		adminGr.PUT("/:id", processStage.UpdateStage())
+		adminGr.DELETE("/:id", processStage.DeleteStage())
 	}
 }

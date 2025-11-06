@@ -3,6 +3,7 @@ package config
 import (
 	checkin_model "erp/backend/internal/hrm/checkin/model"
 	"erp/backend/internal/hrm/hr_profile/model"
+	recruitment_model "erp/backend/internal/hrm/recruitment/model"
 	"fmt"
 	"gorm.io/driver/postgres"
 	"log"
@@ -46,6 +47,11 @@ var AllModels = []interface{}{
 	&checkin_model.TimeSheetList{},
 	&checkin_model.TimeSheet{},
 	&checkin_model.TimeSheetDetail{},
+
+	// Recruitment models
+	&recruitment_model.ProcessForm{},
+	&recruitment_model.ProcessStage{},
+	&recruitment_model.JobPosting{},
 }
 
 func ConnectPostgres() {
@@ -418,4 +424,10 @@ func CreateAllConstraints(db *gorm.DB) {
 	db.Migrator().CreateConstraint(&checkin_model.TimeSheetDetail{}, "CheckInRecord")
 	db.Migrator().CreateConstraint(&checkin_model.TimeSheetDetail{}, "CheckOutRecord")
 	db.Migrator().CreateConstraint(&checkin_model.TimeSheetDetail{}, "AdjustmentUser")
+	db.Migrator().CreateConstraint(&recruitment_model.ProcessStage{}, "ProcessForm")
+	db.Migrator().CreateConstraint(&recruitment_model.JobPosting{}, "ProcessForm")
+	db.Migrator().CreateConstraint(&recruitment_model.JobPosting{}, "CreatorInfo")
+	db.Migrator().CreateConstraint(&recruitment_model.JobPosting{}, "Department")
+	db.Migrator().CreateConstraint(&recruitment_model.JobPosting{}, "Position")
+
 }
